@@ -66,7 +66,7 @@ export function BodyCarePreview(){
 
 export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
- const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState('upper'),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
+ const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState(areas[0].id),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
  const [levelRename,setLevelRename]=useState(null),[levelDraft,setLevelDraft]=useState('');
  const pressTimer=useRef(null),longPressRef=useRef(false);
  const [editing,setEditing]=useState(false),[archived,setArchived]=useState(false),[editItem,setEditItem]=useState(null);

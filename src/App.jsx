@@ -72,7 +72,7 @@ export default function App(){
  const [editing,setEditing]=useState(false),[archived,setArchived]=useState(false),[editItem,setEditItem]=useState(null);
  const [expanded,setExpanded]=useState(null),[activeVideo,setActiveVideo]=useState({}),[videoDraft,setVideoDraft]=useState('');
  const [notice,setNotice]=useState(''),[sync,setSync]=useState(db?'로그인 대기':'기기 저장'),[saving,setSaving]=useState(false);
- const uploaded=useRef(null),importInput=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0);
+ const uploaded=useRef(null),importInput=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0),serverBaseline=useRef(null),blockedSave=useRef(false);
  const userId=session?.user?.id;
  const localKey=userId?KEY+'-'+userId:KEY;
  const show=msg=>{setNotice(msg)};
@@ -81,27 +81,39 @@ export default function App(){
  return()=>{live=false;subscription.unsubscribe()}},[]);
  useEffect(()=>{
   if(!db)return;
-  if(!userId){setLoaded(false);loadedUser.current=null;setData(initial());return;}
-  let live=true;setLoaded(false);setSync('불러오는 중');
+  if(!userId){setLoaded(false);loadedUser.current=null;serverBaseline.current=null;blockedSave.current=false;setData(initial());return;}
+  let live=true;setLoaded(false);serverBaseline.current=null;blockedSave.current=false;setSync('불러오는 중');
   (async()=>{try{
    const {data:remote,error}=await db.from('body_care_studio_data').select('payload').eq('user_id',userId).maybeSingle();
    if(error)throw error;if(!live)return;
    const local=read(localKey,null);
-   const next=seedBodyCatalog(normalize(remote?.payload?.items?remote.payload:local||initial()));
+   serverBaseline.current=remote?.payload??null;
+    const next=seedBodyCatalog(normalize(remote?.payload?.items?remote.payload:local||initial()));
    setData(next);persist(localKey,next);loadedUser.current=userId;setLoaded(true);setSync('동기화됨');
-  }catch(e){if(live){setData(seedBodyCatalog(normalize(read(localKey,initial()))));loadedUser.current=userId;setLoaded(true);setSync('연결 실패');show('클라우드 데이터 읽기 실패: '+e.message)}}})();
+  }catch(e){if(live){setData(seedBodyCatalog(normalize(read(localKey,initial()))));loadedUser.current=null;setLoaded(false);blockedSave.current=true;setSync('불러오기 실패 · 저장 차단');show('서버 읽기 실패로 저장을 막았어 · 기기 데이터는 보존됨: '+e.message)}}})();
   return()=>{live=false};
  },[userId]);
  useEffect(()=>{
   if(!loaded)return;
   persist(localKey,data);
-  if(!db||!userId||loadedUser.current!==userId)return;
+  if(!db||!userId||loadedUser.current!==userId||blockedSave.current)return;
   const n=++saveVersion.current;
   setSaving(true);setSync('저장 중');
   const timer=setTimeout(async()=>{
-   const {error}=await db.from('body_care_studio_data').upsert({user_id:userId,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-   if(saveVersion.current!==n)return;
-   setSaving(false);setSync(error?'저장 실패':'동기화됨');if(error)show('클라우드 저장 실패 · 기기 백업 유지: '+error.message);
+   try{
+    const {data:row,error:readError}=await db.from('body_care_studio_data').select('payload').eq('user_id',userId).maybeSingle();
+    if(readError)throw readError;
+    if(saveVersion.current!==n||loadedUser.current!==userId)return;
+    if(JSON.stringify(row?.payload??null)!==JSON.stringify(serverBaseline.current)){
+     blockedSave.current=true;setSaving(false);setSync('서버 변경 감지 · 저장 중단');
+     show('다른 기기 변경을 감지해 덮어쓰지 않았어. 현재 데이터는 기기에 보존했어. JSON 백업을 해줘.');
+     return;
+    }
+    const {error}=await db.from('body_care_studio_data').upsert({user_id:userId,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(error)throw error;
+    serverBaseline.current=data;
+    if(saveVersion.current===n){setSaving(false);setSync('동기화됨')}
+   }catch(e){if(saveVersion.current===n){setSaving(false);setSync('저장 실패');show('클라우드 저장 실패 · 기기 백업 유지: '+e.message)}}
   },700);
   return()=>clearTimeout(timer);
  },[data,userId,loaded]);

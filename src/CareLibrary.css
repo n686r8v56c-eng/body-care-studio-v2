@@ -102,3 +102,31 @@
 .care-import{padding:10px;border:1px solid #eae2f4;border-radius:10px;color:#766780}
 .care-import input{max-width:100%}
 @media(min-width:620px){.care-content{padding:24px 30px 100px}.care-content .stretching-link-button{width:43px;height:43px}}
+
+/* Match the visual hierarchy and spacing of Beauty Care Flow's Stretching tab. */
+body:has(.care-content){background:#faf9fc}
+.app:has(.care-content){max-width:850px;margin:0 auto;background:#fff}
+.app .care-content{max-width:850px;margin:0 auto;background:#fff;padding:14px 14px 95px}
+.care-page-title{margin:0 0 13px}
+.care-page-title h1{font-size:21px;letter-spacing:-.7px;line-height:1.35;font-weight:750;color:#24212b;margin:0}
+.app .care-content .stretching-page{gap:10px}
+.app .care-content .stretching-levels{margin:0 0 5px}
+.app .care-content .stretching-levels button{background:#f8f5fb;border:1px solid #e9dff1;color:#82748f}
+.app .care-content .stretching-levels button.active{background:#ede3fa;border-color:#ac85de;color:#7450ad;box-shadow:inset 0 0 0 1px #b291dd}
+.app .care-content .stretching-backup-bar{margin:6px 0 12px}
+.app .care-content .stretching-backup-bar button{min-height:38px}
+.app .care-content .stretching-drills{background:#fff}
+.app .care-content .stretching-drill{border:0;border-bottom:1px solid #eee8f4;border-radius:0;background:#fff;box-shadow:none}
+.app .care-content .stretching-drill-row{padding:0;gap:6px}
+.app .care-content .stretching-drill-toggle{padding:12px 2px;min-height:65px;background:#fff;border:none;box-shadow:none}
+.app .care-content .stretching-drill-name strong{font-size:15px;line-height:1.25}
+.app .care-content .stretching-drill-name small{font-size:12px}
+.app .care-content .stretching-link-button{border:0;border-radius:10px;background:#f2eafb;color:#8055af}
+.app .care-content .stretching-edit-controls button{width:29px;height:33px;border:0;border-radius:7px;padding:0}
+.app .care-content .stretching-video-detail{padding:1px 0 14px 33px}
+.app .care-content .stretching-video-actions button,.app .care-content .stretching-video-actions a{min-height:32px;font-size:12px;font-weight:400}
+.app .care-content .stretching-modal-backdrop{z-index:100}
+.app .care-content .stretching-modal{width:min(100%,430px);padding:18px}
+.app .care-content .stretching-submit{background:#8e6fc2;border:0;color:#fff}
+.app .bottom-nav{max-width:850px;left:50%;right:auto;transform:translateX(-50%);box-shadow:none;border-top:1px solid #eeeaf4}
+@media(max-width:380px){.app .care-content .stretching-drill-toggle{gap:6px}.app .care-content .stretching-video-detail{padding-left:27px}}

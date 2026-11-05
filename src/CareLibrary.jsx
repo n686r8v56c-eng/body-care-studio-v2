@@ -46,7 +46,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const [editor,setEditor]=useState(null);
  const [draft,setDraft]=useState({en:'',ko:'',level:1,note:''});
  const [message,setMessage]=useState('');
- const [videoInput,setVideoInput]=useState(null);
+
  const [showRecovery,setShowRecovery]=useState(false);
  const [showImport,setShowImport]=useState(false);
  const [levelRename,setLevelRename]=useState(null);
@@ -104,21 +104,21 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   if(!fresh.length){alertUser(old.length===MAX?'영상은 최대 5개까지 등록 가능해.':'이미 등록된 영상이야.');return}
   update(d=>{const found=d.items.find(x=>x.id===row.id);if(found)found.videos=[...old,...fresh]});
   setOpened(row.id);setActive(v=>({...v,[row.id]:old.length}));
-  setVideoInput(null);alertUser('영상 '+fresh.length+'개 등록 완료');
+  alertUser('영상 '+fresh.length+'개 등록 완료');
  };
  const addFromClipboard=async row=>{
   if(videosFor(row).length>=MAX){setOpened(row.id);alertUser('영상은 최대 5개까지 등록 가능해.');return}
+  let pasted='';
   try{
-   if(!navigator.clipboard?.readText)throw Error('clipboard unavailable');
-   const text=await navigator.clipboard.readText();
-   if(!text?.trim())throw Error('clipboard empty');
-   addVideos(row,text);
+   if(!navigator.clipboard?.readText)throw new Error('clipboard unavailable');
+   pasted=await navigator.clipboard.readText();
   }catch{
-   // iOS can block clipboard reads: one link button remains the only entry point.
-   // Show an inline paste field only after the direct clipboard attempt fails.
-   setVideoInput({id:row.id,text:''});setOpened(row.id);
-   alertUser('클립보드 접근이 제한되어 링크 붙여넣기를 열었어.');
+   // Safari on iOS may deny clipboard reads. Use a temporary native prompt,
+   // never leave the old inline link form visible beneath the video.
+   pasted=window.prompt('유튜브 링크를 붙여넣어 줘.','')||'';
   }
+  if(!pasted.trim())return;
+  addVideos(row,pasted);
  };
  const copyLink=async id=>{
   const url='https://www.youtube.com/watch?v='+id;
@@ -148,7 +148,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    });setShowImport(false);alertUser('JSON 백업에서 새 항목을 가져왔어.');
   }catch(e){alertUser('백업 가져오기 실패: '+e.message)}
  };
- const chooseLevel=n=>{if(wasLongPress.current){wasLongPress.current=false;return}setLevel(n);setOpened(null);setVideoInput(null)};
+ const chooseLevel=n=>{if(wasLongPress.current){wasLongPress.current=false;return}setLevel(n);setOpened(null)};
  const startPress=n=>{clearTimeout(timer.current);wasLongPress.current=false;timer.current=setTimeout(()=>{wasLongPress.current=true;setLevelRename(n);setRenameText(labels[n-1])},550)};
  const stopPress=()=>clearTimeout(timer.current);
  const saveRename=e=>{
@@ -182,7 +182,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    const arr=videosFor(row),expanded=opened===row.id,index=Math.min(active[row.id]||0,Math.max(0,arr.length-1));
    return <div className="stretching-drill" key={row.id}>
     <div className="stretching-drill-row">
-     <button type="button" className="stretching-drill-toggle" aria-expanded={expanded} onClick={()=>{setOpened(expanded?null:row.id);setVideoInput(null)}}>
+     <button type="button" className="stretching-drill-toggle" aria-expanded={expanded} onClick={()=>{setOpened(expanded?null:row.id)}}>
       <span className="stretching-drill-number">{String(numberById.get(row.id)).padStart(2,'0')}</span>
       <span className="stretching-drill-name"><strong>{displayName(row)}</strong>{row.ko&&<small>{row.ko}</small>}</span>
       {expanded?<ChevronUp size={18}/>:<ChevronDown size={18}/>}
@@ -205,10 +205,6 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
        {!readOnly&&arr.length<MAX&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
       </div>
      </>:<div className="stretching-no-video"><strong>영상 링크 등록 대기</strong><span>오른쪽 링크 아이콘을 눌러 유튜브 주소를 등록해 줘.</span></div>}
-     {!readOnly&&videoInput?.id===row.id&&<form className="care-video-entry" onSubmit={e=>{e.preventDefault();addVideos(row,videoInput.text)}}>
-       <input autoFocus type="url" value={videoInput.text} onChange={e=>setVideoInput(v=>({...v,text:e.target.value}))} placeholder="유튜브 링크 붙여넣기"/>
-       <button type="submit"><Plus size={15}/> 등록</button><button type="button" onClick={()=>setVideoInput(null)}>취소</button>
-      </form>}
     </div>}
    </div>
   })}</div>

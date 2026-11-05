@@ -37,7 +37,7 @@ export function seedBodyCatalog(value){
  }
  return {...value,items,beautyCatalogSeedVersion:1};
 }
-export default function CareLibrary({data,onUpdate,area,group,sync}){
+export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false}){
  const [level,setLevel]=useState(1);
  const [editingMode,setEditingMode]=useState(false);
  const [showDeleted,setShowDeleted]=useState(false);
@@ -55,7 +55,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
  const labels=Array.from({length:5},(_,i)=>data.levelNames?.[groupKey(area,group)]?.[i]||DEFAULT_LABELS[i]);
  useEffect(()=>{setLevel(1);setOpened(null);setEditingMode(false);setEditor(null);setShowDeleted(false);setShowRecovery(false)},[area,group]);
  const alertUser=text=>{setMessage(text)};
- const update=fn=>onUpdate(d=>{fn(d)});
+ const update=fn=>{if(readOnly)return;onUpdate(d=>{fn(d)})};
  const scoped=(data.items||[]).filter(x=>x.area===area&&x.group===group);
  const ordered=scoped.filter(x=>!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)||String(a.id).localeCompare(String(b.id)));
  const visible=ordered.filter(x=>(x.level||1)===level);
@@ -171,12 +171,12 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
      onContextMenu={e=>{e.preventDefault();stopPress();wasLongPress.current=true;setLevelRename(i+1);setRenameText(name)}}
      onClick={()=>chooseLevel(i+1)}><span>Lv.{i+1}</span><strong>{name}</strong></button>)}
   </div>
-  <div className="stretching-backup-bar"><button type="button" onClick={exportBackup}><Download size={16}/>JSON 백업 다운로드</button>
-   <small>전체 동작과 영상 링크 · {sync}</small></div>
+  {!readOnly&&<div className="stretching-backup-bar"><button type="button" onClick={exportBackup}><Download size={16}/>JSON 백업 다운로드</button>
+   <small>전체 동작과 영상 링크 · {sync}</small></div>}
   <div className="stretching-list-heading"><strong>LEVEL {level} · {labels[level-1]}</strong>
    <div className="stretching-header-actions"><span>{visible.length} Drill</span>
-    <button type="button" onClick={openNew} aria-label="동작 추가" title="동작 추가"><Plus size={17}/></button>
-    <button type="button" className={editingMode?'active':''} onClick={()=>setEditingMode(x=>!x)}><Pencil size={15}/> 편집</button>
+    <button type="button" disabled={readOnly} onClick={openNew} aria-label="동작 추가" title="동작 추가"><Plus size={17}/></button>
+    <button type="button" disabled={readOnly} className={editingMode?'active':''} onClick={()=>setEditingMode(x=>!x)}><Pencil size={15}/> 편집</button>
    </div>
   </div>
   <div className="stretching-drills">{visible.map(row=>{
@@ -188,12 +188,12 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
       <span className="stretching-drill-name"><strong>{displayName(row)}</strong>{row.ko&&<small>{row.ko}</small>}</span>
       {expanded?<ChevronUp size={18}/>:<ChevronDown size={18}/>}
      </button>
-     {editingMode?<div className="stretching-edit-controls">
+     {editingMode&&!readOnly?<div className="stretching-edit-controls">
       <button type="button" aria-label="위로 이동" disabled={visible[0]?.id===row.id} onClick={()=>reorder(row,-1)}><ArrowUp size={15}/></button>
       <button type="button" aria-label="아래로 이동" disabled={visible.at(-1)?.id===row.id} onClick={()=>reorder(row,1)}><ArrowDown size={15}/></button>
       <button type="button" aria-label="동작 수정" onClick={()=>openEdit(row)}><Pencil size={15}/></button>
       <button type="button" aria-label="동작 삭제" onClick={()=>archive(row)}><Trash2 size={15}/></button>
-     </div>:<button type="button" className="stretching-link-button" aria-label={displayName(row)+' 영상 추가'} onClick={()=>addFromClipboard(row)}><Link2 size={20}/></button>}
+     </div>:!readOnly&&<button type="button" className="stretching-link-button" aria-label={displayName(row)+' 영상 추가'} onClick={()=>addFromClipboard(row)}><Link2 size={20}/></button>}
     </div>
     {expanded&&<div className="stretching-video-detail">
      {arr.length?<>
@@ -202,32 +202,32 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
       <div className="stretching-video-actions">
        <button type="button" onClick={()=>copyLink(arr[index])}><Link2 size={15}/> 링크 복사</button>
        <a href={'https://www.youtube.com/watch?v='+arr[index]} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> 영상 열기</a>
-       <button type="button" onClick={()=>removeVideo(row,index)}><Trash2 size={15}/> 링크 삭제</button>
-       {arr.length<MAX&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
+       {!readOnly&&<button type="button" onClick={()=>removeVideo(row,index)}><Trash2 size={15}/> 링크 삭제</button>}
+       {!readOnly&&arr.length<MAX&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
       </div>
      </>:<div className="stretching-no-video"><strong>영상 링크 등록 대기</strong><span>오른쪽 링크 아이콘을 눌러 유튜브 주소를 등록해 줘.</span></div>}
-     {videoInput?.id===row.id&&<form className="care-video-entry" onSubmit={e=>{e.preventDefault();addVideos(row,videoInput.text)}}>
+     {!readOnly&&videoInput?.id===row.id&&<form className="care-video-entry" onSubmit={e=>{e.preventDefault();addVideos(row,videoInput.text)}}>
        <input autoFocus type="url" value={videoInput.text} onChange={e=>setVideoInput(v=>({...v,text:e.target.value}))} placeholder="유튜브 링크 붙여넣기"/>
        <button type="submit"><Plus size={15}/> 등록</button><button type="button" onClick={()=>setVideoInput(null)}>취소</button>
       </form>}
     </div>}
    </div>
   })}</div>
-  {editingMode&&archived.length>0&&<div className="stretching-archive">
+  {!readOnly&&editingMode&&archived.length>0&&<div className="stretching-archive">
    <button type="button" className="stretching-archive-toggle" onClick={()=>setShowDeleted(v=>!v)}>삭제한 목록 {archived.length}개 {showDeleted?<ChevronUp size={16}/>:<ChevronDown size={16}/>}</button>
    {showDeleted&&archived.map(row=><div className="stretching-archived-row" key={row.id}><span>{displayName(row)} <small>{row.ko}</small></span><button type="button" onClick={()=>restore(row)}><RotateCcw size={15}/> 복구</button></div>)}
   </div>}
-  <section className="stretching-recovery">
+  {!readOnly&&<section className="stretching-recovery">
    <button type="button" className="stretching-recovery-toggle" onClick={()=>setShowRecovery(v=>!v)}><span>저장된 영상 확인 · {recovered.length}개 동작 / {totalSavedVideos}개 링크</span>{showRecovery?<ChevronUp size={17}/>:<ChevronDown size={17}/>}</button>
    {showRecovery&&<div className="stretching-recovery-list"><p>현재 바디케어 계정에 저장된 링크야. 숨긴 항목의 영상도 표시돼.</p>
     {!recovered.length&&<p>등록된 영상 링크가 없어.</p>}
     {recovered.map(row=><div className="stretching-recovery-row" key={row.id}><strong>{displayName(row)}{row.archived?' (목록에서 숨김)':''}</strong><div>{videosFor(row).map((id,i)=><a href={'https://www.youtube.com/watch?v='+id} key={id} target="_blank" rel="noopener noreferrer">영상 {i+1} <ExternalLink size={13}/></a>)}</div></div>)}
    </div>}
-  </section>
-  <div className="stretching-backup-extra"><button type="button" onClick={()=>setShowImport(v=>!v)}><Upload size={15}/> JSON 가져오기</button></div>
-  {showImport&&<div className="care-import"><p>이전 Body Care Studio 백업을 병합해.</p><input type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/></div>}
+  </section>}
+  {!readOnly&&<div className="stretching-backup-extra"><button type="button" onClick={()=>setShowImport(v=>!v)}><Upload size={15}/> JSON 가져오기</button></div>}
+  {!readOnly&&showImport&&<div className="care-import"><p>이전 Body Care Studio 백업을 병합해.</p><input type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/></div>}
   {message&&<div className="stretching-message" role="status">{message}</div>}
-  {editor&&<div className="stretching-modal-backdrop" onClick={()=>setEditor(null)}>
+  {!readOnly&&editor&&<div className="stretching-modal-backdrop" onClick={()=>setEditor(null)}>
    <form className="stretching-modal" role="dialog" aria-modal="true" aria-label={editor.mode==='add'?'동작 추가':'동작 수정'} onClick={e=>e.stopPropagation()} onSubmit={submitItem}>
     <div className="stretching-modal-title"><strong>{editor.mode==='add'?'동작 추가':'동작 수정'}</strong><button type="button" aria-label="닫기" onClick={()=>setEditor(null)}><X size={19}/></button></div>
     <label>영문 이름<input value={draft.en} onChange={e=>setDraft(d=>({...d,en:e.target.value}))} maxLength={120} placeholder="예: Body Scan" autoFocus/></label>
@@ -236,7 +236,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
     <button className="stretching-submit" type="submit">저장</button>
    </form>
   </div>}
-  {levelRename!==null&&<div className="stretching-modal-backdrop" onClick={()=>setLevelRename(null)}>
+  {!readOnly&&levelRename!==null&&<div className="stretching-modal-backdrop" onClick={()=>setLevelRename(null)}>
    <form className="stretching-modal" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onSubmit={saveRename}>
     <div className="stretching-modal-title"><strong>Lv.{levelRename} 이름 수정</strong><button type="button" onClick={()=>setLevelRename(null)}><X size={19}/></button></div>
     <label>단계 이름<input autoFocus maxLength={20} value={renameText} onChange={e=>setRenameText(e.target.value)}/></label>

@@ -43,7 +43,7 @@ function Auth({message}){
  if(r.error)throw r.error;if(signup&&!r.data.session)setAlert('이메일 인증 링크를 확인한 후 로그인해 줘.');setPassword('');
  }catch(e){setAlert(e.message)}finally{setBusy(false)}}
  return <main className="auth"><form className="auth-card" onSubmit={submit}>
- <h1>Body Care Studio</h1><p>마사지부터 근력까지, 몸을 위한 개인 라이브러리</p>
+ <h1>Body Care</h1><p>마사지부터 근력까지, 몸을 위한 개인 라이브러리</p>
  <div className="auth-tabs"><button type="button" className={!signup?'active':''} onClick={()=>setSignup(false)}>로그인</button><button type="button" className={signup?'active':''} onClick={()=>setSignup(true)}>회원가입</button></div>
  <input type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="이메일" required/>
  <input type="password" minLength={6} autoComplete={signup?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="비밀번호" required/>

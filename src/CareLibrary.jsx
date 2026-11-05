@@ -171,8 +171,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
      onContextMenu={e=>{e.preventDefault();stopPress();wasLongPress.current=true;setLevelRename(i+1);setRenameText(name)}}
      onClick={()=>chooseLevel(i+1)}><span>Lv.{i+1}</span><strong>{name}</strong></button>)}
   </div>
-  {!readOnly&&<div className="stretching-backup-bar"><button type="button" onClick={exportBackup}><Download size={16}/>JSON 백업 다운로드</button>
-   <small>전체 동작과 영상 링크 · {sync}</small></div>}
+
   <div className="stretching-list-heading"><strong>LEVEL {level} · {labels[level-1]}</strong>
    <div className="stretching-header-actions"><span>{visible.length} Drill</span>
     <button type="button" disabled={readOnly} onClick={openNew} aria-label="동작 추가" title="동작 추가"><Plus size={17}/></button>
@@ -224,8 +223,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
     {recovered.map(row=><div className="stretching-recovery-row" key={row.id}><strong>{displayName(row)}{row.archived?' (목록에서 숨김)':''}</strong><div>{videosFor(row).map((id,i)=><a href={'https://www.youtube.com/watch?v='+id} key={id} target="_blank" rel="noopener noreferrer">영상 {i+1} <ExternalLink size={13}/></a>)}</div></div>)}
    </div>}
   </section>}
-  {!readOnly&&<div className="stretching-backup-extra"><button type="button" onClick={()=>setShowImport(v=>!v)}><Upload size={15}/> JSON 가져오기</button></div>}
-  {!readOnly&&showImport&&<div className="care-import"><p>이전 Body Care Studio 백업을 병합해.</p><input type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/></div>}
+
   {message&&<div className="stretching-message" role="status">{message}</div>}
   {!readOnly&&editor&&<div className="stretching-modal-backdrop" onClick={()=>setEditor(null)}>
    <form className="stretching-modal" role="dialog" aria-modal="true" aria-label={editor.mode==='add'?'동작 추가':'동작 수정'} onClick={e=>e.stopPropagation()} onSubmit={submitItem}>

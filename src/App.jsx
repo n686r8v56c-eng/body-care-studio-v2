@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import CareLibrary,{seedBodyCatalog} from './CareLibrary.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
+const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
 const areas=[{id:'lower',name:'하체'},{id:'upper',name:'상체'}];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];
 const KEY='body-care-studio-v1',MAX=5;
@@ -104,7 +105,7 @@ export default function App(){
     const {data:row,error:readError}=await db.from('body_care_studio_data').select('payload').eq('user_id',userId).maybeSingle();
     if(readError)throw readError;
     if(saveVersion.current!==n||loadedUser.current!==userId)return;
-    if(JSON.stringify(row?.payload??null)!==JSON.stringify(serverBaseline.current)){
+    if(!sameSnapshot(row?.payload??null,serverBaseline.current)){
      blockedSave.current=true;setSaving(false);setSync('서버 변경 감지 · 저장 중단');
      show('다른 기기 변경을 감지해 덮어쓰지 않았어. 현재 데이터는 기기에 보존했어. JSON 백업을 해줘.');
      return;

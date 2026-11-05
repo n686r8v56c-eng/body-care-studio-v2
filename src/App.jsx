@@ -1,10 +1,11 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
+import CareLibrary,{seedBodyCatalog} from './CareLibrary.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
 const areas=[{id:'lower',name:'하체'},{id:'upper',name:'상체'}];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];
 const KEY='body-care-studio-v1',MAX=5;
-const DEFAULT_LEVEL_NAMES=['기초','제어','발음','표현','실전'];
+const DEFAULT_LEVEL_NAMES=['마사지','이완','폼롤러','도구','SNPE'];
 const levelKey=(area,group)=>area+':'+group;
 const safeLevels=value=>Array.from({length:5},(_,i)=>typeof value?.[i]==='string'&&value[i].trim()?value[i].trim().slice(0,20):DEFAULT_LEVEL_NAMES[i]);
 const url=import.meta.env.VITE_SUPABASE_URL || 'https://kdxvtuldksnsjzjjyqda.supabase.co';
@@ -24,10 +25,10 @@ function videoList(raw){
  const list=Array.isArray(raw)?raw:[];
  return [...new Set(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):'').filter(Boolean))].slice(0,MAX);
 }
-const normalize=obj=>({version:1,levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
+const normalize=obj=>({version:1,beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
  id:String(x.id),area:areas.some(a=>a.id===x.area)?x.area:'upper',
  group:groups.some(g=>g.id===x.group)?x.group:'massage',level:Number.isInteger(Number(x.level))&&Number(x.level)>=1&&Number(x.level)<=5?Number(x.level):1,
- title:String(x.title||'').slice(0,120),note:String(x.note||'').slice(0,2000),
+ title:String(x.title||x.en||x.ko||'').slice(0,120),en:String(x.en||x.title||'').slice(0,120),ko:String(x.ko||'').slice(0,120),note:String(x.note||'').slice(0,2000),
  videos:videoList(x.videos),sort:Number.isFinite(Number(x.sort))?Number(x.sort):i,archived:!!x.archived
 })):[]});
 function download(name,data){
@@ -51,7 +52,7 @@ function Auth({message}){
 }
 export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
- const [data,setData]=useState(()=>normalize(read(KEY,initial()))),[area,setArea]=useState('upper'),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
+ const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState('upper'),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
  const [levelRename,setLevelRename]=useState(null),[levelDraft,setLevelDraft]=useState('');
  const pressTimer=useRef(null),longPressRef=useRef(false);
  const [editing,setEditing]=useState(false),[archived,setArchived]=useState(false),[editItem,setEditItem]=useState(null);
@@ -73,9 +74,9 @@ export default function App(){
    const {data:remote,error}=await db.from('body_care_studio_data').select('payload').eq('user_id',userId).maybeSingle();
    if(error)throw error;if(!live)return;
    const local=read(localKey,null);
-   const next=normalize(remote?.payload?.items?remote.payload:local||initial());
+   const next=seedBodyCatalog(normalize(remote?.payload?.items?remote.payload:local||initial()));
    setData(next);persist(localKey,next);loadedUser.current=userId;setLoaded(true);setSync('동기화됨');
-  }catch(e){if(live){setData(normalize(read(localKey,initial())));loadedUser.current=userId;setLoaded(true);setSync('연결 실패');show('클라우드 데이터 읽기 실패: '+e.message)}}})();
+  }catch(e){if(live){setData(seedBodyCatalog(normalize(read(localKey,initial()))));loadedUser.current=userId;setLoaded(true);setSync('연결 실패');show('클라우드 데이터 읽기 실패: '+e.message)}}})();
   return()=>{live=false};
  },[userId]);
  useEffect(()=>{
@@ -146,39 +147,7 @@ export default function App(){
   <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE STUDIO</strong><small>MOVE · RELEASE · STRENGTHEN</small></div></div>
    <div className="header-right"><label className="area-switch"><span className="sr-only">부위 선택</span><select value={area} onChange={e=>{setArea(e.target.value);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
    {db&&<button className="icon-btn" title="로그아웃" onClick={()=>db.auth.signOut()}><LogOut size={17}/></button>}</div></header>
-  <main className="content">
-   <section className="heading"><div><h1>{areas.find(x=>x.id===area).name} · {groups.find(x=>x.id===group).name}</h1><p>{items.length}개 항목 · 전체 {allCount}개 · {sync}</p></div></section>
-   <nav className="level-tabs" aria-label="관리 단계">{levelNames.map((name,i)=><button type="button" key={i} className={level===i+1?'active':''} onPointerDown={()=>beginLevelPress(i+1)} onPointerUp={cancelLevelPress} onPointerCancel={cancelLevelPress} onPointerLeave={cancelLevelPress} onContextMenu={e=>{e.preventDefault();cancelLevelPress();longPressRef.current=true;setLevelRename(i+1);setLevelDraft(name)}} onClick={()=>chooseLevel(i+1)}><span className="level-number">Lv.{i+1}</span><span className="level-name">{name}</span></button>)}</nav>
-   {levelRename!==null&&<div className="level-rename-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setLevelRename(null)}}><form className="level-rename" onSubmit={saveLevelName}><div className="editor-head"><b>Lv.{levelRename} 이름 수정</b><button type="button" aria-label="닫기" onClick={()=>setLevelRename(null)}><X size={17}/></button></div><input autoFocus value={levelDraft} maxLength={20} onChange={e=>setLevelDraft(e.target.value)} aria-label="단계 이름" placeholder="단계 이름" required/><p>Lv. 번호와 단계 개수는 고정돼 있어.</p><button className="primary" type="submit">이름 저장</button></form></div>}
-   <div className="toolbar"><button type="button" onClick={makeBackup}><Download size={15}/> JSON 백업</button><button onClick={()=>setImportOpen(v=>!v)}><Upload size={15}/> 가져오기</button>
-    <button className={editing?'chosen':''} onClick={()=>{setEditing(v=>!v);setArchived(false)}}><Pencil size={15}/> {editing?'편집 완료':'목록 편집'}</button></div>
-   {importOpen&&<div className="importer"><p>이전에 다운로드한 Body Care Studio JSON 백업을 병합해.</p><input type="file" accept="application/json,.json" onChange={e=>importBackup(e.target.files?.[0])}/></div>}
-   {editing&&<div className="toolbar"><button onClick={()=>setEditItem({title:'',note:''})}><Plus size={15}/> 항목 추가</button><button onClick={()=>setArchived(v=>!v)}><RotateCcw size={15}/> {archived?'일반 목록':'보관 목록'}</button></div>}
-   {editItem&&<ItemForm key={editItem.id||'new'} item={editItem} onSave={saveItem} onClose={()=>setEditItem(null)}/>}
-   <div className="list">{items.map((item,index)=>{
-    const open=expanded===item.id,active=Math.min(activeVideo[item.id]||0,Math.max(0,item.videos.length-1));
-    return <article className="list-item" key={item.id}>
-     <div className="item-row"><button className="item-heading" onClick={()=>{setExpanded(open?null:item.id);setVideoDraft('')}} aria-expanded={open}>
-      <span className="number">{String(index+1).padStart(2,'0')}</span><span className="item-title">{item.title}</span>{item.videos.length>0&&<span className="counter">{item.videos.length}/5</span>}<ChevronDown className={open?'up':''} size={16}/></button>
-      {!editing&&<button title="영상 추가" className="link-btn" onClick={()=>{setExpanded(item.id);setVideoDraft('')}}><Link2 size={17}/></button>}
-     </div>
-     {editing&&<div className="item-actions"><button disabled={index===0} onClick={()=>reorder(item.id,-1)} title="위로"><ArrowUp size={16}/></button><button disabled={index===items.length-1} onClick={()=>reorder(item.id,1)} title="아래로"><ArrowDown size={16}/></button>
-     {!item.archived&&<button onClick={()=>setEditItem(item)}><Pencil size={15}/> 수정</button>}<button onClick={()=>moveArchive(item)}>{item.archived?<RotateCcw size={15}/>:<Trash2 size={15}/>} {item.archived?'복구':'보관'}</button></div>}
-     {open&&<div className="detail">
-      {item.note&&<p className="item-note">{item.note}</p>}
-      {item.videos.length>0?<><div className="video-tabs">{item.videos.map((v,i)=><button key={v} className={i===active?'active':''} onClick={()=>setActiveVideo(a=>({...a,[item.id]:i}))}>{i+1}</button>)}</div>
-       <div className="video"><iframe title={item.title+' 영상'} key={item.videos[active]} src={'https://www.youtube-nocookie.com/embed/'+item.videos[active]+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div>
-       <div className="toolbar"><button onClick={()=>navigator.clipboard?.writeText('https://www.youtube.com/watch?v='+item.videos[active]).then(()=>show('링크 복사 완료')).catch(()=>show('복사 권한을 확인해 줘.'))}><Copy size={15}/> 링크 복사</button>
-       <a target="_blank" rel="noreferrer" href={'https://www.youtube.com/watch?v='+item.videos[active]}><ExternalLink size={15}/> 영상 열기</a>
-       <button onClick={()=>deleteVideo(item,active)}><Trash2 size={15}/> 영상 삭제</button></div></>:<div className="empty-video">등록한 영상이 없어. 유튜브 링크를 추가해 줘.</div>}
-      {item.videos.length<MAX&&<form className="video-form" onSubmit={e=>{e.preventDefault();addVideos(item,videoDraft)}}><input value={videoDraft} onChange={e=>setVideoDraft(e.target.value)} placeholder="유튜브 링크 (최대 5개)"/><button type="submit"><Plus size={15}/> 영상 등록</button></form>}
-     </div>}
-    </article>
-   })}</div>
-   {!items.length&&<div className="empty-list">{archived?'보관된 항목이 없어.':'아직 항목이 없어.'}<button onClick={()=>{setEditing(true);setEditItem({title:'',note:''})}}><Plus size={15}/> 첫 항목 만들기</button></div>}
-   <p className="footnote">{db?'기기 저장 + 로그인 계정 클라우드 동기화':'현재는 기기 저장 모드야. 클라우드 설정을 하면 로그인 및 기기 간 동기화가 가능해.'} JSON으로 언제든 전체 백업할 수 있어.</p>
-   {notice&&<p className="toast" role="status" onClick={()=>setNotice('')}>{notice}<X size={14}/></p>}
-  </main>
+  <main className="content care-content"><CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/></main>
   <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} className={group===g.id?'active':''} onClick={()=>{setGroup(g.id);setExpanded(null);setArchived(false);setEditing(false);setEditItem(null);setLevel(1);setLevelRename(null)}}><span>{g.name}</span></button>)}</nav>
  </div>
 }

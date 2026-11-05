@@ -1,0 +1,104 @@
+/* Flat Voice Flow list and YouTube clipboard/video controls */
+.stretching-page{min-width:0;display:flex;flex-direction:column;gap:10px}
+.stretching-list-heading{display:flex;align-items:center;justify-content:space-between;padding:2px 0 8px;border-bottom:1px solid #e8e1ec}
+.stretching-list-heading strong{font-size:16px}.stretching-list-heading span{font-size:12px;color:#9488a1}
+.stretching-drills{display:flex;flex-direction:column}
+.stretching-drill{border-bottom:1px solid #eee8f4;min-width:0}
+.stretching-drill-row{display:flex;align-items:stretch;gap:6px}
+.stretching-drill-toggle{min-width:0;flex:1;display:flex;align-items:center;gap:10px;border:0;background:#fff;text-align:left;padding:12px 2px;min-height:65px}
+.stretching-drill-number{font-size:13px;color:#9d8bad;min-width:23px}
+.stretching-drill-name{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.stretching-drill-name strong{font-size:15px;font-weight:700;color:#38313e;overflow-wrap:anywhere;line-height:1.25}
+.stretching-drill-name small{font-size:12px;color:#9489a0;line-height:1.35}
+.stretching-drill-toggle>svg{flex-shrink:0;color:#9881b2}
+.stretching-link-button{width:39px;height:39px;border-radius:10px;align-self:center;border:0;color:#8055af;background:#f2eafb;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stretching-video-detail{padding:1px 0 14px 33px;min-width:0}
+.stretching-no-video{border:1px dashed #d6c4e9;background:#faf7fd;color:#8973a5;border-radius:11px;padding:26px 12px;min-height:115px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.stretching-no-video strong{font-size:14px}.stretching-no-video span{font-size:12px;line-height:1.5}
+.stretching-video-switch{display:flex;gap:5px;padding:3px 0 9px;flex-wrap:wrap}
+.stretching-video-switch button{border-radius:8px;padding:8px 13px;background:#f5f1f9;color:#8b789d;border:1px solid #e9dff0;font-size:13px}
+.stretching-video-switch button.active{background:#e9ddf7;color:#6d4da0;border-color:#b89cdb}
+.stretching-video-frame{background:#21192f;aspect-ratio:16/9;overflow:hidden;border-radius:11px;width:100%}
+.stretching-video-frame iframe{display:block;width:100%;height:100%;border:0}
+.stretching-video-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding-top:8px}
+.stretching-video-actions a,.stretching-video-actions button{border:1px solid #e7dcef;border-radius:8px;padding:7px;font-size:12px;color:#775999;background:#faf8fc;display:flex;align-items:center;gap:4px;text-decoration:none}
+.stretching-message{font-size:12px;color:#73599b;background:#f1ebf8;border-radius:10px;padding:9px 12px}
+.stretching-modal-backdrop{position:fixed;z-index:1200;inset:0;background:#21172f80;display:grid;place-items:center;padding:15px}
+.stretching-modal{background:#fff;border-radius:16px;padding:18px;width:min(100%,430px);display:flex;flex-direction:column;gap:13px;box-shadow:0 14px 30px #2817352c}
+.stretching-modal-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stretching-modal-title strong{font-size:17px}.stretching-modal-title button{border:0;background:none;padding:5px;display:flex}
+.stretching-modal p{font-size:13px;color:#8f829d;line-height:1.5;margin:0}
+.stretching-modal textarea{border:1px solid #d7cce5;border-radius:10px;font-size:16px;width:100%;padding:11px;resize:vertical}
+.stretching-submit{border:0;background:#8e6fc2;color:#fff;font-weight:700;border-radius:9px;padding:12px;font-size:14px}
+@media(max-width:380px){.stretching-drill-toggle{gap:6px}.stretching-drill-name strong{font-size:14px}.stretching-video-detail{padding-left:27px}.stretching-link-button{width:36px;height:36px}}
+
+/* Five Voice-style stage selectors above the ten drills for each level */
+.stretching-levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-bottom:5px}
+.stretching-levels button{min-width:0;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 2px;border:1px solid #e9dff1;border-radius:11px;background:#f8f5fb;color:#82748f}
+.stretching-levels button span{font-size:12px;line-height:1.2}
+.stretching-levels button strong{font-size:14px;line-height:1.25;font-weight:700}
+.stretching-levels button.active{border-color:#ac85de;background:#ede3fa;color:#7450ad;box-shadow:inset 0 0 0 1px #b291dd}
+@media(max-width:380px){.stretching-levels{gap:4px}.stretching-levels button{min-height:53px;padding:6px 1px}.stretching-levels button strong{font-size:12px}}
+
+/* Compact editing controls: only visible when editing mode is switched on. */
+.stretching-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+.stretching-header-actions>span{font-size:12px;color:#968aa4;white-space:nowrap}
+.stretching-header-actions button{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#f3edf9;color:#785ca6;border:0;border-radius:9px;min-height:32px;padding:6px 9px;font-size:12px;white-space:nowrap}
+.stretching-header-actions button.active{background:#e6d9f7;color:#6d449e}
+.stretching-header-actions button:disabled{opacity:.45}
+.stretching-edit-controls{display:flex;flex-shrink:0;gap:3px;align-items:center}
+.stretching-edit-controls button{display:flex;align-items:center;justify-content:center;width:29px;height:33px;background:#f4eff8;border:0;border-radius:7px;color:#806399;padding:0}
+.stretching-edit-controls button:last-child{color:#9b6a86}
+.stretching-archive{padding:12px 0 2px}
+.stretching-archive-toggle{border:0;background:#f5f0fa;border-radius:9px;color:#785d99;font-size:13px;font-weight:700;width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px}
+.stretching-archived-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-bottom:1px solid #ece6f2}
+.stretching-archived-row>span{font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.stretching-archived-row small{font-size:12px;color:#9688a2;font-weight:400;margin-left:3px}
+.stretching-archived-row button{display:flex;align-items:center;gap:5px;background:#eee5f8;color:#75529c;border:0;padding:8px;border-radius:8px;font-size:12px;flex-shrink:0}
+.stretching-sync-hint{font-size:12px;color:#89779f}
+.stretching-modal label{display:flex;flex-direction:column;gap:6px;color:#5f4d72;font-size:13px;font-weight:600}
+.stretching-modal input,.stretching-modal select{width:100%;border:1px solid #d7cce5;border-radius:9px;padding:10px;font-size:16px;min-height:42px;background:#fff;color:#332c3b}
+@media(max-width:380px){
+ .stretching-header-actions{gap:4px}.stretching-header-actions button{padding:6px;font-size:11px}
+ .stretching-edit-controls{gap:2px}.stretching-edit-controls button{width:25px;height:30px}
+ .stretching-drill-row:has(.stretching-edit-controls) .stretching-drill-toggle{gap:4px}
+ .stretching-drill-row:has(.stretching-edit-controls) .stretching-drill-name strong{font-size:13px}
+}
+
+/* Read-only bookmark recovery inventory: no deletes or automatic server writes. */
+.stretching-recovery{padding:7px 0 4px;margin-top:7px;border-top:1px solid #eee7f3}
+.stretching-recovery-toggle{border:1px solid #e6dbef;border-radius:10px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#f6f2fa;color:#75579b;font-size:13px;font-weight:700;text-align:left}
+.stretching-recovery-list{padding:10px 4px 0;display:flex;flex-direction:column;gap:8px}
+.stretching-recovery-list>p{font-size:12px;line-height:1.5;color:#857594;margin:0 0 4px}
+.stretching-recovery-row{border-bottom:1px solid #eee9f3;padding:8px 1px 12px;display:flex;flex-direction:column;gap:7px}
+.stretching-recovery-row>strong{font-size:14px;color:#473a51;overflow-wrap:anywhere}
+.stretching-recovery-row>div{display:flex;gap:7px;flex-wrap:wrap}
+.stretching-recovery-row a{display:flex;gap:4px;align-items:center;padding:7px 10px;border-radius:8px;background:#f1eafb;color:#7556a1;font-size:12px;text-decoration:none}
+
+
+/* One-tap, non-destructive backup of stretching catalog and video bookmarks. */
+.stretching-backup-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.stretching-backup-bar button{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#eee5f9;border:1px solid #d9c6ef;border-radius:9px;color:#6d4b9a;padding:9px 12px;font-size:14px;font-weight:700;min-height:38px;cursor:pointer}
+.stretching-backup-bar button:disabled{opacity:.5}
+.stretching-backup-bar small{font-size:12px;color:#89799b;line-height:1.4}
+
+/* Body Care Studio port: match Beauty Care stretch layout while keeping body header/footer */
+.care-content{background:#fff;padding:18px 18px 100px;max-width:950px;width:100%;margin:0 auto}
+.care-content .stretching-page{gap:10px}
+.care-content .stretching-drill-toggle{background:transparent}
+.care-content .stretching-backup-bar{margin-top:14px}
+.care-content .stretching-levels{margin-top:0}
+.care-content .stretching-modal-backdrop{z-index:2000}
+.care-content .stretching-modal{max-height:min(90dvh,720px);overflow:auto}
+.care-content .stretching-header-actions button{min-width:37px}
+.care-content .stretching-link-button{min-width:39px}
+.care-content .stretching-drill-row{align-items:center}
+.care-content .stretching-drill-toggle{min-height:64px}
+.care-content .stretching-video-detail{padding-bottom:18px}
+.care-video-entry{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.care-video-entry input{flex:1;min-width:170px;min-height:40px;font-size:16px;padding:9px;border:1px solid #e0d2ed;border-radius:9px}
+.care-video-entry button,.stretching-backup-extra button{border:1px solid #e2d3ef;border-radius:9px;padding:8px 11px;background:#f4edf9;color:#7955a3;display:inline-flex;gap:5px;align-items:center}
+.stretching-backup-extra{padding:8px 0}
+.care-import{padding:10px;border:1px solid #eae2f4;border-radius:10px;color:#766780}
+.care-import input{max-width:100%}
+@media(min-width:620px){.care-content{padding:24px 30px 100px}.care-content .stretching-link-button{width:43px;height:43px}}

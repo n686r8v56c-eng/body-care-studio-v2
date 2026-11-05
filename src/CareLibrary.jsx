@@ -114,8 +114,10 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
    if(!text?.trim())throw Error('clipboard empty');
    addVideos(row,text);
   }catch{
+   // iOS can block clipboard reads: one link button remains the only entry point.
+   // Show an inline paste field only after the direct clipboard attempt fails.
    setVideoInput({id:row.id,text:''});setOpened(row.id);
-   alertUser('링크를 붙여넣을 입력창을 열었어.');
+   alertUser('클립보드 접근이 제한되어 링크 붙여넣기를 열었어.');
   }
  };
  const copyLink=async id=>{
@@ -162,6 +164,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
  const recovered=scoped.filter(x=>videosFor(x).length);
  const totalSavedVideos=recovered.reduce((sum,x)=>sum+videosFor(x).length,0);
  return <div className="stretching-page">
+  <div className="care-page-title"><h1>{group==='stretch'?'스트레칭':group==='massage'?'마사지':group==='bodyweight'?'맨몸근력운동':'기계근력운동'}</h1></div>
   <div className="stretching-levels" role="tablist" aria-label="바디케어 단계">
    {labels.map((name,i)=><button key={i} type="button" role="tab" aria-selected={level===i+1} className={level===i+1?'active':''}
      onPointerDown={()=>startPress(i+1)} onPointerUp={stopPress} onPointerCancel={stopPress} onPointerLeave={stopPress}
@@ -169,7 +172,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
      onClick={()=>chooseLevel(i+1)}><span>Lv.{i+1}</span><strong>{name}</strong></button>)}
   </div>
   <div className="stretching-backup-bar"><button type="button" onClick={exportBackup}><Download size={16}/>JSON 백업 다운로드</button>
-   <small>전체 바디케어 동작과 영상 링크 · {sync}</small></div>
+   <small>전체 동작과 영상 링크 · {sync}</small></div>
   <div className="stretching-list-heading"><strong>LEVEL {level} · {labels[level-1]}</strong>
    <div className="stretching-header-actions"><span>{visible.length} Drill</span>
     <button type="button" onClick={openNew} aria-label="동작 추가" title="동작 추가"><Plus size={17}/></button>
@@ -229,8 +232,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync}){
     <div className="stretching-modal-title"><strong>{editor.mode==='add'?'동작 추가':'동작 수정'}</strong><button type="button" aria-label="닫기" onClick={()=>setEditor(null)}><X size={19}/></button></div>
     <label>영문 이름<input value={draft.en} onChange={e=>setDraft(d=>({...d,en:e.target.value}))} maxLength={120} placeholder="예: Body Scan" autoFocus/></label>
     <label>한글 이름<input value={draft.ko} onChange={e=>setDraft(d=>({...d,ko:e.target.value}))} maxLength={120} placeholder="예: 신체 긴장 관찰"/></label>
-    <label>메모 (선택)<textarea rows={3} value={draft.note} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} placeholder="동작 설명이나 주의사항"/></label>
-    <label>분류<select value={draft.level} onChange={e=>setDraft(d=>({...d,level:Number(e.target.value)}))}>{labels.map((label,i)=><option key={i} value={i+1}>Lv.{i+1} · {label}</option>)}</select></label>
+     <label>분류<select value={draft.level} onChange={e=>setDraft(d=>({...d,level:Number(e.target.value)}))}>{labels.map((label,i)=><option key={i} value={i+1}>Lv.{i+1} · {label}</option>)}</select></label>
     <button className="stretching-submit" type="submit">저장</button>
    </form>
   </div>}

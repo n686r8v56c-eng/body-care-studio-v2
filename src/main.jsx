@@ -1,1 +1,1 @@
-import React from 'react';import {createRoot} from 'react-dom/client';import App from './App.jsx';import './style.css';createRoot(document.getElementById('root')).render(<App/>);
+import React from 'react';import {createRoot} from 'react-dom/client';import App,{BodyCarePreview} from './App.jsx';import './style.css';createRoot(document.getElementById('root')).render(new URLSearchParams(window.location.search).get('preview')==='1'?<BodyCarePreview/>:<App/>);

@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
-const areas=[{id:'upper',name:'상체'},{id:'lower',name:'하체'}];
+const areas=[{id:'lower',name:'하체'},{id:'upper',name:'상체'}];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];
 const KEY='body-care-studio-v1',MAX=5;
 const DEFAULT_LEVEL_NAMES=['기초','제어','발음','표현','실전'];

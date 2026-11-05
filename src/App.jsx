@@ -56,7 +56,7 @@ export function BodyCarePreview(){
  const [area,setArea]=useState('lower'),[group,setGroup]=useState('stretch');
  const demo=useMemo(()=>seedBodyCatalog({version:1,items:[],levelNames:{},beautyCatalogSeedVersion:0}),[]);
  return <div className="app">
-  <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE STUDIO</strong><small>MOVE · RELEASE · STRENGTHEN</small></div></div>
+  <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE</strong></div></div>
    <div className="header-right"><label className="area-switch"><span className="sr-only">부위 선택</span><select value={area} onChange={e=>setArea(e.target.value)}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label></div>
   </header>
   <main className="content care-content"><div className="public-demo-note">샘플 화면 · 읽기 전용 · 개인 데이터 비공개</div><CareLibrary data={demo} onUpdate={()=>{}} area={area} group={group} sync="체험 모드" readOnly/></main>
@@ -72,8 +72,7 @@ export default function App(){
  const [editing,setEditing]=useState(false),[archived,setArchived]=useState(false),[editItem,setEditItem]=useState(null);
  const [expanded,setExpanded]=useState(null),[activeVideo,setActiveVideo]=useState({}),[videoDraft,setVideoDraft]=useState('');
  const [notice,setNotice]=useState(''),[sync,setSync]=useState(db?'로그인 대기':'기기 저장'),[saving,setSaving]=useState(false);
- const [importOpen,setImportOpen]=useState(false);
- const uploaded=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0);
+ const uploaded=useRef(null),importInput=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0);
  const userId=session?.user?.id;
  const localKey=userId?KEY+'-'+userId:KEY;
  const show=msg=>{setNotice(msg)};
@@ -147,20 +146,25 @@ export default function App(){
  const makeBackup=()=>{const stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,13);download('body-care-studio-'+stamp+'.json',{format:'body-care-studio-v1',exportedAt:new Date().toISOString(),...data});show('JSON 백업 다운로드 완료');};
  const importBackup=async file=>{
   if(!file)return;
-  try{const raw=JSON.parse(await file.text());if(raw.format!=='body-care-studio-v1'||!Array.isArray(raw.items))throw new Error('Body Care Studio 백업 파일이 아니야.');
+  try{const raw=JSON.parse(await file.text());if(!['body-care-studio-v1','body-care-studio-v2'].includes(raw.format)||!Array.isArray(raw.items))throw new Error('Body Care Studio 백업 파일이 아니야.');
    const incoming=normalize(raw);
    if(!confirm('백업 항목을 현재 목록에 병합할까? 같은 ID 항목은 현재 값을 유지해.'))return;
    update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames}});
-   setImportOpen(false);show('백업 가져오기 완료');
+   show('백업 가져오기 완료');
   }catch(e){show('가져오기 실패: '+e.message)}
  };
  if(!authReady)return <div className="loading">로그인 확인 중…</div>;
  if(db&&!session)return <Auth message={notice}/>;
  if(!loaded)return <div className="loading">내 목록 불러오는 중…</div>;
  return <div className="app">
-  <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE STUDIO</strong><small>MOVE · RELEASE · STRENGTHEN</small></div></div>
-   <div className="header-right"><label className="area-switch"><span className="sr-only">부위 선택</span><select value={area} onChange={e=>{setArea(e.target.value);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
-   {db&&<button className="icon-btn" title="로그아웃" onClick={()=>db.auth.signOut()}><LogOut size={17}/></button>}</div></header>
+  <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE</strong></div></div>
+   <div className="header-right">
+    <button type="button" className="icon-btn" title="전체 JSON 다운로드" aria-label="전체 JSON 다운로드" onClick={makeBackup}><Download size={17}/></button>
+    <button type="button" className="icon-btn" title="전체 JSON 가져오기" aria-label="전체 JSON 가져오기" onClick={()=>importInput.current?.click()}><Upload size={17}/></button>
+    <input ref={importInput} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];e.target.value='';importBackup(file)}}/>
+    {db&&<button type="button" className="icon-btn" aria-label="로그아웃" title="로그아웃" onClick={()=>db.auth.signOut()}><LogOut size={17}/></button>}
+    <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
+   </div></header>
   <main className="content care-content"><CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/></main>
   <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} className={group===g.id?'active':''} onClick={()=>{setGroup(g.id);setExpanded(null);setArchived(false);setEditing(false);setEditItem(null);setLevel(1);setLevelRename(null)}}><span>{g.name}</span></button>)}</nav>
  </div>

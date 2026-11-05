@@ -48,6 +48,7 @@ function Auth({message}){
  <input type="password" minLength={6} autoComplete={signup?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="비밀번호" required/>
  <button className="primary" type="submit" disabled={busy}>{busy?'처리 중…':signup?'회원가입':'이메일 로그인'}</button>
  {(alert||message)&&<p role="status" className="alert">{alert||message}</p>}
+ <a className="public-preview-link" href="?preview=1">로그인 없이 보기 · 샘플 화면</a>
  </form></main>
 }
 

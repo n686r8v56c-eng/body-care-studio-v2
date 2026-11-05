@@ -50,6 +50,19 @@ function Auth({message}){
  {(alert||message)&&<p role="status" className="alert">{alert||message}</p>}
  </form></main>
 }
+
+export function BodyCarePreview(){
+ const [area,setArea]=useState('lower'),[group,setGroup]=useState('stretch');
+ const demo=useMemo(()=>seedBodyCatalog({version:1,items:[],levelNames:{},beautyCatalogSeedVersion:0}),[]);
+ return <div className="app">
+  <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE STUDIO</strong><small>MOVE · RELEASE · STRENGTHEN</small></div></div>
+   <div className="header-right"><label className="area-switch"><span className="sr-only">부위 선택</span><select value={area} onChange={e=>setArea(e.target.value)}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label></div>
+  </header>
+  <main className="content care-content"><div className="public-demo-note">샘플 화면 · 읽기 전용 · 개인 데이터 비공개</div><CareLibrary data={demo} onUpdate={()=>{}} area={area} group={group} sync="체험 모드" readOnly/></main>
+  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} className={group===g.id?'active':''} onClick={()=>setGroup(g.id)}>{g.name}</button>)}</nav>
+ </div>;
+}
+
 export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
  const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState('upper'),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);

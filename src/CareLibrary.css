@@ -130,3 +130,36 @@ body:has(.care-content){background:#faf9fc}
 .app .care-content .stretching-submit{background:#8e6fc2;border:0;color:#fff}
 .app .bottom-nav{max-width:850px;left:50%;right:auto;transform:translateX(-50%);box-shadow:none;border-top:1px solid #eeeaf4}
 @media(max-width:380px){.app .care-content .stretching-drill-toggle{gap:6px}.app .care-content .stretching-video-detail{padding-left:27px}}
+
+
+/* Mobile bottom navigation: preserve full viewport width when centered.
+   Without an explicit width, left:50% + right:auto shrink-wraps the grid,
+   causing all four labels to overlap on iPhone Safari. */
+.app .bottom-nav{
+  width:min(100%,850px);
+  max-width:850px;
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  box-sizing:border-box;
+  padding-bottom:max(10px,env(safe-area-inset-bottom));
+}
+.app .bottom-nav button{
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 2px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:clamp(12px,3.5vw,14px);
+}
+.app .bottom-nav button span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}

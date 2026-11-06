@@ -13,6 +13,7 @@ create table if not exists public.body_care_practice_logs (
 create index if not exists body_care_practice_logs_user_date
   on public.body_care_practice_logs (user_id, practice_date desc);
 
+grant select, insert, update on public.body_care_practice_logs to authenticated;
 alter table public.body_care_practice_logs enable row level security;
 
 drop policy if exists "body_care_practice_select_own" on public.body_care_practice_logs;

@@ -36,8 +36,6 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const total=steps.reduce((n,x)=>n+x.seconds,0);
  const elapsed=complete?total:steps.slice(0,index).reduce((n,x)=>n+x.seconds,0)+(chosen?chosen.seconds-remaining:0);
  const totalRemaining=complete?0:Math.max(0,total-elapsed);
- const currentElapsed=chosen?Math.max(0,chosen.seconds-remaining):0;
- const currentTotal=chosen?.seconds||0;
  const radius=96,circ=2*Math.PI*radius,part=chosen?Math.max(0,Math.min(1,remaining/chosen.seconds)):0;
  return <section className={'routine-root '+(theme==='voice'?'routine-voice':'routine-face')} >
   {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
@@ -57,15 +55,12 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      <circle cx="120" cy="120" r="67" fill="none" stroke={colors[index%colors.length]} strokeWidth="8" strokeDasharray={circ*part*67/96+' 421'} transform="rotate(-90 120 120)" opacity=".9"/>
     </svg>
      <div className="routine-pie-center" aria-live="off">
-      <span className="routine-pie-label">현재 연습</span>
       <strong className="routine-pie-title" title={chosen?.title||''}>{complete?'루틴 완료!':chosen?.title}</strong>
       <strong className="routine-pie-time">{fmt(remaining)}</strong>
-      <span className="routine-pie-meta">{complete?'완료':(index+1)+' / '+steps.length+' 단계'}</span>
-      {!complete&&<span className="routine-pie-meta">{fmt(currentElapsed)} 진행 / {fmt(currentTotal)}</span>}
       <span className="routine-pie-total">전체 남은 {fmt(totalRemaining)}</span>
      </div>
     </div>
-    <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong><small>{complete?'오늘 루틴을 다 마쳤어':autoNext?'현재 단계가 끝나면 자동으로 넘어가':'다음 단계는 직접 선택해 줘'}</small></div>
+    <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong></div>
     <div className="routine-controls"><button type="button" onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
     <div className="routine-options"><label><input type="checkbox" checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
     <div className="routine-step-list">{steps.map((step,i)=><div className="routine-step-wrapper" key={i}>

@@ -44,3 +44,33 @@
 .routine-sync-status{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:12px 0;padding:9px 11px;border:1px solid var(--routine-border);border-radius:12px;background:#fff;font-size:12px;color:#807289}
 .routine-sync-status span{min-width:0;line-height:1.4}
 .routine-root .routine-sync-status button{font-weight:700;color:var(--routine-accent);white-space:nowrap;padding:7px 9px}
+
+/* Upper / Lower Timer: Circulation Lavender, Strength Mint, Gym Butter Yellow */
+.routine-circulation{--routine-accent:#9875c5;--routine-border:#dfd1ee;--routine-tint:#f5f0fb}
+.routine-strength{--routine-accent:#39ac99;--routine-border:#c6e7df;--routine-tint:#edf9f5}
+.routine-gym{--routine-accent:#c5a039;--routine-border:#efdfad;--routine-tint:#fff9e8}
+.routine-root.routine-circulation,.routine-root.routine-strength,.routine-root.routine-gym{
+ background:var(--routine-tint);border-color:var(--routine-border);margin-top:8px;
+}
+.routine-root.routine-circulation .routine-purple,.routine-root.routine-strength .routine-purple,
+.routine-root.routine-gym .routine-purple{
+ background:var(--routine-accent);border-color:var(--routine-accent);color:#fff;
+}
+.routine-root.routine-gym .routine-purple{color:#2f2713}
+.routine-root.routine-circulation button:not(.routine-purple):not(.routine-finish-top),
+.routine-root.routine-strength button:not(.routine-purple):not(.routine-finish-top),
+.routine-root.routine-gym button:not(.routine-purple):not(.routine-finish-top){
+ border-color:var(--routine-border);color:var(--routine-accent);
+}
+.routine-root.routine-circulation input[type=checkbox]{accent-color:#9875c5}
+.routine-root.routine-strength input[type=checkbox]{accent-color:#39ac99}
+.routine-root.routine-gym input[type=checkbox]{accent-color:#c5a039}
+.routine-circulation .routine-step.active{border-color:#b69bd8;background:#eee3f8}
+.routine-strength .routine-step.active{border-color:#8cd1c4;background:#e0f4ef}
+.routine-gym .routine-step.active{border-color:#e2c96c;background:#fcf0c8}
+.routine-root.routine-circulation .routine-finish-top{background:#e1d1f4;border-color:#c9abed;color:#6f4a9f}
+.routine-root.routine-strength .routine-finish-top{background:#c5f0e6;border-color:#8dd3c4;color:#187e70}
+.routine-root.routine-gym .routine-finish-top{background:#faedbd;border-color:#ead680;color:#8b6b20}
+.body-timer-subtabs .active.circulation{background:#efe5fa;color:#7752ae;border-color:#b99adb}
+.body-timer-subtabs .active.strength{background:#e2f7f0;color:#248c7a;border-color:#83cdbd}
+.body-timer-subtabs .active.gym{background:#fff5d6;color:#98751d;border-color:#e8d17a}

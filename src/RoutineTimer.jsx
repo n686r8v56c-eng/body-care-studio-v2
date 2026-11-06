@@ -35,7 +35,6 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const updateDuration=(n,raw)=>{const value=Math.min(3600,Math.max(5,Number(raw)||60));setSteps(old=>old.map((s,i)=>i===n?{...s,seconds:value}:s));if(n===index){stop();setRemaining(value);setComplete(false)}};
  const total=steps.reduce((n,x)=>n+x.seconds,0);
  const elapsed=complete?total:steps.slice(0,index).reduce((n,x)=>n+x.seconds,0)+(chosen?chosen.seconds-remaining:0);
- const totalRemaining=complete?0:Math.max(0,total-elapsed);
  const radius=96,circ=2*Math.PI*radius,part=chosen?Math.max(0,Math.min(1,remaining/chosen.seconds)):0;
  return <section className={'routine-root '+(theme==='voice'?'routine-voice':'routine-face')} >
   {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
@@ -57,7 +56,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      <div className="routine-pie-center" aria-live="off">
       <strong className="routine-pie-title" title={chosen?.title||''}>{complete?'루틴 완료!':chosen?.title}</strong>
       <strong className="routine-pie-time">{fmt(remaining)}</strong>
-      <span className="routine-pie-total">전체 남은 {fmt(totalRemaining)}</span>
+      
      </div>
     </div>
     <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong></div>

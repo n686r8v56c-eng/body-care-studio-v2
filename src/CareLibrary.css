@@ -244,3 +244,34 @@ body:has(.care-content){background:#faf9fc}
 .app:has(.voice-library-theme) .bottom-nav button.active{
  background:var(--voice-soft,#e8f8f4);color:var(--voice-strong,#218f80);
 }
+
+/* Upper/Lower renamed library tabs: same palette as their Timer subtabs */
+.app .care-content.circulation-library-theme{--care-accent:#9071c3;--care-soft:#f2eafb;--care-border:#decbed}
+.app .care-content.strength-library-theme{--care-accent:#289e8b;--care-soft:#e5f8f1;--care-border:#bde5da}
+.app .care-content.gym-library-theme{--care-accent:#a88427;--care-soft:#fff4d1;--care-border:#eedb9d}
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .care-page-title h1,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-list-heading>strong{
+ color:var(--care-accent)
+}
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-levels button.active{
+ color:var(--care-accent);background:var(--care-soft);border-color:var(--care-border);
+ box-shadow:inset 0 0 0 1px var(--care-border)
+}
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-header-actions button,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-link-button,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-edit-controls button,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-recovery-toggle,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-video-switch button.active{
+ background:var(--care-soft);color:var(--care-accent);border-color:var(--care-border)
+}
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-video-actions button,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-video-actions a,
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-recovery-row a{
+ background:var(--care-soft);color:var(--care-accent);border-color:var(--care-border)
+}
+.app .care-content:is(.circulation-library-theme,.strength-library-theme,.gym-library-theme) .stretching-submit{
+ background:var(--care-accent)
+}
+.app:has(.circulation-library-theme) .bottom-nav button.active{background:#f2eafb;color:#7956b0}
+.app:has(.strength-library-theme) .bottom-nav button.active{background:#e5f8f1;color:#248c7a}
+.app:has(.gym-library-theme) .bottom-nav button.active{background:#fff4d1;color:#94701d}

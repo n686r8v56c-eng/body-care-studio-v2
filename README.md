@@ -15,3 +15,13 @@
 5. 기기 간 동기화를 하려면 동일 이메일 계정으로 로그인하세요.
 
 기존 Beauty Care 및 다른 앱의 데이터를 삭제하거나 변경하지 않습니다. JSON 백업은 정기적으로 다운로드하세요.
+
+## 연습 기록 SQL 분리 (Face / Voice)
+
+1. 동일한 Supabase 프로젝트의 SQL Editor에서 [supabase/practice_logs.sql](supabase/practice_logs.sql) 전체를 한 번 실행합니다.
+2. 기존 `body_care_studio_data.payload.practiceLogs` 기록은 삭제하지 않고 새 `body_care_practice_logs` 테이블로 복사합니다. 동일 스크립트를 다시 실행해도 기존 날짜의 기록이 중복 합산되지 않습니다.
+3. 앱을 새로고침합니다. 기록 탭은 새 SQL 테이블을 읽고, 타이머는 고유 ID가 있는 이벤트로 실제 경과 시간을 기록합니다.
+4. SQL 테이블이 아직 준비되지 않았거나 네트워크가 끊긴 동안에는 새 기록을 브라우저 로컬 대기열에 보관합니다. 재접속한 뒤 전송을 재시도합니다. 다른 기기와 동기화하려면 SQL 설치와 전송 완료가 필요합니다.
+5. 기존 루틴, 유튜브 영상, JSON 백업은 변경하지 않습니다. 본인 계정만 읽고 쓸 수 있도록 RLS를 적용합니다.
+
+> 유의: GitHub에 SQL 파일을 추가하는 것만으로 Supabase에 테이블이 생성되지는 않습니다. 반드시 SQL Editor에서 실행해야 합니다.

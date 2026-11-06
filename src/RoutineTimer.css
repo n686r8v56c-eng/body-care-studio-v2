@@ -25,3 +25,17 @@
 .routine-pie-total{font-size:11px;font-weight:650;color:#70627e;margin-top:5px;font-variant-numeric:tabular-nums}
 .routine-voice .routine-pie-total{color:#337d74}
 @media(max-width:380px){.routine-pie{width:min(265px,100%)}.routine-pie-center{padding:36px 50px}.routine-pie-title{font-size:14px}.routine-pie-time{font-size:31px}}
+
+/* Collapsible Lv.1–5 picker and top completion action */
+.routine-root .routine-finish-top{background:#dfcef6;border-color:#c7abeb;color:#65449b;font-weight:700}
+.routine-voice .routine-finish-top{background:#bcebe1;border-color:#8bd5c6;color:#167d6c;font-weight:700}
+.routine-level{border-top:1px solid #eee7f3}
+.routine-root .routine-level-toggle{width:100%;display:flex;justify-content:flex-start;gap:10px;align-items:center;padding:13px 5px;background:transparent;border:0;border-radius:0;color:#3b3047;font-size:14px;text-align:left}
+.routine-level-toggle strong{font-size:15px}
+.routine-level-toggle span{flex:1;color:#85758f;font-size:12px;text-align:right}
+.routine-level-toggle svg{flex-shrink:0;transition:transform .16s ease}
+.routine-chevron-open{transform:rotate(180deg)}
+.routine-level-content{padding:0 4px 12px 15px}
+.routine-level-content .routine-source:first-child{border-top:0}
+.routine-level-content .routine-source{padding:10px 2px}
+.routine-level-content p{color:#8a7b99;font-size:12px}

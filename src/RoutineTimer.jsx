@@ -57,7 +57,16 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
     <div className="routine-current"><strong>{complete?'루틴 완료!':chosen?.title}</strong><small>{complete?'모든 연습을 마쳤어':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</small></div>
     <div className="routine-controls"><button type="button" onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
     <div className="routine-options"><label><input type="checkbox" checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
-    <div className="routine-step-list">{steps.map((s,i)=><div className={'routine-step '+(i===index&&!complete?'active':'')} key={i} onClick={()=>jump(i)}><i style={{background:colors[i%colors.length]}}/><span>{i<index||complete?'✓ ':''}{s.title}</span><input aria-label={s.title+' 시간(초)'} type="number" min="5" max="3600" value={s.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small><a href={'https://www.youtube.com/watch?v='+s.videoId} target="_blank" rel="noopener noreferrer" aria-label={s.title+' 영상 열기'} onClick={e=>e.stopPropagation()}><ExternalLink size={15}/></a></div>)}</div>
+    <div className="routine-step-list">{steps.map((step,i)=><div className="routine-step-wrapper" key={i}>
+     <div className={'routine-step '+(i===index&&!complete?'active':'')} onClick={()=>jump(i)}>
+      <i style={{background:colors[i%colors.length]}}/>
+      <span>{i<index||complete?'✓ ':''}{step.title}</span>
+      <input aria-label={step.title+' 시간(초)'} type="number" min="5" max="3600" value={step.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small>
+     </div>
+     {i===index&&step.videoId&&<div className="routine-embedded-video">
+      <iframe key={step.videoId} title={step.title+' 유튜브 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+step.videoId+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/>
+     </div>}
+    </div>)}</div>
     {!readOnly&&<div className="routine-save"><input aria-label="루틴 이름" placeholder="루틴 이름 (예: 아침 발성 6분)" value={draftName} onChange={e=>setDraftName(e.target.value)}/><button className="routine-purple" type="button" onClick={save} disabled={!draftName.trim()}><Save size={16}/> 저장</button>{selectedId&&<button type="button" onClick={remove} aria-label="루틴 삭제"><Trash2 size={17}/></button>}</div>}
    </div>}
   </>}

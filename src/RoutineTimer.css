@@ -14,3 +14,14 @@
 .routine-step-wrapper .routine-step{border-radius:10px}
 .routine-embedded-video{margin:8px 0 12px;padding:8px;border:1px solid var(--routine-border,#ddd0ec);border-radius:13px;background:#fff}
 .routine-embedded-video iframe{display:block;width:100%;aspect-ratio:16/9;height:auto;min-height:170px;border:0;border-radius:9px;background:#201d27}
+
+/* Current-step details centered inside the segmented pie */
+.routine-pie{position:relative;width:min(290px,100%);margin:0 auto}
+.routine-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:38px 57px;pointer-events:none;gap:4px;color:#342b40}
+.routine-pie-label{font-size:11px;color:#8a7b99;line-height:1.25}
+.routine-pie-title{font-size:16px;font-weight:750;line-height:1.2;max-width:165px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere;margin:2px 0 4px}
+.routine-pie-time{font-size:34px;line-height:1.05;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:var(--routine-accent)}
+.routine-pie-meta{font-size:10px;color:#85768f;line-height:1.25;font-variant-numeric:tabular-nums}
+.routine-pie-total{font-size:11px;font-weight:650;color:#70627e;margin-top:5px;font-variant-numeric:tabular-nums}
+.routine-voice .routine-pie-total{color:#337d74}
+@media(max-width:380px){.routine-pie{width:min(265px,100%)}.routine-pie-center{padding:36px 50px}.routine-pie-title{font-size:14px}.routine-pie-time{font-size:31px}}

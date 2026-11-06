@@ -164,7 +164,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const recovered=scoped.filter(x=>videosFor(x).length);
  const totalSavedVideos=recovered.reduce((sum,x)=>sum+videosFor(x).length,0);
  return <div className="stretching-page">
-  <div className="care-page-title"><h1>{group==='stretch'?'스트레칭':group==='massage'?'마사지':group==='bodyweight'?'맨몸근력운동':'기계근력운동'}</h1></div>
+  <div className="care-page-title"><h1>{data.groupNames?.[groupKey(area,group)]||({massage:'마사지',stretch:'스트레치',bodyweight:'맨몸근력',machine:'기계근력'})[group]}</h1></div>
   <div className="stretching-levels" role="tablist" aria-label="바디케어 단계">
    {labels.map((name,i)=><button key={i} type="button" role="tab" aria-selected={level===i+1} className={level===i+1?'active':''}
      onPointerDown={()=>startPress(i+1)} onPointerUp={stopPress} onPointerCancel={stopPress} onPointerLeave={stopPress}

@@ -17,7 +17,7 @@ const readDraft=key=>{
   return {steps,index,remaining:Math.max(0,Math.min(steps[index].seconds,Number(raw.remaining)||0)),selectedId:String(raw.selectedId||''),draftName:String(raw.draftName||''),complete:!!raw.complete,autoNext:raw.autoNext!==false,tone:raw.tone!==false};
  }catch{return null}
 };
-export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId=''}) {
+export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId='',onRecordSeconds=()=>{}}) {
  const colors=theme==='voice'?voiceColors:faceColors;
  const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
  const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
@@ -27,14 +27,27 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(initialDraft?.autoNext??true),[tone,setTone]=useState(initialDraft?.tone??true),[complete,setComplete]=useState(initialDraft?.complete||false);
  const timer=useRef(null),deadline=useRef(0),audio=useRef(null);
+ const tracking=useRef(null),reportRef=useRef(onRecordSeconds);
+ reportRef.current=onRecordSeconds;
+ const flushTracking=()=>{
+  const state=tracking.current;
+  if(!state)return;
+  const now=Date.now();
+  const seconds=Math.min(state.left,Math.max(0,(now-state.last)/1000));
+  state.last=now;state.left=Math.max(0,state.left-seconds);
+  if(seconds>0)reportRef.current(theme,seconds);
+  if(state.left<=0)tracking.current=null;
+ };
+ const beginTracking=seconds=>{tracking.current={last:Date.now(),left:Math.max(0,seconds)}};
+ const flushRef=useRef(flushTracking);flushRef.current=flushTracking;
  const routines=useMemo(()=>(data.routines||[]).filter(x=>x.area===area&&x.group===group),[data.routines,area,group]);
  const catalog=useMemo(()=>(data.items||[]).filter(x=>x.area===area&&x.group===group&&!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)),[data.items,area,group]);
  const available=useMemo(()=>catalog.flatMap(row=>normalizeVideoIds(row.videos).map((id,n)=>({key:row.id+':'+id,itemId:row.id,videoId:id,title:nameOf(row),level:row.level||1,videoNumber:n+1}))),[catalog]);
  const chosen=useMemo(()=>steps[index], [steps,index]);
  const levels=useMemo(()=>Array.from({length:5},(_,i)=>i+1).map(level=>({level,rows:catalog.filter(row=>(row.level||1)===level&&normalizeVideoIds(row.videos).length>0)})),[catalog]);
- const stop=()=>{setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
+ const stop=()=>{flushTracking();tracking.current=null;setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
  const sound=()=>{if(!tone)return;try{audio.current=audio.current||new (window.AudioContext||window.webkitAudioContext)();const ctx=audio.current;ctx.resume();const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=740;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.09,ctx.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);oscillator.connect(gain).connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.19)}catch{}};
- useEffect(()=>()=>{if(timer.current)clearInterval(timer.current)},[]);
+ useEffect(()=>()=>{flushRef.current();tracking.current=null;if(timer.current)clearInterval(timer.current)},[]);
  // Keep an unsaved routine while switching tabs. Restored timers are paused.
  useEffect(()=>{
   try{
@@ -48,10 +61,10 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const finishSelection=()=>{const defaultSeconds=theme==='voice'?120:300;const result=available.filter(v=>checked.includes(v.key)).map(v=>({...v,seconds:defaultSeconds}));if(!result.length)return;setSelectedId('');setDraftName('');setRoutine(result)};
  const save=()=>{const name=draftName.trim();if(!name||!steps.length)return;const id=selectedId||newId();onUpdate(d=>{d.routines=Array.isArray(d.routines)?d.routines:[];const value={id,name,area,group,steps:steps.map(s=>({itemId:s.itemId,videoId:s.videoId,title:s.title,seconds:s.seconds}))};const i=d.routines.findIndex(r=>r.id===id);if(i<0)d.routines.push(value);else d.routines[i]=value});setSelectedId(id)};
  const remove=()=>{if(!selectedId||!window.confirm('저장된 루틴을 삭제할까? 기존 동작과 영상은 유지돼.'))return;onUpdate(d=>{d.routines=(d.routines||[]).filter(r=>r.id!==selectedId)});setSelectedId('');setDraftName('')};
- const advance=()=>{sound();if(index>=steps.length-1){stop();setComplete(true);setRemaining(0);return}const next=index+1;setIndex(next);setRemaining(steps[next].seconds);if(autoNext){deadline.current=performance.now()+steps[next].seconds*1000}else stop()};
+ const advance=()=>{flushTracking();tracking.current=null;sound();if(index>=steps.length-1){stop();setComplete(true);setRemaining(0);return}const next=index+1;setIndex(next);setRemaining(steps[next].seconds);if(autoNext){deadline.current=performance.now()+steps[next].seconds*1000;beginTracking(steps[next].seconds)}else stop()};
  const advanceRef=useRef(advance);advanceRef.current=advance;
- useEffect(()=>{if(!playing)return;deadline.current=performance.now()+remaining*1000;timer.current=setInterval(()=>{const left=Math.max(0,(deadline.current-performance.now())/1000);if(left<=0)advanceRef.current();else setRemaining(left)},100);return()=>{clearInterval(timer.current);timer.current=null}},[playing,index]);
- const togglePlay=()=>{if(complete){setIndex(0);setRemaining(steps[0]?.seconds||60);setComplete(false);setPlaying(true)}else if(playing){setRemaining(Math.max(0,(deadline.current-performance.now())/1000));stop()}else if(steps.length)setPlaying(true)};
+ useEffect(()=>{if(!playing)return;deadline.current=performance.now()+remaining*1000;timer.current=setInterval(()=>{const left=Math.max(0,(deadline.current-performance.now())/1000);if(left<=0)advanceRef.current();else{setRemaining(left);if(tracking.current&&Date.now()-tracking.current.last>=10000)flushTracking()}},100);return()=>{clearInterval(timer.current);timer.current=null}},[playing,index]);
+ const togglePlay=()=>{if(complete){setIndex(0);setRemaining(steps[0]?.seconds||60);setComplete(false);beginTracking(steps[0]?.seconds||60);setPlaying(true)}else if(playing){setRemaining(Math.max(0,(deadline.current-performance.now())/1000));stop()}else if(steps.length){beginTracking(remaining);setPlaying(true)}};
  const jump=n=>{stop();const at=Math.max(0,Math.min(steps.length-1,n));setIndex(at);setRemaining(steps[at]?.seconds||60);setComplete(false)};
  const updateDuration=(n,raw)=>{const value=Math.min(3600,Math.max(5,Number(raw)||60));setSteps(old=>old.map((s,i)=>i===n?{...s,seconds:value}:s));if(n===index){stop();setRemaining(value);setComplete(false)}};
  const total=steps.reduce((n,x)=>n+x.seconds,0);

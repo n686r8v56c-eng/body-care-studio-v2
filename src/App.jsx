@@ -86,6 +86,9 @@ export default function App(){
  const uploaded=useRef(null),importInput=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0),serverBaseline=useRef(null),blockedSave=useRef(false);
  const userId=session?.user?.id;
  const localKey=userId?KEY+'-'+userId:KEY;
+ const timerPreferenceKey='body-care-last-timer-kind:'+String(userId||'guest');
+ useEffect(()=>{try{const kind=localStorage.getItem(timerPreferenceKey);if(kind==='face'||kind==='voice')setTimerKind(kind)}catch{}},[timerPreferenceKey]);
+ useEffect(()=>{try{localStorage.setItem(timerPreferenceKey,timerKind)}catch{}},[timerPreferenceKey,timerKind]);
  const practiceQueueKey='body-care-practice-queue-v1-'+(userId||'guest');
  const legacyPracticeSignature=JSON.stringify(data.practiceLogs||[]);
  const sumPractice=(rows)=>{

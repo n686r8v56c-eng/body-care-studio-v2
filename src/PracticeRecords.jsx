@@ -24,17 +24,17 @@ function WeekChart({name,kind,goal,logs,color}){
   <p>실선은 하루 목표 시간 · 막대는 실제 타이머 실행 시간</p>
  </section>
 }
-export default function PracticeRecords({logs=[]}){
+export default function PracticeRecords({logs=[],area='face'}){
+ const body=area!=='face';
+ const categories=body?[{name:'순환',kind:'circulation',goal:30,color:'#916fcb',cls:'face'},{name:'근력',kind:'strength',goal:30,color:'#46ae9c',cls:'voice'},{name:'헬스',kind:'gym',goal:30,color:'#d6a152',cls:'gym'}]:[{name:'Face',kind:'face',goal:30,color:'#916fcb',cls:'face'},{name:'Voice',kind:'voice',goal:20,color:'#46ae9c',cls:'voice'}];
  const today=localDay(new Date());
- const current=logs.find(x=>x.date===today)||{face:0,voice:0};
+ const current=logs.find(x=>x.date===today)||{};
  return <div className="practice-records">
   <h1>기록</h1>
   <h2>오늘의 연습</h2>
-  <div className="practice-today">
-   <div className="practice-today-face"><span>Face 연습량</span><strong>{minutes(current.face)}</strong><small>목표 30분</small></div>
-   <div className="practice-today-voice"><span>Voice 연습량</span><strong>{minutes(current.voice)}</strong><small>목표 20분</small></div>
+  <div className={'practice-today'+(body?' practice-today-three':'')}>
+   {categories.map(c=><div key={c.kind} className={'practice-today-'+c.cls}><span>{c.name} 연습량</span><strong>{minutes(current[c.kind])}</strong><small>목표 {c.goal}분</small></div>)}
   </div>
-  <WeekChart name="Face" kind="face" goal={30} logs={logs} color="#916fcb"/>
-  <WeekChart name="Voice" kind="voice" goal={20} logs={logs} color="#46ae9c"/>
+  {categories.map(c=><WeekChart key={c.kind} name={c.name} kind={c.kind} goal={c.goal} logs={logs} color={c.color}/>)}
  </div>
 }

@@ -48,7 +48,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false}){
    </div>}
    {!!steps.length&&<div className="routine-player">
     <div className="routine-pie"><svg viewBox="0 0 240 240" role="img" aria-label="단계별 색상 파이 타이머">
-     {steps.map((s,i)=>{const before=steps.slice(0,i).reduce((n,x)=>n+x.seconds,0)/total;const length=s.seconds/total;return <circle key={i} cx="120" cy="120" r={radius} fill="none" stroke={colors[i%colors.length]} strokeWidth="32" strokeDasharray={Math.max(0,circ*length-3)+' '+circ} strokeDashoffset={-circ*before} transform="rotate(-90 120 120)" opacity={i<index||complete?.18:.9}/>})}
+     {steps.map((s,i)=>{const before=steps.slice(0,i).reduce((n,x)=>n+x.seconds,0)/total;const length=s.seconds/total;return <circle key={i} cx="120" cy="120" r={radius} fill="none" stroke={colors[i%colors.length]} strokeWidth="32" strokeDasharray={Math.max(0,circ*length-3)+' '+circ} strokeDashoffset={-circ*before} transform="rotate(-90 120 120)" opacity={(i<index||complete)?0.18:0.9}/>})}
      <circle cx="120" cy="120" r="67" fill="none" stroke={colors[index%colors.length]} strokeWidth="8" strokeDasharray={circ*part*67/96+' 421'} transform="rotate(-90 120 120)" opacity=".9"/>
      <text x="120" y="112" textAnchor="middle" fontSize="33" fill="currentColor" fontWeight="700">{fmt(remaining)}</text><text x="120" y="136" textAnchor="middle" fontSize="12" fill="currentColor">{complete?'완료':index+1+' / '+steps.length}</text>
     </svg></div>

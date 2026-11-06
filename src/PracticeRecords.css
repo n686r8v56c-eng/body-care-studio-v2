@@ -1,0 +1,15 @@
+.practice-records{padding:6px 0 28px;max-width:760px;margin:auto;color:#352a43}
+.practice-records h1{font-size:27px;margin:3px 0 22px;font-weight:800}
+.practice-records h2{font-size:19px;margin:5px 0 13px;font-weight:750}
+.practice-today{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:28px}
+.practice-today>div{display:flex;flex-direction:column;gap:8px;padding:18px 13px;border:1px solid #e3d9f0;border-radius:18px;background:white}
+.practice-today span{font-size:15px;color:#786a86}
+.practice-today strong{font-size:35px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums}
+.practice-today small{font-size:13px;color:#8a7c98}
+.practice-today-face strong{color:#8865bc}.practice-today-voice strong{color:#35a995}
+.practice-week{border:1px solid #e3d9f0;border-radius:18px;padding:16px 12px;background:white;margin-bottom:19px;overflow:hidden}
+.practice-week-title{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;margin:3px 0 3px 6px}
+.practice-week-title strong{font-size:17px;font-weight:750}.practice-week-title span{font-size:13px;color:#857894}
+.practice-chart{width:100%;height:auto;display:block}
+.practice-week p{margin:0 0 3px 6px;color:#8d8098;font-size:12px}
+@media(max-width:380px){.practice-today>div{padding:14px 10px}.practice-today strong{font-size:29px}.practice-week{padding:12px 7px}.practice-week-title strong{font-size:15px}}

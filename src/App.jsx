@@ -74,6 +74,8 @@ export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
  const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState(areas[0].id),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
  const [timerTab,setTimerTab]=useState(false),[timerKind,setTimerKind]=useState('face'),[recordsTab,setRecordsTab]=useState(false);
+ const [practiceLogs,setPracticeLogs]=useState([]),[practiceStorage,setPracticeStorage]=useState('loading');
+ const drainingPractice=useRef(false);
  const [levelRename,setLevelRename]=useState(null),[levelDraft,setLevelDraft]=useState('');
  const [groupRename,setGroupRename]=useState(null),[groupDraft,setGroupDraft]=useState('');
  const groupPressTimer=useRef(null),suppressGroupClick=useRef(false);
@@ -84,6 +86,44 @@ export default function App(){
  const uploaded=useRef(null),importInput=useRef(null),loadedUser=useRef(null),saveVersion=useRef(0),serverBaseline=useRef(null),blockedSave=useRef(false);
  const userId=session?.user?.id;
  const localKey=userId?KEY+'-'+userId:KEY;
+ const practiceQueueKey='body-care-practice-queue-v1-'+(userId||'guest');
+ const legacyPracticeSignature=JSON.stringify(data.practiceLogs||[]);
+ const sumPractice=(rows)=>{
+  const daily=new Map();
+  for(const entry of rows){
+   const date=entry.practice_date||entry.date,kind=entry.category;
+   if(!date||!['face','voice'].includes(kind))continue;
+   const old=daily.get(date)||{date,face:0,voice:0};
+   old[kind]+=Number(entry.duration_seconds)||0;
+   daily.set(date,old);
+  }
+  return [...daily.values()].sort((a,b)=>a.date.localeCompare(b.date));
+ };
+ const legacyEntries=(records)=>(records||[]).flatMap(row=>['face','voice'].map(category=>({practice_date:row.date,category,duration_seconds:Number(row[category])||0})));
+ const addPractice=(list,kind,seconds,date)=>{
+  const result=list.map(x=>({...x}));let row=result.find(x=>x.date===date);
+  if(!row){row={date,face:0,voice:0};result.push(row)}
+  row[kind]=Math.round(((Number(row[kind])||0)+seconds)*1000)/1000;
+  return result;
+ };
+ const drainPracticeQueue=async()=>{
+  if(!db||!userId||drainingPractice.current)return;
+  drainingPractice.current=true;
+  try{
+   while(true){
+    const queue=read(practiceQueueKey,[]);
+    if(!queue.length)break;
+    const event=queue[0];
+    const {error}=await db.from('body_care_practice_logs').upsert({
+      user_id:userId,entry_key:event.entry_key,practice_date:event.practice_date,
+      category:event.category,duration_seconds:event.duration_seconds
+    },{onConflict:'user_id,entry_key',ignoreDuplicates:true});
+    if(error)throw error;
+    persist(practiceQueueKey,read(practiceQueueKey,[]).filter(item=>item.entry_key!==event.entry_key));
+   }
+  }catch(e){setPracticeStorage('queued');show('연습 기록 전송 대기 · 기기에 임시 보관됨: '+e.message)}
+  finally{drainingPractice.current=false}
+ };
  const show=msg=>{setNotice(msg)};
  useEffect(()=>{if(!db)return;let live=true;db.auth.getSession().then(({data,error})=>{if(live){if(error)show(error.message);setSession(data?.session||null);setAuthReady(true)}}).catch(e=>{if(live){show(e.message);setAuthReady(true)}});
  const {data:{subscription}}=db.auth.onAuthStateChange((_event,s)=>{if(live)setSession(s)});
@@ -127,6 +167,38 @@ export default function App(){
   return()=>clearTimeout(timer);
  },[data,userId,loaded]);
  const update=fn=>setData(prev=>{const next=structuredClone(prev);fn(next);return next});
+ useEffect(()=>{
+  if(!loaded)return;
+  let live=true;
+  const legacy=data.practiceLogs||[];
+  const pending=read(practiceQueueKey,[]);
+  setPracticeLogs(sumPractice([...legacyEntries(legacy),...pending]));
+  if(!db||!userId){setPracticeStorage('local');return}
+  setPracticeStorage('loading');
+  (async()=>{
+   try{
+    if(legacy.length){
+     const {error}=await db.rpc('migrate_body_care_practice_logs',{p_logs:legacy});
+     if(error)throw error;
+    }
+    const {data:rows,error}=await db.from('body_care_practice_logs')
+     .select('entry_key,practice_date,category,duration_seconds').eq('user_id',userId);
+    if(error)throw error;
+    if(!live)return;
+    const storedKeys=new Set((rows||[]).map(x=>x.entry_key));
+    const notSaved=read(practiceQueueKey,[]).filter(x=>!storedKeys.has(x.entry_key));
+    setPracticeLogs(sumPractice([...(rows||[]),...notSaved]));
+    setPracticeStorage('sql');
+    drainPracticeQueue();
+   }catch(e){
+    if(!live)return;
+    setPracticeStorage('queued');
+    setPracticeLogs(sumPractice([...legacyEntries(legacy),...read(practiceQueueKey,[])]));
+    show('연습 기록 SQL 연결 대기 · 기존 기록과 새 기록은 보존됨: '+e.message);
+   }
+  })();
+  return()=>{live=false};
+ },[loaded,userId,legacyPracticeSignature]);
  const sorted=(items)=>items.sort((a,b)=>a.sort-b.sort||a.title.localeCompare(b.title,'ko'));
  const items=useMemo(()=>sorted(data.items.filter(x=>x.area===area&&x.group===group&&x.level===level&&x.archived===archived)),[data,area,group,level,archived]);
  const levelNames=safeLevels(data.levelNames?.[levelKey(area,group)]);
@@ -148,12 +220,10 @@ export default function App(){
  const recordPractice=(kind,seconds)=>{
   if(!['face','voice'].includes(kind)||!Number.isFinite(seconds)||seconds<=0)return;
   const now=new Date(),day=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
-  update(d=>{
-   d.practiceLogs=Array.isArray(d.practiceLogs)?d.practiceLogs:[];
-   let log=d.practiceLogs.find(x=>x.date===day);
-   if(!log){log={date:day,face:0,voice:0};d.practiceLogs.push(log)}
-   log[kind]=Math.round((Number(log[kind])||0)+seconds*1000)/1000;
-  });
+  const event={entry_key:uid(),practice_date:day,category:kind,duration_seconds:Math.round(seconds*1000)/1000};
+  persist(practiceQueueKey,[...read(practiceQueueKey,[]),event]);
+  setPracticeLogs(previous=>addPractice(previous,kind,event.duration_seconds,day));
+  if(practiceStorage==='sql')drainPracticeQueue();
  };
  const sourceGroup=(kind)=>{
   const match=groups.find(g=>g.id!==timerGroup?.id&&(/^(face|페이스|얼굴)$/i.test(groupName(area,g))=== (kind==='face') )&&(/^(face|페이스|얼굴|voice|보이스|음성)$/i.test(groupName(area,g))));
@@ -212,7 +282,7 @@ export default function App(){
     {db&&<button type="button" className="icon-btn" aria-label="로그아웃" title="로그아웃" onClick={()=>db.auth.signOut()}><LogOut size={17}/></button>}
     <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setTimerTab(false);setRecordsTab(false);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
    </div></header>
-  <main className="content care-content">{isRecordOpen?<PracticeRecords logs={data.practiceLogs||[]}/>:isTimerOpen?<div className="body-timer-page"><h1 className="body-timer-title">Timer</h1><div className="body-timer-subtabs" role="tablist" aria-label="타이머 종류"><button type="button" role="tab" aria-selected={timerKind==='face'} className={timerKind==='face'?'active face':''} onClick={()=>setTimerKind('face')}>Face</button><button type="button" role="tab" aria-selected={timerKind==='voice'} className={timerKind==='voice'?'active voice':''} onClick={()=>setTimerKind('voice')}>Voice</button></div><RoutineTimer key={userId+':'+area+':'+timerKind+':'+sourceGroup(timerKind)} data={data} onUpdate={update} area={area} group={sourceGroup(timerKind)} theme={timerKind} userId={userId} onRecordSeconds={recordPractice} embedded/></div>:<CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/>}</main>
+  <main className="content care-content">{isRecordOpen?<PracticeRecords logs={practiceLogs}/>:isTimerOpen?<div className="body-timer-page"><h1 className="body-timer-title">Timer</h1><div className="body-timer-subtabs" role="tablist" aria-label="타이머 종류"><button type="button" role="tab" aria-selected={timerKind==='face'} className={timerKind==='face'?'active face':''} onClick={()=>setTimerKind('face')}>Face</button><button type="button" role="tab" aria-selected={timerKind==='voice'} className={timerKind==='voice'?'active voice':''} onClick={()=>setTimerKind('voice')}>Voice</button></div><RoutineTimer key={userId+':'+area+':'+timerKind+':'+sourceGroup(timerKind)} data={data} onUpdate={update} area={area} group={sourceGroup(timerKind)} theme={timerKind} userId={userId} onRecordSeconds={recordPractice} embedded/></div>:<CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/>}</main>
   <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} type="button" className={!timerTab&&group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseBottom(g.id)}><span>{area==='face'&&g.id==='machine'?'기록':groupName(area,g)}</span></button>)}{!timerGroup&&<button type="button" className={timerTab?'active':''} onClick={()=>{setTimerTab(true);setRecordsTab(false);setTimerKind('face')}}>Timer</button>}</nav>
   {groupRename&&<div className="level-rename-backdrop" role="presentation" onClick={()=>setGroupRename(null)}><form className="level-rename" role="dialog" aria-modal="true" aria-label="하단 카테고리 이름 변경" onClick={e=>e.stopPropagation()} onSubmit={saveGroupName}><strong>하단 카테고리 이름 변경</strong><p>{areas.find(a=>a.id===groupRename.area)?.name} · 이 장르에만 적용돼</p><input autoFocus value={groupDraft} onChange={e=>setGroupDraft(e.target.value)} maxLength={20} aria-label="새 카테고리 이름" required/><div className="rename-actions"><button type="button" onClick={()=>setGroupRename(null)}>취소</button><button type="submit" className="primary" disabled={!groupDraft.trim()}>저장</button></div></form></div>}
  </div>

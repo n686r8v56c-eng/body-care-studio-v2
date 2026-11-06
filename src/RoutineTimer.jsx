@@ -165,7 +165,15 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
   loadRef.current(true);
   const poll=setInterval(()=>{if(mounted)loadRef.current(false)},2400);
   const heartbeat=setInterval(()=>{if(mounted&&controller.current)saveRemoteRef.current?.()},4500);
-  return()=>{mounted=false;clearInterval(poll);clearInterval(heartbeat)};
+  return()=>{
+   mounted=false;clearInterval(poll);clearInterval(heartbeat);
+   if(controller.current&&cloudReady.current){
+    const snapshot={...latest.current,remaining:Math.ceil(latest.current.remaining),playing:false};
+    database.rpc('body_care_timer_command',{
+     p_area:area,p_category:theme,p_command:'release',p_device:identity,p_state:snapshot
+    }).then(()=>{}).catch(()=>{});
+   }
+  };
  },[database,userId,cloudKey,identity]);
  const signature=JSON.stringify({steps,index,remaining:playing?null:Math.ceil(remaining),playing,selectedId,draftName,complete,autoNext,tone});
  useEffect(()=>{

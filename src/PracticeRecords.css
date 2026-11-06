@@ -13,3 +13,12 @@
 .practice-chart{width:100%;height:auto;display:block}
 .practice-week p{margin:0 0 3px 6px;color:#8d8098;font-size:12px}
 @media(max-width:380px){.practice-today>div{padding:14px 10px}.practice-today strong{font-size:29px}.practice-week{padding:12px 7px}.practice-week-title strong{font-size:15px}}
+
+/* Upper/lower areas share the Face record layout with three practice categories. */
+.practice-today-three{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.practice-today-three>div{padding:15px 9px;min-width:0}
+.practice-today-three span{font-size:13px;word-break:keep-all}
+.practice-today-three strong{font-size:29px;white-space:nowrap}
+.practice-today-three small{font-size:12px}
+.practice-today-gym strong{color:#bd8b35}
+@media(max-width:420px){.practice-today-three{gap:7px}.practice-today-three>div{padding:13px 8px}.practice-today-three strong{font-size:25px}.practice-today-three span{font-size:12px}}

@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {ChevronDown,ChevronUp,Link2,ExternalLink,Trash2,Plus,Pencil,ArrowUp,ArrowDown,RotateCcw,Download,Upload,X} from 'lucide-react';
 import {BEAUTY_SEED_DRILLS} from './beautySeedDrills.js';
 import './CareLibrary.css';
+import RoutineTimer from './RoutineTimer.jsx';
 
 const DEFAULT_LABELS=['마사지','이완','폼롤러','도구','SNPE'];
 import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
@@ -165,6 +166,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const totalSavedVideos=recovered.reduce((sum,x)=>sum+videosFor(x).length,0);
  return <div className="stretching-page">
   <div className="care-page-title"><h1>{data.groupNames?.[groupKey(area,group)]||({massage:'마사지',stretch:'스트레치',bodyweight:'맨몸근력',machine:'기계근력'})[group]}</h1></div>
+  <RoutineTimer data={data} onUpdate={onUpdate} area={area} group={group} readOnly={readOnly}/>
   <div className="stretching-levels" role="tablist" aria-label="바디케어 단계">
    {labels.map((name,i)=><button key={i} type="button" role="tab" aria-selected={level===i+1} className={level===i+1?'active':''}
      onPointerDown={()=>startPress(i+1)} onPointerUp={stopPress} onPointerCancel={stopPress} onPointerLeave={stopPress}

@@ -9,7 +9,7 @@ const nameOf=r=>r.en||r.title||r.ko||'동작';
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const readDraft=key=>{
  try{
-  const raw=JSON.parse(sessionStorage.getItem(key)||'null');
+  const raw=JSON.parse(localStorage.getItem(key)||sessionStorage.getItem(key)||'null');
   if(!raw||!Array.isArray(raw.steps))return null;
   const steps=raw.steps.filter(s=>s&&typeof s.videoId==='string'&&/^[\w-]{11}$/.test(s.videoId)).map(s=>({...s,seconds:Math.max(5,Math.min(3600,Number(s.seconds)||60))}));
   if(!steps.length)return null;
@@ -51,8 +51,10 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  // Keep an unsaved routine while switching tabs. Restored timers are paused.
  useEffect(()=>{
   try{
-   if(!steps.length){sessionStorage.removeItem(draftKey);return}
-   sessionStorage.setItem(draftKey,JSON.stringify({steps,index,remaining:Math.ceil(remaining),selectedId,draftName,complete,autoNext,tone}));
+   if(!steps.length){localStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey);return}
+   const snapshot=JSON.stringify({steps,index,remaining:Math.ceil(remaining),selectedId,draftName,complete,autoNext,tone});
+   localStorage.setItem(draftKey,snapshot);
+   sessionStorage.setItem(draftKey,snapshot);
   }catch{}
  },[draftKey,steps,index,Math.ceil(remaining),selectedId,draftName,complete,autoNext,tone]);
  const setRoutine=rows=>{stop();setSteps(rows.map(x=>({...x,seconds:Math.max(5,Number(x.seconds)||60)})));setIndex(0);setRemaining(Math.max(5,Number(rows[0]?.seconds)||60));setComplete(false);setSelecting(false);setVisible(true)};

@@ -45,8 +45,8 @@ begin
          least(86400, greatest(0, (entry->>v.category)::numeric))
   from jsonb_array_elements(p_logs) entry
   cross join (values ('face'),('voice')) v(category)
-  where (entry->>'date') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-    and coalesce(entry->>v.category,'0') ~ '^\\d+(\\.\\d+)?$'
+  where (entry->>'date') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+    and coalesce(entry->>v.category,'0') ~ '^[0-9]+([.][0-9]+)?$'
   on conflict (user_id, entry_key) do update
     set duration_seconds = greatest(
       public.body_care_practice_logs.duration_seconds, excluded.duration_seconds
@@ -69,8 +69,8 @@ cross join lateral jsonb_array_elements(
   then d.payload->'practiceLogs' else '[]'::jsonb end
 ) entry
 cross join (values ('face'),('voice')) v(category)
-where (entry->>'date') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-  and coalesce(entry->>v.category,'0') ~ '^\\d+(\\.\\d+)?$'
+where (entry->>'date') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  and coalesce(entry->>v.category,'0') ~ '^[0-9]+([.][0-9]+)?$'
 on conflict (user_id, entry_key) do update
   set duration_seconds = greatest(
     public.body_care_practice_logs.duration_seconds, excluded.duration_seconds

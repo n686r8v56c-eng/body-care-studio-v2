@@ -181,9 +181,16 @@ export default function App(){
      const {error}=await db.rpc('migrate_body_care_practice_logs',{p_logs:legacy});
      if(error)throw error;
     }
-    const {data:rows,error}=await db.from('body_care_practice_logs')
-     .select('entry_key,practice_date,category,duration_seconds').eq('user_id',userId);
-    if(error)throw error;
+    const rows=[];
+    for(let offset=0;;offset+=1000){
+     const {data:page,error}=await db.from('body_care_practice_logs')
+      .select('entry_key,practice_date,category,duration_seconds').eq('user_id',userId)
+      .order('practice_date',{ascending:false}).order('entry_key',{ascending:true})
+      .range(offset,offset+999);
+     if(error)throw error;
+     rows.push(...(page||[]));
+     if(!page||page.length<1000)break;
+    }
     if(!live)return;
     const storedKeys=new Set((rows||[]).map(x=>x.entry_key));
     const notSaved=read(practiceQueueKey,[]).filter(x=>!storedKeys.has(x.entry_key));
@@ -199,6 +206,12 @@ export default function App(){
   })();
   return()=>{live=false};
  },[loaded,userId,legacyPracticeSignature]);
+ useEffect(()=>{
+  if(!userId||practiceStorage!=='sql')return;
+  const resume=()=>drainPracticeQueue();
+  window.addEventListener('online',resume);
+  return()=>window.removeEventListener('online',resume);
+ },[userId,practiceStorage]);
  const sorted=(items)=>items.sort((a,b)=>a.sort-b.sort||a.title.localeCompare(b.title,'ko'));
  const items=useMemo(()=>sorted(data.items.filter(x=>x.area===area&&x.group===group&&x.level===level&&x.archived===archived)),[data,area,group,level,archived]);
  const levelNames=safeLevels(data.levelNames?.[levelKey(area,group)]);

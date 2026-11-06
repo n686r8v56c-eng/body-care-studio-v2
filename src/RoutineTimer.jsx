@@ -5,6 +5,7 @@ import './RoutineTimer.css';
 const newId=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const faceColors=['#ab8bd6','#8366c5','#80acd9','#638bd1','#bcb1ec','#7c9ac9','#9f81d8','#92bbec'];
 const voiceColors=['#55b9a7','#85d4bb','#41a4a6','#a1d9d4','#72c7be','#4cbb93','#91b6b6','#b4e4cf'];
+const butterColors=['#e4c55c','#f0d98a','#d5ad48','#f7e5b0','#d9c06e','#eccb72','#e3b859','#f4dfa1'];
 const nameOf=r=>r.en||r.title||r.ko||'동작';
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const deviceToken=()=>{
@@ -46,7 +47,7 @@ const readDraft=key=>{
  }catch{return null}
 };
 export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId='',onRecordSeconds=()=>{},database=null}) {
- const colors=theme==='voice'?voiceColors:faceColors;
+ const colors=theme==='gym'?butterColors:['voice','strength'].includes(theme)?voiceColors:faceColors;
  const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
  const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
  const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
@@ -263,7 +264,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const total=steps.reduce((n,x)=>n+x.seconds,0);
  const elapsed=complete?total:steps.slice(0,index).reduce((n,x)=>n+x.seconds,0)+(chosen?chosen.seconds-remaining:0);
  const radius=96,circ=2*Math.PI*radius,part=chosen?Math.max(0,Math.min(1,remaining/chosen.seconds)):0;
- return <section className={'routine-root '+(theme==='voice'?'routine-voice':'routine-face')} >
+ return <section className={'routine-root routine-'+theme} >
   {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
   {visible&&<>
    <div className="routine-top"><select disabled={!isOwner} aria-label="저장된 루틴 선택" value={selectedId} onChange={e=>chooseSaved(e.target.value)}><option value="">저장된 루틴 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>

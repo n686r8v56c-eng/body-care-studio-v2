@@ -10,6 +10,7 @@ const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).p
 export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false}){
  const colors=theme==='voice'?voiceColors:faceColors;
  const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
+ const [expandedLevels,setExpandedLevels]=useState([]);
  const [selectedId,setSelectedId]=useState(''),[draftName,setDraftName]=useState('');
  const [steps,setSteps]=useState([]),[index,setIndex]=useState(0),[remaining,setRemaining]=useState(60);
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(true),[tone,setTone]=useState(true),[complete,setComplete]=useState(false);
@@ -18,12 +19,14 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const catalog=useMemo(()=>(data.items||[]).filter(x=>x.area===area&&x.group===group&&!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)),[data.items,area,group]);
  const available=useMemo(()=>catalog.flatMap(row=>normalizeVideoIds(row.videos).map((id,n)=>({key:row.id+':'+id,itemId:row.id,videoId:id,title:nameOf(row),level:row.level||1,videoNumber:n+1}))),[catalog]);
  const chosen=useMemo(()=>steps[index], [steps,index]);
+ const levels=useMemo(()=>Array.from({length:5},(_,i)=>i+1).map(level=>({level,rows:catalog.filter(row=>(row.level||1)===level&&normalizeVideoIds(row.videos).length>0)})),[catalog]);
  const stop=()=>{setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
  const sound=()=>{if(!tone)return;try{audio.current=audio.current||new (window.AudioContext||window.webkitAudioContext)();const ctx=audio.current;ctx.resume();const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=740;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.09,ctx.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);oscillator.connect(gain).connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.19)}catch{}};
  useEffect(()=>()=>{if(timer.current)clearInterval(timer.current)},[]);
- useEffect(()=>{stop();setVisible(embedded);setSelecting(false);setChecked([]);setSelectedId('');setSteps([]);setIndex(0);setRemaining(60);setComplete(false)},[area,group]);
+ useEffect(()=>{stop();setVisible(embedded);setSelecting(false);setChecked([]);setExpandedLevels([]);setSelectedId('');setSteps([]);setIndex(0);setRemaining(60);setComplete(false)},[area,group]);
  const setRoutine=rows=>{stop();setSteps(rows.map(x=>({...x,seconds:Math.max(5,Number(x.seconds)||60)})));setIndex(0);setRemaining(Math.max(5,Number(rows[0]?.seconds)||60));setComplete(false);setSelecting(false);setVisible(true)};
  const chooseSaved=id=>{setSelectedId(id);const match=routines.find(r=>r.id===id);if(match){setRoutine(match.steps);setDraftName(match.name)}else{stop();setSteps([]);setIndex(0);setRemaining(60);setDraftName('');setComplete(false)}};
+ const togglePicker=()=>{stop();setSelecting(x=>!x);setChecked([]);setExpandedLevels([])};
  const finishSelection=()=>{const defaultSeconds=theme==='voice'?120:300;const result=available.filter(v=>checked.includes(v.key)).map(v=>({...v,seconds:defaultSeconds}));if(!result.length)return;setSelectedId('');setDraftName('');setRoutine(result)};
  const save=()=>{const name=draftName.trim();if(!name||!steps.length)return;const id=selectedId||newId();onUpdate(d=>{d.routines=Array.isArray(d.routines)?d.routines:[];const value={id,name,area,group,steps:steps.map(s=>({itemId:s.itemId,videoId:s.videoId,title:s.title,seconds:s.seconds}))};const i=d.routines.findIndex(r=>r.id===id);if(i<0)d.routines.push(value);else d.routines[i]=value});setSelectedId(id)};
  const remove=()=>{if(!selectedId||!window.confirm('저장된 루틴을 삭제할까? 기존 동작과 영상은 유지돼.'))return;onUpdate(d=>{d.routines=(d.routines||[]).filter(r=>r.id!==selectedId)});setSelectedId('');setDraftName('')};
@@ -40,13 +43,17 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
   {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
   {visible&&<>
    <div className="routine-top"><select aria-label="저장된 루틴 선택" value={selectedId} onChange={e=>chooseSaved(e.target.value)}><option value="">저장된 루틴 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
-    <button type="button" className="routine-purple" onClick={()=>{stop();setSelecting(x=>!x);setChecked([])}}><Plus size={16}/> 영상 선택</button></div>
+    <button type="button" className={selecting&&checked.length?"routine-finish-top":"routine-purple"} onClick={()=>selecting&&checked.length?finishSelection():togglePicker()}>{selecting&&checked.length?<><Check size={16}/> 선택 완료 ({checked.length})</>:<><Plus size={16}/> 영상 선택</>}</button></div>
    {selecting&&<div className="routine-picker">
     <div className="routine-pickhead"><strong>영상 선택 · Lv.1~5 전체</strong><button type="button" onClick={()=>setSelecting(false)} aria-label="선택 닫기"><X size={17}/></button></div>
     {!available.length&&<p>현재 탭에 등록된 유튜브 영상이 없어.</p>}
-    {catalog.filter(row=>normalizeVideoIds(row.videos).length).map(row=><div className="routine-source" key={row.id}><strong>Lv.{row.level} · {nameOf(row)}</strong>
-     {normalizeVideoIds(row.videos).map((videoId,i)=>{const key=row.id+':'+videoId;return <label key={key}><input type="checkbox" checked={checked.includes(key)} onChange={e=>setChecked(v=>e.target.checked?[...v,key]:v.filter(x=>x!==key))}/> 영상 {i+1}<a href={'https://www.youtube.com/watch?v='+videoId} target="_blank" rel="noopener noreferrer" aria-label="영상 열기" onClick={e=>e.stopPropagation()}><ExternalLink size={14}/></a></label>})}</div>)}
-    <button type="button" className="routine-purple routine-finish" disabled={!checked.length} onClick={finishSelection}><Check size={16}/> 선택 완료 ({checked.length})</button>
+    {levels.map(({level,rows})=>{const open=expandedLevels.includes(level);const selectedCount=rows.reduce((n,row)=>n+normalizeVideoIds(row.videos).filter(id=>checked.includes(row.id+":"+id)).length,0);return <div className="routine-level" key={level}>
+      <button type="button" className="routine-level-toggle" aria-expanded={open} onClick={()=>setExpandedLevels(prev=>open?prev.filter(n=>n!==level):[...prev,level])}>
+       <strong>Lv.{level}</strong><span>{rows.reduce((n,r)=>n+normalizeVideoIds(r.videos).length,0)}개 영상{selectedCount?" · "+selectedCount+"개 선택":""}</span><ChevronDown size={17} className={open?"routine-chevron-open":""}/>
+      </button>
+      {open&&<div className="routine-level-content">{rows.length?rows.map(row=><div className="routine-source" key={row.id}><strong>{nameOf(row)}</strong>
+       {normalizeVideoIds(row.videos).map((videoId,i)=>{const key=row.id+":"+videoId;return <label key={key}><input type="checkbox" checked={checked.includes(key)} onChange={e=>setChecked(v=>e.target.checked?[...v,key]:v.filter(x=>x!==key))}/> 영상 {i+1}<a href={"https://www.youtube.com/watch?v="+videoId} target="_blank" rel="noopener noreferrer" aria-label="영상 열기" onClick={e=>e.stopPropagation()}><ExternalLink size={14}/></a></label>})}</div>):<p>등록된 영상이 없어.</p>}</div>}
+     </div>})}
    </div>}
    {!!steps.length&&<div className="routine-player">
     <div className="routine-pie"><svg viewBox="0 0 240 240" role="img" aria-label="단계별 색상 파이 타이머">

@@ -56,7 +56,9 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(initialDraft?.autoNext??true),[tone,setTone]=useState(initialDraft?.tone??true),[complete,setComplete]=useState(initialDraft?.complete||false);
  const [isOwner,setIsOwner]=useState(!database||!userId),[syncState,setSyncState]=useState(database&&userId?'연결 중':'기기 저장');
  const controller=useRef(!database||!userId),hydrated=useRef(!database||!userId),cloudReady=useRef(true);
- const identity=useMemo(deviceToken,[]);
+ const identity=useMemo(()=>deviceToken()+':'+newId(),[]);
+ const sameDevicePrefix=identity.slice(0,identity.lastIndexOf(':'));
+ const autoClaiming=useRef(false);
  const remoteRef=useRef(null),viewRemote=useRef(null),sending=useRef(false),sendAgain=useRef(false);
  const latest=useRef(null),applyRemoteRef=useRef(null),saveRemoteRef=useRef(null);
  const timer=useRef(null),deadline=useRef(0),audio=useRef(null);
@@ -128,7 +130,29 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
     return;
    }
    cloudReady.current=true;remoteRef.current=row;
-   const isMine=row.owner_token===identity&&Date.parse(row.lease_until||'')>Date.now();
+   const leaseActive=Date.parse(row.lease_until||'')>Date.now();
+   const isMine=row.owner_token===identity&&leaseActive;
+   // A previous mount on this phone may have released control, but its saved
+   // server snapshot must survive. Reclaim only if the controller is not active,
+   // or its token belongs to this same browser session.
+   const samePhone=row.owner_token===sameDevicePrefix||
+     String(row.owner_token||'').startsWith(sameDevicePrefix+':');
+   if(!isMine&&(!leaseActive||!row.owner_token||samePhone)&&!autoClaiming.current){
+    autoClaiming.current=true;
+    try{
+     const {data:claimed,error:claimError}=await database.rpc('body_care_timer_command',{
+      p_area:area,p_category:theme,p_command:'claim',p_device:identity,p_state:null
+     });
+     if(claimError)throw claimError;
+     const snapshot=resolveRemote(row);
+     applyRemoteRef.current({...snapshot,playing:false});
+     remoteRef.current=claimed;viewRemote.current=null;
+     controller.current=true;hydrated.current=true;
+     setIsOwner(true);setSyncState('동기화됨 · 자동 이어받기');
+     setTimeout(()=>saveRemoteRef.current?.(),150);
+     return;
+    }finally{autoClaiming.current=false}
+   }
    if(isMine){
     if(!controller.current){
      const snap=resolveRemote(row);

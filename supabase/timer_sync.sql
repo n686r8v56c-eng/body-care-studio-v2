@@ -59,7 +59,8 @@ begin
    update public.body_care_timer_sessions
    set owner_token=p_device,
        lease_until=v_time+interval '15 seconds',
-       state=coalesce(p_state,v_row.state),
+       state=case when v_row.revision=0 and v_row.state='{}'::jsonb
+             then coalesce(p_state,v_row.state) else v_row.state end,
        revision=revision+1, updated_at=v_time
    where user_id=v_user and area=p_area and category=p_category;
  elsif p_command='save' then

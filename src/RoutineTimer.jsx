@@ -20,7 +20,7 @@ const resolveRemote=(row)=>{
  const raw=row?.state||{},steps=Array.isArray(raw.steps)?raw.steps:[];
  if(!steps.length)return {...raw,steps:[],index:0,remaining:60,playing:false,complete:false};
  let index=Math.max(0,Math.min(steps.length-1,Number(raw.index)||0));
- let remaining=Math.max(0,Number(raw.remaining)??Number(steps[index].seconds)||0);
+ let remaining=Math.max(0,Number.isFinite(Number(raw.remaining))?Number(raw.remaining):(Number(steps[index].seconds)||60));
  let complete=!!raw.complete;
  const leaseLive=row?.lease_until&&Date.parse(row.lease_until)>Date.now();
  if(raw.playing&&!complete&&leaseLive){

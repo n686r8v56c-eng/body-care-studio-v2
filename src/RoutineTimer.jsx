@@ -7,13 +7,25 @@ const faceColors=['#ab8bd6','#8366c5','#80acd9','#638bd1','#bcb1ec','#7c9ac9','#
 const voiceColors=['#55b9a7','#85d4bb','#41a4a6','#a1d9d4','#72c7be','#4cbb93','#91b6b6','#b4e4cf'];
 const nameOf=r=>r.en||r.title||r.ko||'동작';
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
-export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false}){
+const readDraft=key=>{
+ try{
+  const raw=JSON.parse(sessionStorage.getItem(key)||'null');
+  if(!raw||!Array.isArray(raw.steps))return null;
+  const steps=raw.steps.filter(s=>s&&typeof s.videoId==='string'&&/^[\w-]{11}$/.test(s.videoId)).map(s=>({...s,seconds:Math.max(5,Math.min(3600,Number(s.seconds)||60))}));
+  if(!steps.length)return null;
+  const index=Math.max(0,Math.min(steps.length-1,Number(raw.index)||0));
+  return {steps,index,remaining:Math.max(0,Math.min(steps[index].seconds,Number(raw.remaining)||0)),selectedId:String(raw.selectedId||''),draftName:String(raw.draftName||''),complete:!!raw.complete,autoNext:raw.autoNext!==false,tone:raw.tone!==false};
+ }catch{return null}
+};
+export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId=''}) {
  const colors=theme==='voice'?voiceColors:faceColors;
+ const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
+ const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
  const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
  const [expandedLevels,setExpandedLevels]=useState([]);
- const [selectedId,setSelectedId]=useState(''),[draftName,setDraftName]=useState('');
- const [steps,setSteps]=useState([]),[index,setIndex]=useState(0),[remaining,setRemaining]=useState(60);
- const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(true),[tone,setTone]=useState(true),[complete,setComplete]=useState(false);
+ const [selectedId,setSelectedId]=useState(initialDraft?.selectedId||''),[draftName,setDraftName]=useState(initialDraft?.draftName||'');
+ const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);
+ const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(initialDraft?.autoNext??true),[tone,setTone]=useState(initialDraft?.tone??true),[complete,setComplete]=useState(initialDraft?.complete||false);
  const timer=useRef(null),deadline=useRef(0),audio=useRef(null);
  const routines=useMemo(()=>(data.routines||[]).filter(x=>x.area===area&&x.group===group),[data.routines,area,group]);
  const catalog=useMemo(()=>(data.items||[]).filter(x=>x.area===area&&x.group===group&&!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)),[data.items,area,group]);
@@ -23,7 +35,13 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const stop=()=>{setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
  const sound=()=>{if(!tone)return;try{audio.current=audio.current||new (window.AudioContext||window.webkitAudioContext)();const ctx=audio.current;ctx.resume();const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=740;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.09,ctx.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);oscillator.connect(gain).connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.19)}catch{}};
  useEffect(()=>()=>{if(timer.current)clearInterval(timer.current)},[]);
- useEffect(()=>{stop();setVisible(embedded);setSelecting(false);setChecked([]);setExpandedLevels([]);setSelectedId('');setSteps([]);setIndex(0);setRemaining(60);setComplete(false)},[area,group]);
+ // Keep an unsaved routine while switching tabs. Restored timers are paused.
+ useEffect(()=>{
+  try{
+   if(!steps.length){sessionStorage.removeItem(draftKey);return}
+   sessionStorage.setItem(draftKey,JSON.stringify({steps,index,remaining:Math.ceil(remaining),selectedId,draftName,complete,autoNext,tone}));
+  }catch{}
+ },[draftKey,steps,index,Math.ceil(remaining),selectedId,draftName,complete,autoNext,tone]);
  const setRoutine=rows=>{stop();setSteps(rows.map(x=>({...x,seconds:Math.max(5,Number(x.seconds)||60)})));setIndex(0);setRemaining(Math.max(5,Number(rows[0]?.seconds)||60));setComplete(false);setSelecting(false);setVisible(true)};
  const chooseSaved=id=>{setSelectedId(id);const match=routines.find(r=>r.id===id);if(match){setRoutine(match.steps);setDraftName(match.name)}else{stop();setSteps([]);setIndex(0);setRemaining(60);setDraftName('');setComplete(false)}};
  const togglePicker=()=>{stop();setSelecting(x=>!x);setChecked([]);setExpandedLevels([])};

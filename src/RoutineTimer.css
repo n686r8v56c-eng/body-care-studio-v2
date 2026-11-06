@@ -8,3 +8,9 @@
 .routine-root.routine-voice input[type=checkbox]{accent-color:#38a996}
 .routine-root.routine-voice .routine-step.active{border-color:#69bdb3;background:#dff5ef}
 .body-timer-page{max-width:680px;margin:auto}.body-timer-title{margin:5px 0 17px;font-size:25px}.body-timer-subtabs{display:flex;gap:9px;margin-bottom:14px}.body-timer-subtabs button{flex:1;border:1px solid #e6ddec;padding:12px;border-radius:13px;font-size:16px;font-weight:650;background:white;color:#7a7185}.body-timer-subtabs .active.face{background:#eee5fa;color:#7955b4;border-color:#ad8ad8}.body-timer-subtabs .active.voice{background:#e4f8f1;color:#238e7e;border-color:#78cbb7}
+
+/* Embedded reference player for the selected routine step. */
+.routine-step-wrapper{border-radius:12px;overflow:hidden}
+.routine-step-wrapper .routine-step{border-radius:10px}
+.routine-embedded-video{margin:8px 0 12px;padding:8px;border:1px solid var(--routine-border,#ddd0ec);border-radius:13px;background:#fff}
+.routine-embedded-video iframe{display:block;width:100%;aspect-ratio:16/9;height:auto;min-height:170px;border:0;border-radius:9px;background:#201d27}

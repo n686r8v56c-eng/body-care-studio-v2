@@ -8,11 +8,13 @@ const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'}
 const KEY='body-care-studio-v1',MAX=5;
 const DEFAULT_LEVEL_NAMES=['마사지','이완','폼롤러','도구','SNPE'];
 const levelKey=(area,group)=>area+':'+group;
+const groupLabelKey=(area,group)=>area+':'+group;
+const safeGroupNames=value=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).filter(([key,name])=>areas.some(a=>groups.some(g=>key===groupLabelKey(a.id,g.id)))&&typeof name==='string'&&name.trim()).map(([key,name])=>[key,name.trim().slice(0,20)])):{};
 const safeLevels=value=>Array.from({length:5},(_,i)=>typeof value?.[i]==='string'&&value[i].trim()?value[i].trim().slice(0,20):DEFAULT_LEVEL_NAMES[i]);
 const url=import.meta.env.VITE_SUPABASE_URL || 'https://kdxvtuldksnsjzjjyqda.supabase.co';
 const anon=import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AFL_RPrGakWmivWWOpA6rw_bWu6A-7B';
 const db=url&&anon?createClient(url,anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-const initial=()=>({version:1,items:[],levelNames:{}});
+const initial=()=>({version:1,items:[],levelNames:{},groupNames:{}});
 const uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch{return fallback}};
 const persist=(key,obj)=>{try{localStorage.setItem(key,JSON.stringify(obj));return true}catch{return false}};
@@ -26,7 +28,7 @@ function videoList(raw){
  const list=Array.isArray(raw)?raw:[];
  return [...new Set(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):'').filter(Boolean))].slice(0,MAX);
 }
-const normalize=obj=>({version:1,beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
+const normalize=obj=>({version:1,beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
  id:String(x.id),area:areas.some(a=>a.id===x.area)?x.area:'upper',
  group:groups.some(g=>g.id===x.group)?x.group:'massage',level:Number.isInteger(Number(x.level))&&Number(x.level)>=1&&Number(x.level)<=5?Number(x.level):1,
  title:String(x.title||x.en||x.ko||'').slice(0,120),en:String(x.en||x.title||'').slice(0,120),ko:String(x.ko||'').slice(0,120),note:String(x.note||'').slice(0,2000),
@@ -69,6 +71,8 @@ export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
  const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState(areas[0].id),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
  const [levelRename,setLevelRename]=useState(null),[levelDraft,setLevelDraft]=useState('');
+ const [groupRename,setGroupRename]=useState(null),[groupDraft,setGroupDraft]=useState('');
+ const groupPressTimer=useRef(null),suppressGroupClick=useRef(false);
  const pressTimer=useRef(null),longPressRef=useRef(false);
  const [editing,setEditing]=useState(false),[archived,setArchived]=useState(false),[editItem,setEditItem]=useState(null);
  const [expanded,setExpanded]=useState(null),[activeVideo,setActiveVideo]=useState({}),[videoDraft,setVideoDraft]=useState('');
@@ -126,6 +130,12 @@ export default function App(){
  const beginLevelPress=n=>{cancelLevelPress();longPressRef.current=false;pressTimer.current=setTimeout(()=>{longPressRef.current=true;setLevelRename(n);setLevelDraft(levelNames[n-1]);pressTimer.current=null},550)};
  const chooseLevel=n=>{if(longPressRef.current){longPressRef.current=false;return}setLevel(n);setExpanded(null);setEditItem(null)};
  const saveLevelName=e=>{e.preventDefault();const text=levelDraft.trim().slice(0,20);if(!text)return;update(d=>{const key=levelKey(area,group);d.levelNames={...(d.levelNames||{}),[key]:safeLevels(d.levelNames?.[key]).map((name,i)=>i===levelRename-1?text:name)}});setLevelRename(null);show('단계 이름을 저장했어')};
+ const groupName=(areaId,g)=>data.groupNames?.[groupLabelKey(areaId,g.id)]||g.name;
+ const cancelGroupPress=()=>{if(groupPressTimer.current){clearTimeout(groupPressTimer.current);groupPressTimer.current=null}};
+ const beginGroupPress=(g)=>{cancelGroupPress();suppressGroupClick.current=false;groupPressTimer.current=setTimeout(()=>{groupPressTimer.current=null;suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))},550)};
+ const chooseGroup=id=>{if(suppressGroupClick.current){suppressGroupClick.current=false;return}setGroup(id);setExpanded(null);setArchived(false);setEditing(false);setEditItem(null);setLevel(1);setLevelRename(null)};
+ const saveGroupName=e=>{e.preventDefault();if(!groupRename)return;const name=groupDraft.trim().slice(0,20);if(!name)return;update(d=>{d.groupNames={...(d.groupNames||{}),[groupLabelKey(groupRename.area,groupRename.group)]:name}});setGroupRename(null);show('카테고리 이름을 저장했어')};
+ useEffect(()=>()=>{if(groupPressTimer.current)clearTimeout(groupPressTimer.current)},[]);
  const allCount=data.items.filter(x=>!x.archived).length;
  const saveItem=({title,note})=>{
   const name=title.trim();if(!name)return show('이름을 입력해 줘.');
@@ -162,7 +172,7 @@ export default function App(){
   try{const raw=JSON.parse(await file.text());if(!['body-care-studio-v1','body-care-studio-v2'].includes(raw.format)||!Array.isArray(raw.items))throw new Error('Body Care Studio 백업 파일이 아니야.');
    const incoming=normalize(raw);
    if(!confirm('백업 항목을 현재 목록에 병합할까? 같은 ID 항목은 현재 값을 유지해.'))return;
-   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames}});
+   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames};d.groupNames={...incoming.groupNames,...d.groupNames}});
    show('백업 가져오기 완료');
   }catch(e){show('가져오기 실패: '+e.message)}
  };
@@ -179,7 +189,8 @@ export default function App(){
     <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
    </div></header>
   <main className="content care-content"><CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/></main>
-  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} className={group===g.id?'active':''} onClick={()=>{setGroup(g.id);setExpanded(null);setArchived(false);setEditing(false);setEditItem(null);setLevel(1);setLevelRename(null)}}><span>{g.name}</span></button>)}</nav>
+  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} type="button" className={group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseGroup(g.id)}><span>{groupName(area,g)}</span></button>)}</nav>
+  {groupRename&&<div className="level-rename-backdrop" role="presentation" onClick={()=>setGroupRename(null)}><form className="level-rename" role="dialog" aria-modal="true" aria-label="하단 카테고리 이름 변경" onClick={e=>e.stopPropagation()} onSubmit={saveGroupName}><strong>하단 카테고리 이름 변경</strong><p>{areas.find(a=>a.id===groupRename.area)?.name} · 이 장르에만 적용돼</p><input autoFocus value={groupDraft} onChange={e=>setGroupDraft(e.target.value)} maxLength={20} aria-label="새 카테고리 이름" required/><div className="rename-actions"><button type="button" onClick={()=>setGroupRename(null)}>취소</button><button type="submit" className="primary" disabled={!groupDraft.trim()}>저장</button></div></form></div>}
  </div>
 }
 function ItemForm({item,onSave,onClose}){

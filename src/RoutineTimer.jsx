@@ -3,11 +3,13 @@ import {Play,Pause,SkipBack,SkipForward,RotateCcw,Plus,Save,Trash2,ChevronDown,C
 import {normalizeVideoIds} from './videoLimits.js';
 import './RoutineTimer.css';
 const newId=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
-const colors=['#ab8bd6','#8366c5','#80acd9','#68b7b3','#de99bc','#aaa3d0','#daae7e','#8bb8a2'];
+const faceColors=['#ab8bd6','#8366c5','#80acd9','#638bd1','#bcb1ec','#7c9ac9','#9f81d8','#92bbec'];
+const voiceColors=['#55b9a7','#85d4bb','#41a4a6','#a1d9d4','#72c7be','#4cbb93','#91b6b6','#b4e4cf'];
 const nameOf=r=>r.en||r.title||r.ko||'동작';
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
-export default function RoutineTimer({data,onUpdate,area,group,readOnly=false}){
- const [visible,setVisible]=useState(false),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
+export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false}){
+ const colors=theme==='voice'?voiceColors:faceColors;
+ const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
  const [selectedId,setSelectedId]=useState(''),[draftName,setDraftName]=useState('');
  const [steps,setSteps]=useState([]),[index,setIndex]=useState(0),[remaining,setRemaining]=useState(60);
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(true),[tone,setTone]=useState(true),[complete,setComplete]=useState(false);
@@ -19,9 +21,9 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false}){
  const stop=()=>{setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
  const sound=()=>{if(!tone)return;try{audio.current=audio.current||new (window.AudioContext||window.webkitAudioContext)();const ctx=audio.current;ctx.resume();const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=740;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.09,ctx.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);oscillator.connect(gain).connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.19)}catch{}};
  useEffect(()=>()=>{if(timer.current)clearInterval(timer.current)},[]);
- useEffect(()=>{stop();setVisible(false);setSelecting(false);setChecked([]);setSelectedId('');setSteps([]);setIndex(0);setRemaining(60);setComplete(false)},[area,group]);
+ useEffect(()=>{stop();setVisible(embedded);setSelecting(false);setChecked([]);setSelectedId('');setSteps([]);setIndex(0);setRemaining(60);setComplete(false)},[area,group]);
  const setRoutine=rows=>{stop();setSteps(rows.map(x=>({...x,seconds:Math.max(5,Number(x.seconds)||60)})));setIndex(0);setRemaining(Math.max(5,Number(rows[0]?.seconds)||60));setComplete(false);setSelecting(false);setVisible(true)};
- const chooseSaved=id=>{setSelectedId(id);const match=routines.find(r=>r.id===id);if(match){setRoutine(match.steps);setDraftName(match.name)}};
+ const chooseSaved=id=>{setSelectedId(id);const match=routines.find(r=>r.id===id);if(match){setRoutine(match.steps);setDraftName(match.name)}else{stop();setSteps([]);setIndex(0);setRemaining(60);setDraftName('');setComplete(false)}};
  const finishSelection=()=>{const result=available.filter(v=>checked.includes(v.key)).map(v=>({...v,seconds:60}));if(!result.length)return;setSelectedId('');setDraftName('');setRoutine(result)};
  const save=()=>{const name=draftName.trim();if(!name||!steps.length)return;const id=selectedId||newId();onUpdate(d=>{d.routines=Array.isArray(d.routines)?d.routines:[];const value={id,name,area,group,steps:steps.map(s=>({itemId:s.itemId,videoId:s.videoId,title:s.title,seconds:s.seconds}))};const i=d.routines.findIndex(r=>r.id===id);if(i<0)d.routines.push(value);else d.routines[i]=value});setSelectedId(id)};
  const remove=()=>{if(!selectedId||!window.confirm('저장된 루틴을 삭제할까? 기존 동작과 영상은 유지돼.'))return;onUpdate(d=>{d.routines=(d.routines||[]).filter(r=>r.id!==selectedId)});setSelectedId('');setDraftName('')};
@@ -34,8 +36,8 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false}){
  const total=steps.reduce((n,x)=>n+x.seconds,0);
  const elapsed=complete?total:steps.slice(0,index).reduce((n,x)=>n+x.seconds,0)+(chosen?chosen.seconds-remaining:0);
  const radius=96,circ=2*Math.PI*radius,part=chosen?remaining/chosen.seconds:0;
- return <section className="routine-root">
-  <div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>
+ return <section className={'routine-root '+(theme==='voice'?'routine-voice':'routine-face')} >
+  {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
   {visible&&<>
    <div className="routine-top"><select aria-label="저장된 루틴 선택" value={selectedId} onChange={e=>chooseSaved(e.target.value)}><option value="">저장된 루틴 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
     <button type="button" className="routine-purple" onClick={()=>{stop();setSelecting(x=>!x);setChecked([])}}><Plus size={16}/> 영상 선택</button></div>

@@ -143,7 +143,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    if(!confirm('현재 목록을 보존하면서 새 항목만 추가할까?'))return;
    update(d=>{
     const ids=new Set(d.items.map(x=>x.id));
-    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:(x.videos||[]).filter(v=>/^[\w-]{11}$/.test(v)).slice(0,5)});ids.add(x.id)}});
+    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:(x.videos||[]).filter(v=>/^[\w-]{11}$/.test(v)).slice(0,5)});ids.add(x.id)}});
     d.levelNames={...(raw.levelNames||{}),...(d.levelNames||{})};
    });setShowImport(false);alertUser('JSON 백업에서 새 항목을 가져왔어.');
   }catch(e){alertUser('백업 가져오기 실패: '+e.message)}

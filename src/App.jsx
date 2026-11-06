@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
 import CareLibrary,{seedBodyCatalog} from './CareLibrary.jsx';
 import RoutineTimer from './RoutineTimer.jsx';
+import PracticeRecords from './PracticeRecords.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
@@ -16,7 +17,7 @@ const safeLevels=value=>Array.from({length:5},(_,i)=>typeof value?.[i]==='string
 const url=import.meta.env.VITE_SUPABASE_URL || 'https://kdxvtuldksnsjzjjyqda.supabase.co';
 const anon=import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AFL_RPrGakWmivWWOpA6rw_bWu6A-7B';
 const db=url&&anon?createClient(url,anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-const initial=()=>({version:1,items:[],levelNames:{},groupNames:{},routines:[]});
+const initial=()=>({version:1,items:[],levelNames:{},groupNames:{},routines:[],practiceLogs:[]});
 const uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch{return fallback}};
 const persist=(key,obj)=>{try{localStorage.setItem(key,JSON.stringify(obj));return true}catch{return false}};
@@ -30,7 +31,7 @@ function videoList(raw){
  const list=Array.isArray(raw)?raw:[];
  return normalizeVideoIds(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):''));
 }
-const normalize=obj=>({version:1,routines:Array.isArray(obj?.routines)?obj.routines.filter(r=>r&&typeof r.id==='string'&&typeof r.name==='string'&&Array.isArray(r.steps)).map(r=>({id:r.id,name:r.name.slice(0,100),area:areas.some(a=>a.id===r.area)?r.area:'face',group:groups.some(g=>g.id===r.group)?r.group:'massage',steps:r.steps.filter(s=>s&&typeof s.videoId==='string'&&/^[\w-]{11}$/.test(s.videoId)).map(s=>({itemId:String(s.itemId||''),videoId:s.videoId,title:String(s.title||'').slice(0,120),seconds:Math.min(3600,Math.max(5,Number(s.seconds)||60))}))})):[],beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
+const normalize=obj=>({version:1,practiceLogs:Array.isArray(obj?.practiceLogs)?obj.practiceLogs.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x?.date||'')).map(x=>({date:x.date,face:Math.max(0,Number(x.face)||0),voice:Math.max(0,Number(x.voice)||0)})):[],routines:Array.isArray(obj?.routines)?obj.routines.filter(r=>r&&typeof r.id==='string'&&typeof r.name==='string'&&Array.isArray(r.steps)).map(r=>({id:r.id,name:r.name.slice(0,100),area:areas.some(a=>a.id===r.area)?r.area:'face',group:groups.some(g=>g.id===r.group)?r.group:'massage',steps:r.steps.filter(s=>s&&typeof s.videoId==='string'&&/^[\w-]{11}$/.test(s.videoId)).map(s=>({itemId:String(s.itemId||''),videoId:s.videoId,title:String(s.title||'').slice(0,120),seconds:Math.min(3600,Math.max(5,Number(s.seconds)||60))}))})):[],beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
  id:String(x.id),area:areas.some(a=>a.id===x.area)?x.area:'upper',
  group:groups.some(g=>g.id===x.group)?x.group:'massage',level:Number.isInteger(Number(x.level))&&Number(x.level)>=1&&Number(x.level)<=5?Number(x.level):1,
  title:String(x.title||x.en||x.ko||'').slice(0,120),en:String(x.en||x.title||'').slice(0,120),ko:String(x.ko||'').slice(0,120),note:String(x.note||'').slice(0,2000),
@@ -72,7 +73,7 @@ export function BodyCarePreview(){
 export default function App(){
  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(!db),[loaded,setLoaded]=useState(!db);
  const [data,setData]=useState(()=>seedBodyCatalog(normalize(read(KEY,initial())))),[area,setArea]=useState(areas[0].id),[group,setGroup]=useState('massage'),[level,setLevel]=useState(1);
- const [timerTab,setTimerTab]=useState(false),[timerKind,setTimerKind]=useState('face');
+ const [timerTab,setTimerTab]=useState(false),[timerKind,setTimerKind]=useState('face'),[recordsTab,setRecordsTab]=useState(false);
  const [levelRename,setLevelRename]=useState(null),[levelDraft,setLevelDraft]=useState('');
  const [groupRename,setGroupRename]=useState(null),[groupDraft,setGroupDraft]=useState('');
  const groupPressTimer=useRef(null),suppressGroupClick=useRef(false);
@@ -142,13 +143,24 @@ export default function App(){
  const allCount=data.items.filter(x=>!x.archived).length;
  const isTimerName=(name)=>/^(timer|타이머|루틴\s*타이머)$/i.test(String(name||'').trim());
  const timerGroup=groups.find(g=>isTimerName(groupName(area,g)));
- const isTimerOpen=timerTab || Boolean(timerGroup&&timerGroup.id===group);
+ const isTimerOpen=!recordsTab&&(timerTab || Boolean(timerGroup&&timerGroup.id===group));
+ const isRecordOpen=recordsTab || (area==='face'&&group==='machine'&&!timerTab);
+ const recordPractice=(kind,seconds)=>{
+  if(!['face','voice'].includes(kind)||!Number.isFinite(seconds)||seconds<=0)return;
+  const now=new Date(),day=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  update(d=>{
+   d.practiceLogs=Array.isArray(d.practiceLogs)?d.practiceLogs:[];
+   let log=d.practiceLogs.find(x=>x.date===day);
+   if(!log){log={date:day,face:0,voice:0};d.practiceLogs.push(log)}
+   log[kind]=Math.round((Number(log[kind])||0)+seconds*1000)/1000;
+  });
+ };
  const sourceGroup=(kind)=>{
   const match=groups.find(g=>g.id!==timerGroup?.id&&(/^(face|페이스|얼굴)$/i.test(groupName(area,g))=== (kind==='face') )&&(/^(face|페이스|얼굴|voice|보이스|음성)$/i.test(groupName(area,g))));
   if(match)return match.id;
   return (kind==='face'?'massage':'stretch')===timerGroup?.id?(kind==='face'?'stretch':'massage'):(kind==='face'?'massage':'stretch');
  };
- const chooseBottom=(id)=>{if(timerGroup?.id===id){setTimerTab(false);setGroup(id);setTimerKind('face');return;}setTimerTab(false);chooseGroup(id)};
+ const chooseBottom=(id)=>{if(area==='face'&&id==='machine'){setRecordsTab(true);setTimerTab(false);setGroup(id);return;}setRecordsTab(false);if(timerGroup?.id===id){setTimerTab(false);setGroup(id);setTimerKind('face');return;}setTimerTab(false);chooseGroup(id)};
  const saveItem=({title,note})=>{
   const name=title.trim();if(!name)return show('이름을 입력해 줘.');
   if(editItem?.id){update(d=>{const found=d.items.find(x=>x.id===editItem.id);if(found){found.title=name;found.note=note;}})}
@@ -184,7 +196,7 @@ export default function App(){
   try{const raw=JSON.parse(await file.text());if(!['body-care-studio-v1','body-care-studio-v2'].includes(raw.format)||!Array.isArray(raw.items))throw new Error('Body Care Studio 백업 파일이 아니야.');
    const incoming=normalize(raw);
    if(!confirm('백업 항목을 현재 목록에 병합할까? 같은 ID 항목은 현재 값을 유지해.'))return;
-   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames};d.groupNames={...incoming.groupNames,...d.groupNames};d.routines=[...(d.routines||[]),...incoming.routines.filter(r=>!(d.routines||[]).some(existing=>existing.id===r.id))]});
+   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames};d.groupNames={...incoming.groupNames,...d.groupNames};d.routines=[...(d.routines||[]),...incoming.routines.filter(r=>!(d.routines||[]).some(existing=>existing.id===r.id))];for(const entry of incoming.practiceLogs){if(!d.practiceLogs.some(x=>x.date===entry.date))d.practiceLogs.push(entry)}});
    show('백업 가져오기 완료');
   }catch(e){show('가져오기 실패: '+e.message)}
  };
@@ -198,10 +210,10 @@ export default function App(){
     <button type="button" className="icon-btn" title="전체 JSON 가져오기" aria-label="전체 JSON 가져오기" onClick={()=>importInput.current?.click()}><Upload size={17}/></button>
     <input ref={importInput} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];e.target.value='';importBackup(file)}}/>
     {db&&<button type="button" className="icon-btn" aria-label="로그아웃" title="로그아웃" onClick={()=>db.auth.signOut()}><LogOut size={17}/></button>}
-    <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setTimerTab(false);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
+    <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setTimerTab(false);setRecordsTab(false);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
    </div></header>
-  <main className="content care-content">{isTimerOpen?<div className="body-timer-page"><h1 className="body-timer-title">Timer</h1><div className="body-timer-subtabs" role="tablist" aria-label="타이머 종류"><button type="button" role="tab" aria-selected={timerKind==='face'} className={timerKind==='face'?'active face':''} onClick={()=>setTimerKind('face')}>Face</button><button type="button" role="tab" aria-selected={timerKind==='voice'} className={timerKind==='voice'?'active voice':''} onClick={()=>setTimerKind('voice')}>Voice</button></div><RoutineTimer key={userId+':'+area+':'+timerKind+':'+sourceGroup(timerKind)} data={data} onUpdate={update} area={area} group={sourceGroup(timerKind)} theme={timerKind} userId={userId} embedded/></div>:<CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/>}</main>
-  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} type="button" className={!timerTab&&group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseBottom(g.id)}><span>{groupName(area,g)}</span></button>)}{!timerGroup&&<button type="button" className={timerTab?'active':''} onClick={()=>{setTimerTab(true);setTimerKind('face')}}>Timer</button>}</nav>
+  <main className="content care-content">{isRecordOpen?<PracticeRecords logs={data.practiceLogs||[]}/>:isTimerOpen?<div className="body-timer-page"><h1 className="body-timer-title">Timer</h1><div className="body-timer-subtabs" role="tablist" aria-label="타이머 종류"><button type="button" role="tab" aria-selected={timerKind==='face'} className={timerKind==='face'?'active face':''} onClick={()=>setTimerKind('face')}>Face</button><button type="button" role="tab" aria-selected={timerKind==='voice'} className={timerKind==='voice'?'active voice':''} onClick={()=>setTimerKind('voice')}>Voice</button></div><RoutineTimer key={userId+':'+area+':'+timerKind+':'+sourceGroup(timerKind)} data={data} onUpdate={update} area={area} group={sourceGroup(timerKind)} theme={timerKind} userId={userId} onRecordSeconds={recordPractice} embedded/></div>:<CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/>}</main>
+  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} type="button" className={!timerTab&&group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseBottom(g.id)}><span>{area==='face'&&g.id==='machine'?'기록':groupName(area,g)}</span></button>)}{!timerGroup&&<button type="button" className={timerTab?'active':''} onClick={()=>{setTimerTab(true);setRecordsTab(false);setTimerKind('face')}}>Timer</button>}</nav>
   {groupRename&&<div className="level-rename-backdrop" role="presentation" onClick={()=>setGroupRename(null)}><form className="level-rename" role="dialog" aria-modal="true" aria-label="하단 카테고리 이름 변경" onClick={e=>e.stopPropagation()} onSubmit={saveGroupName}><strong>하단 카테고리 이름 변경</strong><p>{areas.find(a=>a.id===groupRename.area)?.name} · 이 장르에만 적용돼</p><input autoFocus value={groupDraft} onChange={e=>setGroupDraft(e.target.value)} maxLength={20} aria-label="새 카테고리 이름" required/><div className="rename-actions"><button type="button" onClick={()=>setGroupRename(null)}>취소</button><button type="submit" className="primary" disabled={!groupDraft.trim()}>저장</button></div></form></div>}
  </div>
 }

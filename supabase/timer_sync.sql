@@ -1,4 +1,4 @@
--- Body Care v2: shared Face / Voice timer state.
+-- Body Care v2: shared Face / Voice / Circulation / Strength / Gym timer state.
 -- Execute in the SAME Supabase project as practice_logs.sql.
 -- Safe to run again; existing practice logs and routines are unchanged.
 
@@ -13,6 +13,13 @@ create table if not exists public.body_care_timer_sessions (
  updated_at timestamptz not null default now(),
  primary key(user_id,area,category)
 );
+-- Extend any previously installed Face/Voice-only constraint in place.
+-- Existing sessions stay intact.
+alter table public.body_care_timer_sessions
+ drop constraint if exists body_care_timer_sessions_category_check;
+alter table public.body_care_timer_sessions
+ add constraint body_care_timer_sessions_category_check
+ check (category in ('face','voice','circulation','strength','gym'));
 alter table public.body_care_timer_sessions enable row level security;
 grant select on public.body_care_timer_sessions to authenticated;
 drop policy if exists "timer_read_own" on public.body_care_timer_sessions;
@@ -37,7 +44,7 @@ declare
 begin
  if v_user is null then raise exception 'Login required'; end if;
  if p_area not in ('face','lower','upper')
-    or p_category not in ('face','voice')
+    or p_category not in ('face','voice','circulation','strength','gym')
     or length(p_device) < 8 or length(p_device) > 128
     or p_command not in ('claim','save','release') then
   raise exception 'Invalid timer command';

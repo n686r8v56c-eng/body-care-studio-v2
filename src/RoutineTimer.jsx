@@ -7,6 +7,34 @@ const faceColors=['#ab8bd6','#8366c5','#80acd9','#638bd1','#bcb1ec','#7c9ac9','#
 const voiceColors=['#55b9a7','#85d4bb','#41a4a6','#a1d9d4','#72c7be','#4cbb93','#91b6b6','#b4e4cf'];
 const nameOf=r=>r.en||r.title||r.ko||'동작';
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const deviceToken=()=>{
+ try{
+  const key='body-care-timer-device-v2';
+  let id=sessionStorage.getItem(key);
+  if(!id){id=newId()+'-'+newId();sessionStorage.setItem(key,id)}
+  return id;
+ }catch{return newId()+'-'+newId()}
+};
+// Interpret a server snapshot using the last authoritative server update time.
+const resolveRemote=(row)=>{
+ const raw=row?.state||{},steps=Array.isArray(raw.steps)?raw.steps:[];
+ if(!steps.length)return {...raw,steps:[],index:0,remaining:60,playing:false,complete:false};
+ let index=Math.max(0,Math.min(steps.length-1,Number(raw.index)||0));
+ let remaining=Math.max(0,Number(raw.remaining)??Number(steps[index].seconds)||0);
+ let complete=!!raw.complete;
+ const leaseLive=row?.lease_until&&Date.parse(row.lease_until)>Date.now();
+ if(raw.playing&&!complete&&leaseLive){
+  let elapsed=Math.max(0,(Date.now()-Date.parse(row.updated_at))/1000);
+  while(elapsed>0&&!complete){
+   if(elapsed<remaining){remaining-=elapsed;break}
+   elapsed-=remaining;
+   if(index>=steps.length-1){remaining=0;complete=true;break}
+   if(raw.autoNext===false){remaining=0;break}
+   index++;remaining=Math.max(5,Number(steps[index].seconds)||60);
+  }
+ }
+ return {...raw,steps,index,remaining,complete,playing:!!raw.playing&&!!leaseLive&&!complete&&remaining>0};
+};
 const readDraft=key=>{
  try{
   const raw=JSON.parse(localStorage.getItem(key)||sessionStorage.getItem(key)||'null');
@@ -17,7 +45,7 @@ const readDraft=key=>{
   return {steps,index,remaining:Math.max(0,Math.min(steps[index].seconds,Number(raw.remaining)||0)),selectedId:String(raw.selectedId||''),draftName:String(raw.draftName||''),complete:!!raw.complete,autoNext:raw.autoNext!==false,tone:raw.tone!==false};
  }catch{return null}
 };
-export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId='',onRecordSeconds=()=>{}}) {
+export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,theme='face',embedded=false,userId='',onRecordSeconds=()=>{},database=null}) {
  const colors=theme==='voice'?voiceColors:faceColors;
  const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
  const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
@@ -26,6 +54,11 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const [selectedId,setSelectedId]=useState(initialDraft?.selectedId||''),[draftName,setDraftName]=useState(initialDraft?.draftName||'');
  const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(initialDraft?.autoNext??true),[tone,setTone]=useState(initialDraft?.tone??true),[complete,setComplete]=useState(initialDraft?.complete||false);
+ const [isOwner,setIsOwner]=useState(!database||!userId),[syncState,setSyncState]=useState(database&&userId?'연결 중':'기기 저장');
+ const controller=useRef(!database||!userId),hydrated=useRef(!database||!userId);
+ const identity=useMemo(deviceToken,[]);
+ const remoteRef=useRef(null),viewRemote=useRef(null),sending=useRef(false),sendAgain=useRef(false);
+ const latest=useRef(null),applyRemoteRef=useRef(null),saveRemoteRef=useRef(null);
  const timer=useRef(null),deadline=useRef(0),audio=useRef(null);
  const tracking=useRef(null),reportRef=useRef(onRecordSeconds);
  reportRef.current=onRecordSeconds;
@@ -40,6 +73,131 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  };
  const beginTracking=seconds=>{tracking.current={last:Date.now(),left:Math.max(0,seconds)}};
  const flushRef=useRef(flushTracking);flushRef.current=flushTracking;
+ const activeRemaining=()=>playing?Math.max(0,(deadline.current-performance.now())/1000):remaining;
+ latest.current={steps,index,remaining:activeRemaining(),playing,selectedId,draftName,complete,autoNext,tone};
+ const restoreState=(snapshot)=>{
+  if(!snapshot)return;
+  stop();
+  const entries=Array.isArray(snapshot.steps)?snapshot.steps:[];
+  setSteps(entries);setIndex(Math.max(0,Math.min(entries.length-1,Number(snapshot.index)||0)));
+  setRemaining(Math.max(0,Number(snapshot.remaining)||0));
+  setSelectedId(String(snapshot.selectedId||''));
+  setDraftName(String(snapshot.draftName||''));
+  setComplete(!!snapshot.complete);
+  setAutoNext(snapshot.autoNext!==false);setTone(snapshot.tone!==false);
+  setSelecting(false);
+ };
+ applyRemoteRef.current=restoreState;
+ const cloudKey=area+':'+theme;
+ const sendRemote=async()=>{
+  if(!database||!userId||!controller.current||!hydrated.current)return;
+  if(sending.current){sendAgain.current=true;return}
+  sending.current=true;
+  try{
+   const snapshot={...latest.current,remaining:Math.ceil(latest.current.remaining)};
+   const {data:row,error}=await database.rpc('body_care_timer_command',{
+    p_area:area,p_category:theme,p_command:'save',p_device:identity,p_state:snapshot
+   });
+   if(error)throw error;
+   remoteRef.current=row;setSyncState('동기화됨');
+  }catch(e){
+   controller.current=false;setIsOwner(false);setSyncState('연결 실패 · 기기 임시 저장');
+   setPlaying(false);tracking.current=null;
+  }finally{
+   sending.current=false;
+   if(sendAgain.current){sendAgain.current=false;if(controller.current)saveRemoteRef.current?.()}
+  }
+ };
+ saveRemoteRef.current=sendRemote;
+ const loadRemote=async(initial=false)=>{
+  if(!database||!userId)return;
+  try{
+   const {data:row,error}=await database.from('body_care_timer_sessions')
+    .select('*').eq('user_id',userId).eq('area',area).eq('category',theme).maybeSingle();
+   if(error)throw error;
+   if(!row){
+    if(initial){
+     const {data:newRow,error:claimError}=await database.rpc('body_care_timer_command',{
+      p_area:area,p_category:theme,p_command:'claim',p_device:identity,p_state:latest.current
+     });
+     if(claimError)throw claimError;
+     if(!newRow?.owner_token||newRow.owner_token!==identity)return;
+     remoteRef.current=newRow;controller.current=true;hydrated.current=true;
+     setIsOwner(true);setSyncState('동기화됨');
+    }
+    return;
+   }
+   remoteRef.current=row;
+   const isMine=row.owner_token===identity&&Date.parse(row.lease_until||'')>Date.now();
+   if(isMine){
+    if(!controller.current){
+     const snap=resolveRemote(row);
+     applyRemoteRef.current({...snap,playing:false});
+    }
+    controller.current=true;hydrated.current=true;
+    viewRemote.current=null;setIsOwner(true);setSyncState('동기화됨');
+    return;
+   }
+   if(controller.current){
+    controller.current=false;
+    tracking.current=null;
+    setPlaying(false);
+   }
+   const changed=viewRemote.current?.revision!==row.revision;
+   viewRemote.current=row;
+   hydrated.current=true;setIsOwner(false);setSyncState('다른 기기와 동기화됨');
+   if(changed){
+    const snap=resolveRemote(row);
+    applyRemoteRef.current({...snap,playing:false});
+   }
+  }catch(e){
+   if(initial){
+    hydrated.current=true;controller.current=false;setIsOwner(false);
+   }
+   setSyncState('SQL 연결 확인 필요');
+  }
+ };
+ const loadRef=useRef(loadRemote);loadRef.current=loadRemote;
+ useEffect(()=>{
+  if(!database||!userId)return;
+  let mounted=true;
+  loadRef.current(true);
+  const poll=setInterval(()=>{if(mounted)loadRef.current(false)},2400);
+  const heartbeat=setInterval(()=>{if(mounted&&controller.current)saveRemoteRef.current?.()},4500);
+  return()=>{mounted=false;clearInterval(poll);clearInterval(heartbeat)};
+ },[database,userId,cloudKey,identity]);
+ const signature=JSON.stringify({steps,index,remaining:playing?null:Math.ceil(remaining),playing,selectedId,draftName,complete,autoNext,tone});
+ useEffect(()=>{
+  if(!database||!userId||!controller.current||!hydrated.current)return;
+  const job=setTimeout(()=>saveRemoteRef.current?.(),350);
+  return()=>clearTimeout(job);
+ },[signature,cloudKey]);
+ useEffect(()=>{
+  if(!database||!userId)return;
+  const refresh=setInterval(()=>{
+   if(controller.current||!viewRemote.current)return;
+   const state=resolveRemote(viewRemote.current);
+   setIndex(old=>old===state.index?old:state.index);
+   setRemaining(state.remaining);setComplete(!!state.complete);
+  },250);
+  return()=>clearInterval(refresh);
+ },[database,userId,cloudKey]);
+ const takeOver=async()=>{
+  if(!database||!userId){controller.current=true;setIsOwner(true);return}
+  try{
+   const {data:row,error}=await database.rpc('body_care_timer_command',{
+    p_area:area,p_category:theme,p_command:'claim',p_device:identity,p_state:null
+   });
+   if(error)throw error;
+   const previous=viewRemote.current||remoteRef.current||row;
+   const snap=resolveRemote(previous);
+   applyRemoteRef.current({...snap,playing:false});
+   controller.current=true;hydrated.current=true;viewRemote.current=null;remoteRef.current=row;
+   setIsOwner(true);setSyncState('동기화됨');
+   setTimeout(()=>saveRemoteRef.current?.(),100);
+  }catch(e){setSyncState('연결 실패 · '+e.message)}
+ };
+
  const routines=useMemo(()=>(data.routines||[]).filter(x=>x.area===area&&x.group===group),[data.routines,area,group]);
  const catalog=useMemo(()=>(data.items||[]).filter(x=>x.area===area&&x.group===group&&!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)),[data.items,area,group]);
  const available=useMemo(()=>catalog.flatMap(row=>normalizeVideoIds(row.videos).map((id,n)=>({key:row.id+':'+id,itemId:row.id,videoId:id,title:nameOf(row),level:row.level||1,videoNumber:n+1}))),[catalog]);
@@ -75,8 +233,8 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  return <section className={'routine-root '+(theme==='voice'?'routine-voice':'routine-face')} >
   {!embedded&&<div className="routine-heading"><strong>루틴 타이머</strong><button type="button" onClick={()=>setVisible(x=>!x)}>{visible?'접기':'열기'} <ChevronDown size={16}/></button></div>}
   {visible&&<>
-   <div className="routine-top"><select aria-label="저장된 루틴 선택" value={selectedId} onChange={e=>chooseSaved(e.target.value)}><option value="">저장된 루틴 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
-    <button type="button" className={selecting&&checked.length?"routine-finish-top":"routine-purple"} onClick={()=>selecting&&checked.length?finishSelection():togglePicker()}>{selecting&&checked.length?<><Check size={16}/> 선택 완료 ({checked.length})</>:<><Plus size={16}/> 영상 선택</>}</button></div>
+   <div className="routine-top"><select disabled={!isOwner} aria-label="저장된 루틴 선택" value={selectedId} onChange={e=>chooseSaved(e.target.value)}><option value="">저장된 루틴 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
+    <button type="button" disabled={!isOwner} className={selecting&&checked.length?"routine-finish-top":"routine-purple"} onClick={()=>selecting&&checked.length?finishSelection():togglePicker()}>{selecting&&checked.length?<><Check size={16}/> 선택 완료 ({checked.length})</>:<><Plus size={16}/> 영상 선택</>}</button></div>
    {selecting&&<div className="routine-picker">
     <div className="routine-pickhead"><strong>영상 선택 · Lv.1~5 전체</strong><button type="button" onClick={()=>setSelecting(false)} aria-label="선택 닫기"><X size={17}/></button></div>
     {!available.length&&<p>현재 탭에 등록된 유튜브 영상이 없어.</p>}
@@ -87,6 +245,10 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
       {open&&<div className="routine-level-content">{rows.length?rows.map(row=><div className="routine-source" key={row.id}><strong>{nameOf(row)}</strong>
        {normalizeVideoIds(row.videos).map((videoId,i)=>{const key=row.id+":"+videoId;return <label key={key}><input type="checkbox" checked={checked.includes(key)} onChange={e=>setChecked(v=>e.target.checked?[...v,key]:v.filter(x=>x!==key))}/> 영상 {i+1}<a href={"https://www.youtube.com/watch?v="+videoId} target="_blank" rel="noopener noreferrer" aria-label="영상 열기" onClick={e=>e.stopPropagation()}><ExternalLink size={14}/></a></label>})}</div>):<p>등록된 영상이 없어.</p>}</div>}
      </div>})}
+   </div>}
+   {database&&userId&&<div className="routine-sync-status">
+     <span>{syncState}{!isOwner&&' · 읽기 전용'}</span>
+     {!isOwner&&<button type="button" onClick={takeOver}>이 기기에서 이어받기</button>}
    </div>}
    {!!steps.length&&<div className="routine-player">
     <div className="routine-pie"><svg viewBox="0 0 240 240" role="img" aria-label="단계별 색상 파이 타이머">
@@ -100,19 +262,19 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      </div>
     </div>
     <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong></div>
-    <div className="routine-controls"><button type="button" onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
-    <div className="routine-options"><label><input type="checkbox" checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
+    <div className="routine-controls"><button type="button" disabled={!isOwner} onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" disabled={!isOwner} className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" disabled={!isOwner} onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" disabled={!isOwner} onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
+    <div className="routine-options"><label><input type="checkbox" disabled={!isOwner} checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" disabled={!isOwner} checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
     <div className="routine-step-list">{steps.map((step,i)=><div className="routine-step-wrapper" key={i}>
-     <div className={'routine-step '+(i===index&&!complete?'active':'')} onClick={()=>jump(i)}>
+     <div className={'routine-step '+(i===index&&!complete?'active':'')} onClick={()=>isOwner&&jump(i)}>
       <i style={{background:colors[i%colors.length]}}/>
       <span>{i<index||complete?'✓ ':''}{step.title}</span>
-      <input aria-label={step.title+' 시간(초)'} type="number" min="5" max="3600" value={step.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small>
+      <input aria-label={step.title+' 시간(초)'} type="number" disabled={!isOwner} min="5" max="3600" value={step.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small>
      </div>
      {i===index&&step.videoId&&<div className="routine-embedded-video">
       <iframe key={step.videoId} title={step.title+' 유튜브 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+step.videoId+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/>
      </div>}
     </div>)}</div>
-    {!readOnly&&<div className="routine-save"><input aria-label="루틴 이름" placeholder="루틴 이름 (예: 아침 발성 6분)" value={draftName} onChange={e=>setDraftName(e.target.value)}/><button className="routine-purple" type="button" onClick={save} disabled={!draftName.trim()}><Save size={16}/> 저장</button>{selectedId&&<button type="button" onClick={remove} aria-label="루틴 삭제"><Trash2 size={17}/></button>}</div>}
+    {!readOnly&&<div className="routine-save"><input aria-label="루틴 이름" disabled={!isOwner} placeholder="루틴 이름 (예: 아침 발성 6분)" value={draftName} onChange={e=>setDraftName(e.target.value)}/><button className="routine-purple" type="button" onClick={save} disabled={!isOwner||!draftName.trim()}><Save size={16}/> 저장</button>{selectedId&&<button type="button" onClick={remove} disabled={!isOwner} aria-label="루틴 삭제"><Trash2 size={17}/></button>}</div>}
    </div>}
   </>}
  </section>;

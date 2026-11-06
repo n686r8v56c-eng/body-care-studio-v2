@@ -1,11 +1,12 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
+import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
 import CareLibrary,{seedBodyCatalog} from './CareLibrary.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
 const areas=[{id:'face',name:'Face Care'},{id:'lower',name:'하체'},{id:'upper',name:'상체'}];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];
-const KEY='body-care-studio-v1',MAX=5;
+const KEY='body-care-studio-v1';
 const DEFAULT_LEVEL_NAMES=['마사지','이완','폼롤러','도구','SNPE'];
 const levelKey=(area,group)=>area+':'+group;
 const groupLabelKey=(area,group)=>area+':'+group;
@@ -26,7 +27,7 @@ function idFromUrl(raw){
 }
 function videoList(raw){
  const list=Array.isArray(raw)?raw:[];
- return [...new Set(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):'').filter(Boolean))].slice(0,MAX);
+ return normalizeVideoIds(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):''));
 }
 const normalize=obj=>({version:1,beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
  id:String(x.id),area:areas.some(a=>a.id===x.area)?x.area:'upper',

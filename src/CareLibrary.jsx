@@ -4,7 +4,7 @@ import {BEAUTY_SEED_DRILLS} from './beautySeedDrills.js';
 import './CareLibrary.css';
 
 const DEFAULT_LABELS=['마사지','이완','폼롤러','도구','SNPE'];
-const MAX=5;
+import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
 const groupKey=(area,group)=>area+':'+group;
 const nextId=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const displayName=row=>row.en||row.title||row.ko||'이름 없음';
@@ -61,7 +61,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const visible=ordered.filter(x=>(x.level||1)===level);
  const archived=scoped.filter(x=>x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0));
  const numberById=new Map(ordered.map((row,i)=>[row.id,i+1]));
- const videosFor=row=>(Array.isArray(row?.videos)?row.videos:[]).filter(v=>/^[\w-]{11}$/.test(v)).slice(0,MAX);
+ const videosFor=row=>normalizeVideoIds(row?.videos);
  const openNew=()=>{setDraft({en:'',ko:'',level,note:''});setEditor({mode:'add'})};
  const openEdit=row=>{setDraft({en:row.en||row.title||'',ko:row.ko||'',level:row.level||1,note:row.note||''});setEditor({mode:'edit',id:row.id})};
  const submitItem=e=>{
@@ -143,7 +143,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    if(!confirm('현재 목록을 보존하면서 새 항목만 추가할까?'))return;
    update(d=>{
     const ids=new Set(d.items.map(x=>x.id));
-    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:(x.videos||[]).filter(v=>/^[\w-]{11}$/.test(v)).slice(0,5)});ids.add(x.id)}});
+    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:normalizeVideoIds(x.videos)});ids.add(x.id)}});
     d.levelNames={...(raw.levelNames||{}),...(d.levelNames||{})};
    });setShowImport(false);alertUser('JSON 백업에서 새 항목을 가져왔어.');
   }catch(e){alertUser('백업 가져오기 실패: '+e.message)}

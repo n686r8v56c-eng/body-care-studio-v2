@@ -264,6 +264,23 @@ export default function App(){
   if(fallback!==timerGroup?.id)return fallback;
   return groups.find(g=>g.id!==timerGroup?.id)?.id||fallback;
  };
+ const bottomTabs=(
+  area==='face'
+   ? [...groups,...(!timerGroup?[{id:'__timer'}]:[])]
+   : [...groups,...(!timerGroup?[{id:'__timer'}]:[])].sort((a,b)=>{
+      const order=g=>{
+       if(g.id==='__timer'||isTimerName(groupName(area,g)))return 3;
+       const label=groupName(area,g).trim();
+       if(/^(순환|순환운동|순환관리)$/i.test(label))return 0;
+       if(/^(근력|근력운동)$/i.test(label))return 1;
+       if(/^(헬스|헬스장)$/i.test(label))return 2;
+       if(/^(기록|운동기록|연습기록)$/i.test(label))return 4;
+       const fallback={massage:0,stretch:1,bodyweight:2,machine:4};
+       return fallback[g.id]??4;
+      };
+      return order(a)-order(b);
+     })
+ );
  const chooseBottom=(id)=>{if(area==='face'&&id==='machine'){setRecordsTab(true);setTimerTab(false);setGroup(id);return;}setRecordsTab(false);if(timerGroup?.id===id){setTimerTab(false);setGroup(id);return;}setTimerTab(false);chooseGroup(id)};
  const saveItem=({title,note})=>{
   const name=title.trim();if(!name)return show('이름을 입력해 줘.');
@@ -317,7 +334,7 @@ export default function App(){
     <label className="area-switch"><span className="sr-only">장르 선택</span><select aria-label="장르 선택" value={area} onChange={e=>{setArea(e.target.value);setTimerTab(false);setRecordsTab(false);setExpanded(null);setArchived(false);setEditing(false);setLevel(1);setLevelRename(null)}}>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><ChevronDown size={15}/></label>
    </div></header>
   <main className={'content care-content'+(!isTimerOpen&&!isRecordOpen&&area==='face'&&group===sourceGroup('voice')?' voice-library-theme':'')+(!isTimerOpen&&!isRecordOpen&&area!=='face'&&group===sourceGroup('circulation')?' circulation-library-theme':'')+(!isTimerOpen&&!isRecordOpen&&area!=='face'&&group===sourceGroup('strength')?' strength-library-theme':'')+(!isTimerOpen&&!isRecordOpen&&area!=='face'&&group===sourceGroup('gym')?' gym-library-theme':'')}>{isRecordOpen?<PracticeRecords logs={practiceLogs}/>:isTimerOpen?<div className="body-timer-page"><h1 className="body-timer-title">Timer</h1><div className="body-timer-subtabs" role="tablist" aria-label="타이머 종류">{timerKinds.map(t=><button key={t.id} type="button" role="tab" aria-selected={activeTimerKind===t.id} className={activeTimerKind===t.id?'active '+t.id:''} onClick={()=>selectTimerKind(t.id)}>{t.name}</button>)}</div><RoutineTimer key={userId+':'+area+':'+activeTimerKind+':'+sourceGroup(activeTimerKind)} data={data} onUpdate={update} area={area} group={sourceGroup(activeTimerKind)} theme={activeTimerKind} userId={userId} database={db} onRecordSeconds={area==='face'?recordPractice:()=>{}} embedded/></div>:<CareLibrary data={data} onUpdate={update} area={area} group={group} sync={sync}/>}</main>
-  <nav className="bottom-nav" aria-label="운동 카테고리">{groups.map(g=><button key={g.id} type="button" className={!timerTab&&group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseBottom(g.id)}><span>{area==='face'&&g.id==='machine'?'기록':groupName(area,g)}</span></button>)}{!timerGroup&&<button type="button" className={timerTab?'active':''} onClick={()=>{setTimerTab(true);setRecordsTab(false)}}>Timer</button>}</nav>
+  <nav className={'bottom-nav'+(area==='face'?'':' bottom-nav-five')} aria-label="운동 카테고리">{bottomTabs.map(g=>g.id==='__timer'?<button key="__timer" type="button" className={timerTab?'active':''} onClick={()=>{setTimerTab(true);setRecordsTab(false)}}>Timer</button>:<button key={g.id} type="button" className={!timerTab&&group===g.id?'active':''} title="길게 눌러 이름 변경" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginGroupPress(g)}} onPointerUp={cancelGroupPress} onPointerCancel={cancelGroupPress} onPointerLeave={cancelGroupPress} onContextMenu={e=>{e.preventDefault();cancelGroupPress();suppressGroupClick.current=true;setGroupRename({area,group:g.id});setGroupDraft(groupName(area,g))}} onClick={()=>chooseBottom(g.id)}><span>{area==='face'&&g.id==='machine'?'기록':groupName(area,g)}</span></button>)}</nav>
   {groupRename&&<div className="level-rename-backdrop" role="presentation" onClick={()=>setGroupRename(null)}><form className="level-rename" role="dialog" aria-modal="true" aria-label="하단 카테고리 이름 변경" onClick={e=>e.stopPropagation()} onSubmit={saveGroupName}><strong>하단 카테고리 이름 변경</strong><p>{areas.find(a=>a.id===groupRename.area)?.name} · 이 장르에만 적용돼</p><input autoFocus value={groupDraft} onChange={e=>setGroupDraft(e.target.value)} maxLength={20} aria-label="새 카테고리 이름" required/><div className="rename-actions"><button type="button" onClick={()=>setGroupRename(null)}>취소</button><button type="submit" className="primary" disabled={!groupDraft.trim()}>저장</button></div></form></div>}
  </div>
 }

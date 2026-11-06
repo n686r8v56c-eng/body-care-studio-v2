@@ -163,8 +163,8 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
   if(!database||!userId)return;
   let mounted=true;
   loadRef.current(true);
-  const poll=setInterval(()=>{if(mounted)loadRef.current(false)},2400);
-  const heartbeat=setInterval(()=>{if(mounted&&controller.current)saveRemoteRef.current?.()},4500);
+  const poll=setInterval(()=>{if(mounted)loadRef.current(false)},1800);
+  const heartbeat=setInterval(()=>{if(mounted&&controller.current)saveRemoteRef.current?.()},3000);
   return()=>{
    mounted=false;clearInterval(poll);clearInterval(heartbeat);
    if(controller.current&&cloudReady.current){

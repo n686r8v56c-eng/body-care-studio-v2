@@ -163,3 +163,84 @@ body:has(.care-content){background:#faf9fc}
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+
+/* Voice library — mint palette matching Timer > Voice.
+   Scoped only to the Voice library; Face and other categories stay purple. */
+.app .care-content.voice-library-theme{
+ --voice-accent:#35aa98;
+ --voice-strong:#218f80;
+ --voice-border:#bce4dd;
+ --voice-soft:#e8f8f4;
+ --voice-pale:#f4fcf9;
+ --voice-muted:#67978e;
+}
+.app .voice-library-theme .care-page-title h1{color:#286f65}
+.app .voice-library-theme .stretching-levels button{
+ background:var(--voice-pale);border-color:#d9eee8;color:#608a83;
+}
+.app .voice-library-theme .stretching-levels button.active{
+ background:var(--voice-soft);border-color:var(--voice-accent);
+ color:var(--voice-strong);box-shadow:inset 0 0 0 1px #72cdbc;
+}
+.app .voice-library-theme .stretching-list-heading{border-bottom-color:#d8ede7}
+.app .voice-library-theme .stretching-list-heading>strong{color:#286f65}
+.app .voice-library-theme .stretching-list-heading span,
+.app .voice-library-theme .stretching-header-actions>span{color:var(--voice-muted)}
+.app .voice-library-theme .stretching-header-actions button{
+ background:var(--voice-soft);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-header-actions button.active{
+ background:#cceee5;color:#187e70;
+}
+.app .voice-library-theme .stretching-drill{border-bottom-color:#dfeeea}
+.app .voice-library-theme .stretching-drill-number,
+.app .voice-library-theme .stretching-drill-name small{color:var(--voice-muted)}
+.app .voice-library-theme .stretching-drill-toggle>svg{color:var(--voice-strong)}
+.app .voice-library-theme .stretching-link-button{
+ background:var(--voice-soft);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-edit-controls button{
+ background:var(--voice-soft);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-video-switch button{
+ background:var(--voice-pale);border-color:var(--voice-border);color:#52887e;
+}
+.app .voice-library-theme .stretching-video-switch button.active{
+ background:#d2f0e8;border-color:var(--voice-accent);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-video-actions button,
+.app .voice-library-theme .stretching-video-actions a{
+ border-color:var(--voice-border);background:var(--voice-pale);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-no-video{
+ background:var(--voice-pale);border-color:var(--voice-border);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-recovery{border-top-color:#dcefe9}
+.app .voice-library-theme .stretching-recovery-toggle{
+ background:var(--voice-pale);border-color:var(--voice-border);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-recovery-row{border-bottom-color:#deeee8}
+.app .voice-library-theme .stretching-recovery-row a{
+ background:var(--voice-soft);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-archive-toggle,
+.app .voice-library-theme .stretching-archived-row button{
+ background:var(--voice-soft);color:var(--voice-strong);
+}
+.app .voice-library-theme .stretching-message{
+ color:var(--voice-strong);background:var(--voice-soft);
+}
+.app .voice-library-theme .stretching-modal label{color:#287a70}
+.app .voice-library-theme .stretching-modal input,
+.app .voice-library-theme .stretching-modal select,
+.app .voice-library-theme .stretching-modal textarea{border-color:var(--voice-border)}
+.app .voice-library-theme .stretching-modal input:focus,
+.app .voice-library-theme .stretching-modal select:focus,
+.app .voice-library-theme .stretching-modal textarea:focus{
+ outline:2px solid var(--voice-accent);outline-offset:1px;
+}
+.app .voice-library-theme .stretching-submit{background:var(--voice-accent)}
+.app:has(.voice-library-theme) .bottom-nav button.active{
+ background:var(--voice-soft,#e8f8f4);color:var(--voice-strong,#218f80);
+}

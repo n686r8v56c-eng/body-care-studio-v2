@@ -39,3 +39,8 @@
 .routine-level-content .routine-source:first-child{border-top:0}
 .routine-level-content .routine-source{padding:10px 2px}
 .routine-level-content p{color:#8a7b99;font-size:12px}
+
+/* Live timer synchronization and explicit device handoff */
+.routine-sync-status{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:12px 0;padding:9px 11px;border:1px solid var(--routine-border);border-radius:12px;background:#fff;font-size:12px;color:#807289}
+.routine-sync-status span{min-width:0;line-height:1.4}
+.routine-root .routine-sync-status button{font-weight:700;color:var(--routine-accent);white-space:nowrap;padding:7px 9px}

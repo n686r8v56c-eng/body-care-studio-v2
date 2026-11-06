@@ -15,7 +15,7 @@ const safeLevels=value=>Array.from({length:5},(_,i)=>typeof value?.[i]==='string
 const url=import.meta.env.VITE_SUPABASE_URL || 'https://kdxvtuldksnsjzjjyqda.supabase.co';
 const anon=import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AFL_RPrGakWmivWWOpA6rw_bWu6A-7B';
 const db=url&&anon?createClient(url,anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-const initial=()=>({version:1,items:[],levelNames:{},groupNames:{}});
+const initial=()=>({version:1,items:[],levelNames:{},groupNames:{},routines:[]});
 const uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch{return fallback}};
 const persist=(key,obj)=>{try{localStorage.setItem(key,JSON.stringify(obj));return true}catch{return false}};
@@ -29,7 +29,7 @@ function videoList(raw){
  const list=Array.isArray(raw)?raw:[];
  return normalizeVideoIds(list.map(v=>typeof v==='string'?(idFromUrl(v)||(/^[\w-]{11}$/.test(v)?v:'')):''));
 }
-const normalize=obj=>({version:1,beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
+const normalize=obj=>({version:1,routines:Array.isArray(obj?.routines)?obj.routines.filter(r=>r&&typeof r.id==='string'&&typeof r.name==='string'&&Array.isArray(r.steps)).map(r=>({id:r.id,name:r.name.slice(0,100),area:areas.some(a=>a.id===r.area)?r.area:'face',group:groups.some(g=>g.id===r.group)?r.group:'massage',steps:r.steps.filter(s=>s&&typeof s.videoId==='string'&&/^[\\w-]{11}$/.test(s.videoId)).map(s=>({itemId:String(s.itemId||''),videoId:s.videoId,title:String(s.title||'').slice(0,120),seconds:Math.min(3600,Math.max(5,Number(s.seconds)||60))}))})):[],beautyCatalogSeedVersion:Number(obj?.beautyCatalogSeedVersion)||0,groupNames:safeGroupNames(obj?.groupNames),levelNames:obj?.levelNames&&typeof obj.levelNames==='object'&&!Array.isArray(obj.levelNames)?Object.fromEntries(Object.entries(obj.levelNames).filter(([k])=>areas.some(a=>groups.some(g=>k===levelKey(a.id,g.id)))).map(([k,v])=>[k,safeLevels(v)])):{},items:Array.isArray(obj?.items)?obj.items.filter(x=>x&&typeof x==='object'&&x.id).map((x,i)=>({
  id:String(x.id),area:areas.some(a=>a.id===x.area)?x.area:'upper',
  group:groups.some(g=>g.id===x.group)?x.group:'massage',level:Number.isInteger(Number(x.level))&&Number(x.level)>=1&&Number(x.level)<=5?Number(x.level):1,
  title:String(x.title||x.en||x.ko||'').slice(0,120),en:String(x.en||x.title||'').slice(0,120),ko:String(x.ko||'').slice(0,120),note:String(x.note||'').slice(0,2000),
@@ -173,7 +173,7 @@ export default function App(){
   try{const raw=JSON.parse(await file.text());if(!['body-care-studio-v1','body-care-studio-v2'].includes(raw.format)||!Array.isArray(raw.items))throw new Error('Body Care Studio 백업 파일이 아니야.');
    const incoming=normalize(raw);
    if(!confirm('백업 항목을 현재 목록에 병합할까? 같은 ID 항목은 현재 값을 유지해.'))return;
-   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames};d.groupNames={...incoming.groupNames,...d.groupNames}});
+   update(d=>{const existing=new Set(d.items.map(x=>x.id));for(const row of incoming.items)if(!existing.has(row.id))d.items.push(row);d.levelNames={...incoming.levelNames,...d.levelNames};d.groupNames={...incoming.groupNames,...d.groupNames};d.routines=[...(d.routines||[]),...incoming.routines.filter(r=>!(d.routines||[]).some(existing=>existing.id===r.id))]});
    show('백업 가져오기 완료');
   }catch(e){show('가져오기 실패: '+e.message)}
  };

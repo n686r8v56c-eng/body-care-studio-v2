@@ -55,7 +55,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);
  const [playing,setPlaying]=useState(false),[autoNext,setAutoNext]=useState(initialDraft?.autoNext??true),[tone,setTone]=useState(initialDraft?.tone??true),[complete,setComplete]=useState(initialDraft?.complete||false);
  const [isOwner,setIsOwner]=useState(!database||!userId),[syncState,setSyncState]=useState(database&&userId?'연결 중':'기기 저장');
- const controller=useRef(!database||!userId),hydrated=useRef(!database||!userId);
+ const controller=useRef(!database||!userId),hydrated=useRef(!database||!userId),cloudReady=useRef(true);
  const identity=useMemo(deviceToken,[]);
  const remoteRef=useRef(null),viewRemote=useRef(null),sending=useRef(false),sendAgain=useRef(false);
  const latest=useRef(null),applyRemoteRef=useRef(null),saveRemoteRef=useRef(null);
@@ -90,7 +90,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  applyRemoteRef.current=restoreState;
  const cloudKey=area+':'+theme;
  const sendRemote=async()=>{
-  if(!database||!userId||!controller.current||!hydrated.current)return;
+  if(!database||!userId||!cloudReady.current||!controller.current||!hydrated.current)return;
   if(sending.current){sendAgain.current=true;return}
   sending.current=true;
   try{
@@ -116,18 +116,18 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
     .select('*').eq('user_id',userId).eq('area',area).eq('category',theme).maybeSingle();
    if(error)throw error;
    if(!row){
-    if(initial){
+    if(initial||!cloudReady.current){
      const {data:newRow,error:claimError}=await database.rpc('body_care_timer_command',{
       p_area:area,p_category:theme,p_command:'claim',p_device:identity,p_state:latest.current
      });
      if(claimError)throw claimError;
      if(!newRow?.owner_token||newRow.owner_token!==identity)return;
-     remoteRef.current=newRow;controller.current=true;hydrated.current=true;
+     cloudReady.current=true;remoteRef.current=newRow;controller.current=true;hydrated.current=true;
      setIsOwner(true);setSyncState('동기화됨');
     }
     return;
    }
-   remoteRef.current=row;
+   cloudReady.current=true;remoteRef.current=row;
    const isMine=row.owner_token===identity&&Date.parse(row.lease_until||'')>Date.now();
    if(isMine){
     if(!controller.current){
@@ -151,10 +151,11 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
     applyRemoteRef.current({...snap,playing:false});
    }
   }catch(e){
-   if(initial){
-    hydrated.current=true;controller.current=false;setIsOwner(false);
-   }
-   setSyncState('SQL 연결 확인 필요');
+   // Preserve the previous local timer until its SQL table is available.
+   cloudReady.current=false;
+   hydrated.current=true;
+   controller.current=true;setIsOwner(true);
+   setSyncState('SQL 연결 전 · 기기 저장만 가능');
   }
  };
  const loadRef=useRef(loadRemote);loadRef.current=loadRemote;

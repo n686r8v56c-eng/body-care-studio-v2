@@ -275,3 +275,29 @@ body:has(.care-content){background:#faf9fc}
 .app:has(.circulation-library-theme) .bottom-nav button.active{background:#f2eafb;color:#7956b0}
 .app:has(.strength-library-theme) .bottom-nav button.active{background:#e5f8f1;color:#248c7a}
 .app:has(.gym-library-theme) .bottom-nav button.active{background:#fff4d1;color:#94701d}
+
+/* Upper and lower: exactly five bottom tabs on one row, including Timer. */
+.app .bottom-nav.bottom-nav-five{
+ display:grid;
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ grid-auto-flow:row;
+ gap:0;
+ width:min(100%,850px);
+}
+.app .bottom-nav.bottom-nav-five button{
+ min-width:0;
+ width:100%;
+ max-width:100%;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ padding:8px 1px;
+ font-size:clamp(11px,3vw,14px);
+}
+.app .bottom-nav.bottom-nav-five button span{
+ display:block;
+ min-width:0;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}

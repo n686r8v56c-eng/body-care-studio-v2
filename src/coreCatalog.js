@@ -39,6 +39,22 @@ export const CORE_APPROVED_TECHNIQUES=[
     "imageUrl": "https://treinoemcasa.com/cdn/shop/articles/Exercicios-Pilates-Roll-Up.webp?v=1740411004"
   },
   {
+    "id": "core-superman-extension",
+    "time": "",
+    "category": 1,
+    "name": "슈퍼맨",
+    "en": "Superman / Prone Back Extension",
+    "posture": "엎드려 팔과 다리를 길게 뻗음",
+    "muscles": "척추기립근·다열근·대둔근·어깨 후면 근육",
+    "description": "엎드린 상태에서 팔과 다리를 바닥에서 가볍게 들어 올려 유지한 뒤 천천히 내린다. 허리를 과도하게 꺾지 않고 몸을 길게 뻗는다. 스위밍과 달리 양팔과 양다리를 동시에 들어 올리는 정적 또는 반복 동작이다.",
+    "tags": [
+      "척추 신전",
+      "후면 사슬",
+      "정적·동적"
+    ],
+    "imageUrl": "https://img.womenshealth.de/_/bg%3AFFFFFF/f%3Abest/rt%3Afill/w%3A2200/plain/244684.jpg"
+  },
+  {
     "id": "core-strong-abs-2427",
     "time": "24:27",
     "category": 1,

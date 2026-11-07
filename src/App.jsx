@@ -8,7 +8,7 @@ import PracticeRecords from './PracticeRecords.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
-const areas=[{id:'face',name:'Face Care'},{id:'lower',name:'하체'},{id:'upper',name:'상체'},{id:'core',name:'코어'}];
+const areas=[{id:'core',name:'코어'},{id:'face',name:'Face Care'},{id:'lower',name:'하체'},{id:'upper',name:'상체'}];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];
 const KEY='body-care-studio-v1';
 const DEFAULT_LEVEL_NAMES=['마사지','이완','폼롤러','도구','SNPE'];
@@ -61,7 +61,7 @@ function Auth({message}){
 }
 
 export function BodyCarePreview(){
- const [area,setArea]=useState('lower'),[group,setGroup]=useState('stretch');
+ const [area,setArea]=useState('core'),[group,setGroup]=useState('stretch');
  const demo=useMemo(()=>seedBodyCatalog({version:1,items:[],levelNames:{},beautyCatalogSeedVersion:0}),[]);
  return <div className="app">
   <header className="header"><div className="brand"><span className="symbol">✦</span><div><strong>BODY CARE</strong></div></div>

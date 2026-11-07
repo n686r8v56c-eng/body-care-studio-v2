@@ -62,7 +62,7 @@ function normalizeRegionalStudio(raw,area){
  })):raw?.techniques||[];
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?13:8,
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:8,
   coreTechniques:prepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],

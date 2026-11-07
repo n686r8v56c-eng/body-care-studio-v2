@@ -5,7 +5,7 @@ import './RoutineTimer.css';
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
 const STUDIO_STRENGTH_CATEGORIES={
- glutes:['Quadruped','Supine','Side-Lying','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Seated','Bench-Supported','Prone','Half Kneeling','Tall Kneeling','Legacy Techniques · Review','Step up'],
+ glutes:['Quadruped','Supine','Prone','Side-Lying','Half Kneeling','Tall Kneeling','Seated','Bench-Supported','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Step up','Legacy Techniques · Review'],
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side Kneeling','Prone','Long Sitting / Straddle','Frog Position','Z-Shaped Legs'],
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
@@ -524,8 +524,8 @@ function CoreRecords({logs=[],title='코어'}){
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
  const title=STUDIO_NAMES[area]||'코어';
  const baseCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
- // Keep legacy Glutes category at index 12 so saved techniques retain their original category.
- // Step up uses index 13 and remains the last visible category.
+ // Step up is the 13th visible category (index 12) in the user's requested order.
+ // Legacy review stays hidden unless there are saved legacy techniques (index 13).
  const strengthCategories=baseCategories;
  const scoped=area==='core'?data:{
   ...data,

@@ -54,6 +54,21 @@ const HIP_MOBILITY_SEED=[
   imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}
 ];
 // Curated inner-thigh exercises. Images are linked to their original publishers rather than copied.
+// Position is recorded as a filterable tag; source image fields are intentionally blank for user-uploaded photos.
+const THIGH_ADDUCTOR_ADDITIONS=[
+ {id:'thigh-inner-sumo-squat',name:'Sumo Squat',en:'Sumo Squat',category:0,
+  posture:'넓게 벌려 선 자세 · 발끝은 바깥쪽',muscles:'내전근군·대퇴사두근·대둔근',
+  description:'양발을 어깨너비보다 넓게 벌리고 발끝을 바깥쪽으로 향하게 한 뒤 무릎과 고관절을 함께 굽혀 앉았다 일어난다. 안벅지뿐 아니라 앞벅지와 엉덩이도 함께 쓰는 복합 동작이다.',
+  tags:['Standing','Inner Thigh','Adductors','Compound'],imageUrl:''},
+ {id:'thigh-inner-v-leg-pulse-in-out',name:'V Leg Pulse In & Out',en:'V Leg Pulse In & Out',category:0,
+  posture:'바로 누워 두 다리를 들어 V자로 벌린 자세',muscles:'내전근군·복부 안정화 근육',
+  description:'바로 누워 두 다리를 들어 V자로 벌렸다가 작게 안쪽으로 모으는 펄스 동작을 반복한다. 허리와 골반을 편안하게 유지하고 동작 범위를 조절한다.',
+  tags:['Supine','Inner Thigh','Adductors','Pulse'],imageUrl:''},
+ {id:'thigh-inner-frog-pulse-stretch',name:'Frog Pulse Stretch',en:'Frog Pulse Stretch',category:0,
+  posture:'바로 누워 발바닥을 맞대고 무릎을 양옆으로 벌린 자세',muscles:'고관절 내전근군',
+  description:'바로 누운 나비자세에서 무릎을 양옆으로 편안하게 벌리고 작은 범위로 부드럽게 펄스한다. 근력 운동보다는 내전근 스트레칭과 고관절 가동성에 초점을 둔다.',
+  tags:['Supine','Inner Thigh','Adductors','Stretch','Pulse'],imageUrl:''}
+].map(t=>({...t,notes:'사진은 사용자가 직접 등록 예정',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
 const THIGH_ADDUCTOR_SEED=[
  {id:'thigh-inner-seated-hip-adduction',name:'Seated Hip Adduction',en:'Seated Hip Adduction',category:0,
   posture:'앉은 자세 · 어덕션 머신',muscles:'내전근군',
@@ -113,13 +128,27 @@ function normalizeRegionalStudio(raw,area){
  ]:parsed.coreTechniques;
  const thighSeedVersion=Number(raw?.thighSeedVersion)||0;
  const thighTechniques=area==='thighs'?[
-  ...parsed.coreTechniques,
-  ...(thighSeedVersion<1?THIGH_ADDUCTOR_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
+  ...parsed.coreTechniques.map(t=>{
+   // Tag older seeded cards without overwriting the user's own starting-position tags.
+   const known={ 'thigh-inner-seated-hip-adduction':'Machine', 'thigh-inner-side-lying-adduction':'Side-Lying',
+    'thigh-inner-copenhagen-adduction':'Side-Lying','thigh-inner-standing-cable-adduction':'Standing',
+    'thigh-inner-supine-ball-squeeze':'Supine'};
+   const position=known[t.id];
+   return position&&!(t.tags||[]).some(tag=>['Supine','Side-Lying','Standing','Machine'].includes(tag))
+    ?{...t,tags:[position,...(t.tags||[])].slice(0,12)}:t;
+  }),
+  ...(thighSeedVersion<1?THIGH_ADDUCTOR_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[]).map(t=>{
+    const positions={'thigh-inner-seated-hip-adduction':'Machine','thigh-inner-side-lying-adduction':'Side-Lying',
+      'thigh-inner-copenhagen-adduction':'Side-Lying','thigh-inner-standing-cable-adduction':'Standing',
+      'thigh-inner-supine-ball-squeeze':'Supine'};
+    return {...t,tags:[positions[t.id],...(t.tags||[])].filter(Boolean).slice(0,12)};
+  }),
+  ...(thighSeedVersion<2?THIGH_ADDUCTOR_ADDITIONS.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
  ]:hipTechniques;
  return {
   postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
-  thighSeedVersion:area==='thighs'?Math.max(1,thighSeedVersion):thighSeedVersion,
+  thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
   techniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };

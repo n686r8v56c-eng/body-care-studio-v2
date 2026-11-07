@@ -43,15 +43,23 @@ const normalize=obj=>({version:1,corePreparationMigrated:!!obj?.corePreparationM
 })):[]});
 // New independent studios reuse the Core catalog/routine schema without touching Core's saved data.
 function normalizeRegionalStudio(raw,area){
+ // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
+ // not starting positions. Put them in a visible review group rather than mislabeling poses.
+ const migrated=area==='glutes'&&!raw?.postureMigrated;
+ const legacyLabels=['준비동작','고관절 신전','고관절 외전','고관절 외회전','단측 안정화','복합·통합'];
+ const prepared=area==='glutes'&&migrated?(raw?.techniques||[]).map(t=>({
+  ...t,category:12,
+  tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),...(legacyLabels[t.category]?['기존 분류: '+legacyLabels[t.category]]:[])])].slice(0,12)
+ })):raw?.techniques||[];
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:8,
-  coreTechniques:raw?.techniques||[],
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?13:8,
+  coreTechniques:prepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
- return {techniques:parsed.coreTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs};
+ return {postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,techniques:parsed.coreTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs};
 }
 function download(name,data){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');

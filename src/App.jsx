@@ -135,6 +135,27 @@ const BACK_EXERCISE_SEED=[
   imageUrl:'https://getfitcraft.com/images/exercises/bird-dogs-proper-form.webp',
   notes:'사진 출처: FitCraft · https://getfitcraft.com/exercises/bird-dogs'}
 ].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
+// Thoracic mobility starter cards with publisher-hosted exercise photos.
+const THORACIC_MOBILITY_SEED=[
+ {id:'back-thoracic-open-book',name:'Open Book',en:'Open Book',category:4,
+  posture:'옆으로 누워 무릎을 굽힌 자세',muscles:'흉추 회전 · 흉곽 주변 조직',
+  description:'옆으로 누워 무릎과 골반을 안정적으로 유지하고 위쪽 팔을 반대편으로 열며 가슴을 회전한다. 시선은 움직이는 손을 따라간다.',
+  tags:['Thoracic Rotation','Side-Lying','Mobility'],
+  imageUrl:'https://www.elitesportsandpt.com/wp-content/uploads/2025/12/Open-book-1-225x300.jpg',
+  notes:'사진 출처: Elite Sports Performance & Physical Therapy · https://www.elitesportsandpt.com/blog/mobility-exercises-for-your-thoracic-spine/'},
+ {id:'back-thoracic-thread-needle',name:'Thread the Needle',en:'Thread the Needle',category:4,
+  posture:'네발기기 · 한쪽 팔을 반대편 아래로 통과',muscles:'흉추 회전 · 견갑 주변 조직',
+  description:'네발기기에서 한쪽 팔을 반대쪽 겨드랑이 아래로 보내 몸통을 회전하고, 어깨를 낮추어 부드럽게 움직인다. 허리에서 과하게 비틀지 않는다.',
+  tags:['Thoracic Rotation','Quadruped','Mobility'],
+  imageUrl:'https://www.elitesportsandpt.com/wp-content/uploads/2025/12/Threading-the-needle-c-FR-225x300.jpg',
+  notes:'사진 출처: Elite Sports Performance & Physical Therapy · https://www.elitesportsandpt.com/blog/mobility-exercises-for-your-thoracic-spine/'},
+ {id:'back-thoracic-foam-roller-extension',name:'Foam Roller Thoracic Extension',en:'Foam Roller Thoracic Extension',category:4,
+  posture:'바로 누워 흉추 아래 폼롤러 놓기',muscles:'흉추 신전 · 흉곽 가동성',
+  description:'폼롤러를 견갑골 아래쪽의 등 상부에 가로로 놓고 손으로 머리를 받친 후 가슴을 부드럽게 연다. 허리를 과하게 꺾거나 목을 젖히지 않는다.',
+  tags:['Thoracic Extension','Supine','Foam Roller','Mobility'],
+  imageUrl:'https://www.elitesportsandpt.com/wp-content/uploads/2025/12/T-spine-extension-on-FR-225x300.jpg',
+  notes:'사진 출처: Elite Sports Performance & Physical Therapy · https://www.elitesportsandpt.com/blog/mobility-exercises-for-your-thoracic-spine/'}
+].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
 function normalizeRegionalStudio(raw,area){
  // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
  // not starting positions. Put them in a visible review group rather than mislabeling poses.
@@ -150,18 +171,23 @@ function normalizeRegionalStudio(raw,area){
   ...t,category:4,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 등 미분류 · 재분류 필요'])].slice(0,12)
  })):raw?.techniques||[];
+ // Previous back category 4 was a legacy review bucket; reserve category 4 for thoracic mobility.
+ const backPrepared=area==='back'&&!raw?.backMobilityCategoryMigrated
+  ?prepared.map(t=>t.category===4?{...t,category:5}:t)
+  :prepared;
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?5:area==='arms'?1:8,
-  coreTechniques:prepared,
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?6:area==='arms'?1:8,
+  coreTechniques:backPrepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
  const backSeedVersion=Number(raw?.backSeedVersion)||0;
- const backTechniques=area==='back'&&backSeedVersion<1?[
+ const backTechniques=area==='back'?[
   ...parsed.coreTechniques,
-  ...BACK_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase()))
+  ...(backSeedVersion<1?BACK_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[]),
+  ...(backSeedVersion<2?THORACIC_MOBILITY_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
  ]:parsed.coreTechniques;
  const hipSeedVersion=Number(raw?.hipSeedVersion)||0;
  const hipTechniques=area==='hips'&&hipSeedVersion<1?[
@@ -190,10 +216,11 @@ function normalizeRegionalStudio(raw,area){
  return {
   postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
   backCategoryMigrated:area==='back'?true:!!raw?.backCategoryMigrated,
+  backMobilityCategoryMigrated:area==='back'?true:!!raw?.backMobilityCategoryMigrated,
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
-  backSeedVersion:area==='back'?Math.max(1,backSeedVersion):backSeedVersion,
+  backSeedVersion:area==='back'?Math.max(2,backSeedVersion):backSeedVersion,
   techniques:area==='back'?backTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }

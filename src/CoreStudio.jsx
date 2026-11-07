@@ -21,14 +21,17 @@ function CoreTechniques({data}){
    {CORE_CATEGORIES.map((name,i)=><button type="button" key={name} onClick={()=>setFilter(filter===i?-1:i)} style={{...btn,textAlign:'left',background:filter===i?'#eee5fb':'transparent',color:filter===i?'#382552':'inherit',display:'flex',justifyContent:'space-between'}}><strong>{i+1}. {name}</strong><span>{techniques.filter(x=>x.category===i).length}개</span></button>)}
   </div>
   {filter!==-1&&<button style={btn} onClick={()=>setFilter(-1)}>전체 보기</button>}
-  {techniques.filter(x=>filter===-1||x.category===filter).map(t=><article key={t.id} style={{...panel,display:'flex',gap:12,alignItems:'flex-start'}}>
-   {t.imageUrl&&<img src={t.imageUrl} alt="" loading="lazy" style={{height:72,width:84,objectFit:'cover',borderRadius:8}} onError={e=>{e.currentTarget.style.display='none'}}/>}
+  {techniques.filter(x=>filter===-1||x.category===filter).map(t=><article key={t.id} style={{...panel}}>
    <div><strong>{t.name}</strong><p style={{margin:'4px 0',fontSize:12,opacity:.7}}>{CORE_CATEGORIES[t.category]}</p>{t.en&&<p style={{fontSize:12,margin:'4px 0',opacity:.65}}>{t.en}</p>}
     {t.posture&&<p style={{fontSize:12,margin:'4px 0'}}><strong>자세</strong> · {t.posture}</p>}
     {t.muscles&&<p style={{fontSize:12,margin:'4px 0'}}><strong>근육</strong> · {t.muscles}</p>}
     {t.description&&<p style={{fontSize:13,margin:'6px 0'}}>{t.description}</p>}
     {!!t.tags?.length&&<p style={{fontSize:12,opacity:.7}}>{t.tags.join(' · ')}</p>}
     {t.notes&&<p style={{fontSize:13}}>{t.notes}</p>}</div>
+   <div style={{marginTop:12,background:'#f2eff6',borderRadius:12,overflow:'hidden',minHeight:150,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    {t.imageUrl?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" style={{width:'100%',maxHeight:270,objectFit:'contain'}} onError={e=>{e.currentTarget.style.display='none';e.currentTarget.parentElement.dataset.failed='true';e.currentTarget.parentElement.textContent='이미지 연결 확인 필요'}}/>:<span style={{fontSize:13,color:'#857990'}}>참고 이미지 확인 중</span>}
+   </div>
+   {t.imageUrl&&<a href={t.imageUrl} target="_blank" rel="noopener noreferrer" style={{display:'inline-block',marginTop:8,fontSize:12}}>이미지 원본 열기</a>}
   </article>)}
   {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어. 타임라인 분석 뒤 승인된 기술만 추가할 예정이야.</p>}
  </section>;

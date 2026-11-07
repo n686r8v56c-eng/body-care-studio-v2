@@ -398,7 +398,7 @@ const sourceReference=(tech,time,index)=>({
  memo:index?'반대쪽 동작':''
 });
 for(const tech of CORE_APPROVED_TECHNIQUES){
- if(!/^core-strong-abs-\\d{4}$/.test(tech.id)||!tech.time)continue;
+ if(!tech.id.startsWith('core-strong-abs-')||!tech.time)continue;
  const others=alternateTimes[tech.id.slice(-4)]||[];
  tech.references=[sourceReference(tech,tech.time,0),...others.map((time,i)=>sourceReference(tech,time,i+1))];
 }

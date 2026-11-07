@@ -119,11 +119,14 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
  </section>;
 }
 
+const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
+const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
 function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
  const [mode,setMode]=useState('strength');
  const [addingTechnique,setAddingTechnique]=useState(false);
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
  const [openCategories,setOpenCategories]=useState([]);
+ const [postureFilters,setPostureFilters]=useState({});
  const [search,setSearch]=useState('');
  const [searchClosed,setSearchClosed]=useState([]);
  const [expanded,setExpanded]=useState([]);
@@ -137,6 +140,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
  const categories=yogaMode?YOGA_CATEGORIES:strengthCategories;
+ const thighMode=title==='허벅지'&&!yogaMode;
  const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
   let alive=true;
@@ -151,10 +155,10 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const term=search.trim().toLocaleLowerCase();
  const searchable=t=>[t.name,t.en,t.posture,t.muscles,t.description,t.notes,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(term);
  const categoryMatches=i=>categories[i].toLocaleLowerCase().includes(term);
- const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t)));
+ const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t))&&(!thighMode||!postureFilters[i]||thighPostureOf(t)===postureFilters[i]));
  const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
  const totalMatches=term?categories.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
- const switchMode=next=>{setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
+ const switchMode=next=>{setPostureFilters({});setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
  const storageKey=yogaMode?'coreYogaTechniques':'coreTechniques';
@@ -169,7 +173,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
     posture:techniqueDraft.posture.trim().slice(0,200),
     muscles:techniqueDraft.muscles.trim().slice(0,400),
     description:techniqueDraft.description.trim().slice(0,1500),
-    tags:techniqueDraft.tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),
+    tags:[...new Set([...(thighMode&&techniqueDraft.postureTag?[techniqueDraft.postureTag]:[]),...techniqueDraft.tags.split(',').map(x=>x.trim()).filter(Boolean).filter(tag=>!thighMode||!THIGH_POSTURE_TAGS.includes(tag)||tag===techniqueDraft.postureTag)])].slice(0,12),
     imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[],notes:''
    }];
   });
@@ -216,6 +220,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
    {addingTechnique&&<form onSubmit={saveTechnique} style={{display:'grid',gap:9,padding:13,marginTop:8,border:'1px solid #e3d7ef',borderRadius:13,background:'#fff'}}>
     <label style={{display:'grid',gap:4,fontSize:13}}>기술명<input required maxLength={120} value={techniqueDraft.name} onChange={e=>setTechniqueDraft(v=>({...v,name:e.target.value}))} placeholder="동작 이름" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{orderedCategoryEntries(categories).map(([name,i])=>name==='Legacy Techniques · Review'?null:<option key={name} value={i}>{name}</option>)}</select></label>
+    {thighMode&&<label style={{display:'grid',gap:4,fontSize:13}}>시작 자세 태그<select value={techniqueDraft.postureTag||''} onChange={e=>setTechniqueDraft(v=>({...v,postureTag:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}><option value="">선택 안 함</option>{THIGH_POSTURE_TAGS.map(tag=><option key={tag} value={tag}>{tag}</option>)}</select></label>}
     <label style={{display:'grid',gap:4,fontSize:13}}>영문명 (선택)<input maxLength={120} value={techniqueDraft.en} onChange={e=>setTechniqueDraft(v=>({...v,en:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>자세 (선택)<input maxLength={200} value={techniqueDraft.posture} onChange={e=>setTechniqueDraft(v=>({...v,posture:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>주요 근육 (선택)<input maxLength={400} value={techniqueDraft.muscles} onChange={e=>setTechniqueDraft(v=>({...v,muscles:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
@@ -245,6 +250,9 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
       <span style={{color:'#977eb0',fontSize:17}} aria-hidden="true">{openCategory?'⌃':'⌄'}</span>
      </button>
      {openCategory&&<div style={{borderTop:'1px solid #e9e1ef',padding:'10px',display:'grid',gridTemplateColumns:'minmax(0,1fr)',gap:12}}>
+      {thighMode&&i<3&&<div role="group" aria-label={name+' 시작 자세 필터'} style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+       {['전체',...THIGH_POSTURE_TAGS].map(tag=>{const value=tag==='전체'?'':tag;const selected=(postureFilters[i]||'')===value;const count=techniques.filter(t=>t.category===i&&(!value||thighPostureOf(t)===value)).length;return <button key={tag} type="button" aria-pressed={selected} onClick={()=>setPostureFilters(prev=>({...prev,[i]:value}))} style={{...btn,fontSize:12,padding:'7px 10px',borderRadius:20,background:selected?'#e9ddf7':'#fff',color:selected?'#624184':'inherit',borderColor:selected?'#b79bd5':'#e1d5e9'}}>{tag} {count}</button>})}
+      </div>}
       {!entries.length&&<p style={{fontSize:13,opacity:.65,margin:'8px 4px'}}>등록된 동작이 없어.</p>}
       {entries.map(t=>{
 
@@ -255,7 +263,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
        {hasImage?<img src={imageSrc} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>:<span style={{fontSize:12,color:'#857990',padding:8,textAlign:'center'}}>사진 추가</span>}
       </div>
       <div style={{padding:'10px 12px 6px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:5,minHeight:52}}>
-       <strong style={{fontSize:14,lineHeight:1.4,overflowWrap:'anywhere'}}>{t.name}</strong>
+       <strong style={{fontSize:14,lineHeight:1.4,overflowWrap:'anywhere'}}>{t.name}{thighMode&&thighPostureOf(t)&&<span style={{display:'block',fontSize:12,color:'#8060a5',fontWeight:500,marginTop:3}}>{thighPostureOf(t)}</span>}</strong>
        <span style={{fontSize:17,color:'#927ab8',flexShrink:0}} aria-hidden="true">{open?'⌃':'⌄'}</span>
       </div>
      </button>

@@ -112,10 +112,13 @@ function normalizeRegionalStudio(raw,area){
  })):area==='thighs'&&!raw?.thighCategoryMigrated?(raw?.techniques||[]).map(t=>({
   ...t,category:3,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 허벅지 분류 · 재분류 필요'])].slice(0,12)
+ })):area==='back'&&!raw?.backCategoryMigrated?(raw?.techniques||[]).map(t=>({
+  ...t,category:4,
+  tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 등 미분류 · 재분류 필요'])].slice(0,12)
  })):raw?.techniques||[];
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:(area==='back'||area==='arms')?1:8,
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?5:area==='arms'?1:8,
   coreTechniques:prepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
@@ -147,6 +150,7 @@ function normalizeRegionalStudio(raw,area){
  ]:hipTechniques;
  return {
   postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
+  backCategoryMigrated:area==='back'?true:!!raw?.backCategoryMigrated,
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,

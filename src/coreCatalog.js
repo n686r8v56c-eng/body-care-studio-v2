@@ -366,7 +366,7 @@ export function seedCoreCatalog(snapshot){
  const ids=new Set(existing.map(x=>x.id));
  const hydrated=existing.map(x=>{
   const source=approved.get(x.id);
-  return source&&(!x.imageUrl)&&source.imageUrl?{...x,imageUrl:source.imageUrl}:x;
+  return source&&!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{...x,imageUrl:source.imageUrl}:x;
  });
  const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id));
  return {...snapshot,coreTechniques:[...hydrated,...additional]};

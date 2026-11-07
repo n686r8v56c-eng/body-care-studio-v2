@@ -257,7 +257,7 @@ function CoreTimer({data,onUpdate,database,userId}){
  const [pickerCategory,setPickerCategory]=useState(null);
  const [pickerSearch,setPickerSearch]=useState('');
  const [mediaOpen,setMediaOpen]=useState({photo:false,video:false});
- const [stepsOpen,setStepsOpen]=useState(true);
+ const [stepsOpen,setStepsOpen]=useState(false);
  const [editingStep,setEditingStep]=useState(null);
  const [index,setIndex]=useState(0);
  const [remaining,setRemaining]=useState(60);

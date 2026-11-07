@@ -6,7 +6,7 @@ export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
 const STUDIO_STRENGTH_CATEGORIES={
  glutes:['준비동작','고관절 신전','고관절 외전','고관절 외회전','단측 안정화','복합·통합'],
- hips:['90/90 자세','네발기기 자세','반무릎 런지','바로 눕기','서기','깊은 스쿼트','측면 무릎 자세','엎드리기','다리 뻗어 앉기'],
+ hips:['90/90 자세','네발기기 자세','반무릎 런지','바로 눕기','서기','깊은 스쿼트','측면 무릎 자세','엎드리기','다리 뻗어 앉기','Frog 자세','Z-shaped Legs 자세'],
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
 export const CORE_CATEGORIES=Object.freeze([

@@ -5,7 +5,7 @@ import './RoutineTimer.css';
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
 const STUDIO_STRENGTH_CATEGORIES={
- glutes:['준비동작','고관절 신전','고관절 외전','고관절 외회전','단측 안정화','복합·통합'],
+ glutes:['네발기기','바로 눕기','옆으로 눕기','양발 서기','한발 서기','Split Stance','Kickstand / B-Stance','앉기','등 지지 자세','엎드리기','반무릎 자세','양무릎 자세 (Tall Kneeling)'],
  hips:['90/90 자세','네발기기 자세','반무릎 런지','바로 눕기','서기','깊은 스쿼트','측면 무릎 자세','엎드리기','다리 뻗어 앉기','Frog 자세','Z-shaped Legs 자세'],
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
@@ -520,7 +520,8 @@ function CoreRecords({logs=[],title='코어'}){
 }
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
  const title=STUDIO_NAMES[area]||'코어';
- const strengthCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
+ const baseCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
+ const strengthCategories=area==='glutes'&&(data.studios?.glutes?.techniques||[]).some(t=>t.category===12)?[...baseCategories,'기존 기술 · 분류 확인']:baseCategories;
  const scoped=area==='core'?data:{
   ...data,
   coreTechniques:data.studios?.[area]?.techniques||[],
@@ -538,6 +539,7 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   };
   fn(virtual);
   d.studios={...(d.studios||{}),[area]:{
+   ...current,
    techniques:virtual.coreTechniques,
    yogaTechniques:virtual.coreYogaTechniques,
    routines:virtual.coreRoutines,

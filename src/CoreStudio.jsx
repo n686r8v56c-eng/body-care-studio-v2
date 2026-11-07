@@ -16,14 +16,19 @@ function CoreTechniques({data}){
  const techniques=data.coreTechniques||[];
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
-  <p style={{fontSize:13,opacity:.7}}>영상 인박스와 분리된 기술 공간. 분석 내용을 검토·승인한 다음 등록해.</p>
+  <p style={{fontSize:13,opacity:.7}}>영상 인박스와 분리된 기술 공간. 검토·승인된 기술을 분류별로 볼 수 있어. 이미지가 확인되지 않은 기술은 텍스트로 표시돼.</p>
   <div style={{display:'grid',gap:8,marginBottom:14}}>
    {CORE_CATEGORIES.map((name,i)=><button type="button" key={name} onClick={()=>setFilter(filter===i?-1:i)} style={{...btn,textAlign:'left',background:filter===i?'#eee5fb':'transparent',color:filter===i?'#382552':'inherit',display:'flex',justifyContent:'space-between'}}><strong>{i+1}. {name}</strong><span>{techniques.filter(x=>x.category===i).length}개</span></button>)}
   </div>
   {filter!==-1&&<button style={btn} onClick={()=>setFilter(-1)}>전체 보기</button>}
   {techniques.filter(x=>filter===-1||x.category===filter).map(t=><article key={t.id} style={{...panel,display:'flex',gap:12,alignItems:'flex-start'}}>
    {t.imageUrl&&<img src={t.imageUrl} alt="" loading="lazy" style={{height:72,width:84,objectFit:'cover',borderRadius:8}} onError={e=>{e.currentTarget.style.display='none'}}/>}
-   <div><strong>{t.name}</strong><p style={{margin:'4px 0',fontSize:12,opacity:.7}}>{CORE_CATEGORIES[t.category]}</p>{t.notes&&<p style={{fontSize:13}}>{t.notes}</p>}</div>
+   <div><strong>{t.name}</strong><p style={{margin:'4px 0',fontSize:12,opacity:.7}}>{CORE_CATEGORIES[t.category]}</p>{t.en&&<p style={{fontSize:12,margin:'4px 0',opacity:.65}}>{t.en}</p>}
+    {t.posture&&<p style={{fontSize:12,margin:'4px 0'}}><strong>자세</strong> · {t.posture}</p>}
+    {t.muscles&&<p style={{fontSize:12,margin:'4px 0'}}><strong>근육</strong> · {t.muscles}</p>}
+    {t.description&&<p style={{fontSize:13,margin:'6px 0'}}>{t.description}</p>}
+    {!!t.tags?.length&&<p style={{fontSize:12,opacity:.7}}>{t.tags.join(' · ')}</p>}
+    {t.notes&&<p style={{fontSize:13}}>{t.notes}</p>}</div>
   </article>)}
   {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어. 타임라인 분석 뒤 승인된 기술만 추가할 예정이야.</p>}
  </section>;

@@ -55,7 +55,7 @@ function TechniqueReferences({technique,onUpdate}){
  };
  const remove=id=>{
   if(!window.confirm('이 기술에 연결된 참고 영상만 삭제할까? 원본 영상과 기술은 유지돼.'))return;
-  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);if(row)row.references=(row.references||[]).filter(x=>x.id!==id)});
+  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);if(row){row.references=(row.references||[]).filter(x=>x.id!==id);row.removedReferenceIds=[...new Set([...(row.removedReferenceIds||[]),id])]}});
  };
  return <section style={{borderTop:'1px solid #ebe5f0',marginTop:12,paddingTop:12}}>
   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>

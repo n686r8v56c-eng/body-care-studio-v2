@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import CareLibrary from './CareLibrary.jsx';
 import './RoutineTimer.css';
 
+export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 export const CORE_CATEGORIES=Object.freeze([
  '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측면 안정화','복합·통합'
 ]);
@@ -36,7 +37,7 @@ const timeLabel=n=>{
  const sec=Math.max(0,Math.floor(Number(n)||0));
  return sec>=3600?[Math.floor(sec/3600),Math.floor(sec%3600/60),sec%60].map(x=>String(x).padStart(2,'0')).join(':'):String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
 };
-function TechniqueReferences({technique,onUpdate}){
+function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
  const refs=technique.references||[];
  const [adding,setAdding]=useState(false);
  const [selectedRef,setSelectedRef]=useState(null);
@@ -54,13 +55,13 @@ function TechniqueReferences({technique,onUpdate}){
   if(start===null||!Number.isSafeInteger(start)||start<0||end!==null&&(!Number.isSafeInteger(end)||end<=start)){setError('시간은 03:21 또는 초 단위로, 종료는 시작보다 늦게 적어 줘.');return}
   if(refs.some(x=>parseVideoUrl(x.url)?.id===vid.id&&x.start===start)){setError('같은 영상의 같은 시작 시간이 이미 연결되어 있어.');return}
   onUpdate(d=>{
-   const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);
+   const row=(d[storageKey]||[]).find(x=>x.id===technique.id);
    if(row){row.references=Array.isArray(row.references)?row.references:[];row.references.push({id:uid(),url:vid.url,title:draft.title.trim().slice(0,150)||'참고 영상',start,end,memo:draft.memo.trim().slice(0,500)})}
   });setSelectedRef(null);setShowPlayer(false);reset();
  };
  const remove=id=>{
   if(!window.confirm('이 기술에 연결된 참고 영상만 삭제할까? 원본 영상과 기술은 유지돼.'))return;
-  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);if(row){row.references=(row.references||[]).filter(x=>x.id!==id);row.removedReferenceIds=[...new Set([...(row.removedReferenceIds||[]),id])]}});
+  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===technique.id);if(row){row.references=(row.references||[]).filter(x=>x.id!==id);row.removedReferenceIds=[...new Set([...(row.removedReferenceIds||[]),id])]}});
   if(active?.id===id){setSelectedRef(null);setShowPlayer(false)}
  };
  return <section style={{borderTop:'1px solid #ebe5f0',marginTop:12,paddingTop:12}}>
@@ -103,6 +104,7 @@ function TechniqueReferences({technique,onUpdate}){
 }
 
 function CoreTechniques({data,onUpdate}){
+ const [mode,setMode]=useState('strength');
  const [openCategories,setOpenCategories]=useState([]);
  const [search,setSearch]=useState('');
  const [searchClosed,setSearchClosed]=useState([]);
@@ -111,27 +113,34 @@ function CoreTechniques({data,onUpdate}){
  const [imageDraft,setImageDraft]=useState('');
  const [imageError,setImageError]=useState('');
  const [failedImages,setFailedImages]=useState([]);
- const techniques=data.coreTechniques||[];
+ const yogaMode=mode==='yoga';
+ const categories=yogaMode?YOGA_CATEGORIES:CORE_CATEGORIES;
+ const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  const term=search.trim().toLocaleLowerCase();
  const searchable=t=>[t.name,t.en,t.posture,t.muscles,t.description,t.notes,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(term);
- const categoryMatches=i=>CORE_CATEGORIES[i].toLocaleLowerCase().includes(term);
+ const categoryMatches=i=>categories[i].toLocaleLowerCase().includes(term);
  const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t)));
  const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
- const totalMatches=term?CORE_CATEGORIES.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
+ const totalMatches=term?categories.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
+ const switchMode=next=>{setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
+ const storageKey=yogaMode?'coreYogaTechniques':'coreTechniques';
  const updateImage=(id,value)=>{
   const clean=value.trim();
   if(!isValidUrl(clean)){setImageError('http:// 또는 https:// 이미지 URL을 입력해 줘.');return}
-  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imageRemoved=false}});
+  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imageRemoved=false}});
   setFailedImages(ids=>ids.filter(x=>x!==id));setEditingImage('');setImageDraft('');setImageError('');
  };
  const deleteImage=id=>{
-  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imageRemoved=true}});
+  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imageRemoved=true}});
   setEditingImage('');setImageDraft('');setImageError('');
  };
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
+  <div role="tablist" aria-label="코어 운동 유형" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
+   {[{id:'strength',label:'맨몸근력'},{id:'yoga',label:'요가'}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
+  </div>
   <div style={{display:'flex',alignItems:'center',gap:8,border:'1px solid #d9cae8',borderRadius:12,padding:'7px 11px',marginBottom:8,background:'transparent'}}>
    <span aria-hidden="true" style={{color:'#8f76ac',fontSize:18}}>⌕</span>
    <input type="search" aria-label="코어 기술 검색" value={search} onChange={e=>{setSearch(e.target.value);setSearchClosed([])}} placeholder="기술명 · 영문명 · 근육 · 자세 · 태그 검색" style={{flex:1,minWidth:0,border:0,outline:'none',background:'transparent',color:'inherit',fontSize:16,padding:'7px 0'}}/>
@@ -139,7 +148,7 @@ function CoreTechniques({data,onUpdate}){
   </div>
   {term&&<p role="status" style={{fontSize:12,color:'#8d78a4',margin:'0 0 12px'}}>검색 결과 {totalMatches}개</p>}
   <div style={{display:'grid',gap:10,marginBottom:16}}>
-   {CORE_CATEGORIES.map((name,i)=>{
+   {categories.map((name,i)=>{
     const entries=matchingEntries(i);
     if(term&&!entries.length)return null;
     const openCategory=term?!searchClosed.includes(i):openCategories.includes(i);
@@ -151,6 +160,7 @@ function CoreTechniques({data,onUpdate}){
       <span style={{color:'#977eb0',fontSize:17}} aria-hidden="true">{openCategory?'⌃':'⌄'}</span>
      </button>
      {openCategory&&<div style={{borderTop:'1px solid #e9e1ef',padding:'10px',display:'grid',gridTemplateColumns:'minmax(0,1fr)',gap:12}}>
+      {!entries.length&&<p style={{fontSize:13,opacity:.65,margin:'8px 4px'}}>등록된 동작이 없어.</p>}
       {entries.map(t=>{
 
     const open=expanded.includes(t.id),hasImage=!!t.imageUrl&&!failedImages.includes(t.id);
@@ -181,7 +191,7 @@ function CoreTechniques({data,onUpdate}){
       {!!t.tags?.length&&<p style={{opacity:.7}}>{t.tags.join(' · ')}</p>}
       {t.notes&&<p>{t.notes}</p>}
       {hasImage&&<a href={t.imageUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>이미지 원본 열기</a>}
-      <TechniqueReferences technique={t} onUpdate={onUpdate}/>
+      <TechniqueReferences technique={t} onUpdate={onUpdate} storageKey={storageKey}/>
      </div>}
     </article>;
       })}
@@ -189,7 +199,7 @@ function CoreTechniques({data,onUpdate}){
     </section>;
    })}
   </div>
-  {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어.</p>}
+  {!techniques.length&&!yogaMode&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어.</p>}
   {term&&totalMatches===0&&<p style={{fontSize:14,opacity:.7,textAlign:'center',padding:'18px 0'}}>일치하는 기술이 없어. 다른 검색어를 입력해 줘.</p>}
  </section>;
 }

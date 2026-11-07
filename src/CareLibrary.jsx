@@ -10,6 +10,16 @@ const VOICE_SEED_DRILLS=[{"level":1,"sort":0,"en":"Appoggio","ko":"아포지오 
 
 import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
 const groupKey=(area,group)=>area+':'+group;
+const instagramUrl=raw=>{
+ try{
+  const u=new URL(String(raw||'').trim().replace(/^(?!https?:\/\/)/,'https://'));
+  if(!['instagram.com','www.instagram.com','m.instagram.com'].includes(u.hostname.toLowerCase()))return null;
+  const p=u.pathname.split('/').filter(Boolean);
+  if(!['reel','reels','p','tv'].includes(p[0])||!/^[-\w]+$/.test(p[1]||''))return null;
+  return 'https://www.instagram.com/'+(p[0]==='reels'?'reel':p[0])+'/'+p[1]+'/';
+ }catch{return null}
+};
+const instagramLinks=value=>[...new Set((Array.isArray(value)?value:[]).map(instagramUrl).filter(Boolean))].slice(0,5);
 const nextId=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const displayName=row=>row.en||row.title||row.ko||'이름 없음';
 const videoId=raw=>{
@@ -76,6 +86,8 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const archived=scoped.filter(x=>x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0));
  const numberById=new Map(ordered.map((row,i)=>[row.id,i+1]));
  const videosFor=row=>normalizeVideoIds(row?.videos);
+ const instagramsFor=row=>instagramLinks(row?.instagramLinks);
+ const linksFor=row=>[...videosFor(row).map(id=>({type:'youtube',id,url:'https://www.youtube.com/watch?v='+id})),...instagramsFor(row).map(url=>({type:'instagram',id:url,url}))];
  const openNew=()=>{setDraft({en:'',ko:'',level,note:''});setEditor({mode:'add'})};
  const openEdit=row=>{setDraft({en:row.en||row.title||'',ko:row.ko||'',level:row.level||1,note:row.note||''});setEditor({mode:'edit',id:row.id})};
  const submitItem=e=>{
@@ -111,17 +123,27 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   alertUser('목록에 복구했어.');
  };
  const addVideos=(row,raw)=>{
-  const matches=String(raw||'').match(/(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)\/[^\s,，]+/gi)||[String(raw||'').trim()];
-  const ids=matches.map(videoId).filter(Boolean);
-  if(!ids.length){alertUser('올바른 유튜브 주소를 입력해 줘.');return}
-  const old=videosFor(row),fresh=[...new Set(ids)].filter(x=>!old.includes(x)).slice(0,MAX-old.length);
-  if(!fresh.length){alertUser(old.length===MAX?'영상은 최대 5개까지 등록 가능해.':'이미 등록된 영상이야.');return}
-  update(d=>{const found=d.items.find(x=>x.id===row.id);if(found)found.videos=[...old,...fresh]});
-  setOpened(row.id);setActive(v=>({...v,[row.id]:old.length}));
-  alertUser('영상 '+fresh.length+'개 등록 완료');
+  const pasted=String(raw||'').trim();
+  const rawLinks=pasted.match(/(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com|instagram\.com)\/[^\s,，]+/gi)||[pasted];
+  const youTubeIds=[...new Set(rawLinks.map(videoId).filter(Boolean))];
+  const instagramUrls=[...new Set(rawLinks.map(instagramUrl).filter(Boolean))];
+  if(!youTubeIds.length&&!instagramUrls.length){alertUser('YouTube 또는 Instagram 릴스·게시물 주소를 입력해 줘.');return}
+  const existing=linksFor(row);
+  const limit=Math.max(0,MAX-existing.length);
+  if(!limit){alertUser('영상 링크는 한 동작에 최대 5개까지 등록 가능해.');return}
+  const fresh=[...youTubeIds.filter(id=>!videosFor(row).includes(id)).map(id=>({type:'youtube',id})),...instagramUrls.filter(url=>!instagramsFor(row).includes(url)).map(url=>({type:'instagram',url}))].slice(0,limit);
+  if(!fresh.length){alertUser('이미 등록된 영상이야.');return}
+  update(d=>{
+   const found=d.items.find(x=>x.id===row.id);
+   if(!found)return;
+   found.videos=[...videosFor(found),...fresh.filter(x=>x.type==='youtube').map(x=>x.id)];
+   found.instagramLinks=[...instagramsFor(found),...fresh.filter(x=>x.type==='instagram').map(x=>x.url)];
+  });
+  setOpened(row.id);setActive(v=>({...v,[row.id]:existing.length}));
+  alertUser('영상 링크 '+fresh.length+'개 등록 완료');
  };
  const addFromClipboard=async row=>{
-  if(videosFor(row).length>=MAX){setOpened(row.id);alertUser('영상은 최대 5개까지 등록 가능해.');return}
+  if(linksFor(row).length>=MAX){setOpened(row.id);alertUser('영상은 최대 5개까지 등록 가능해.');return}
   let pasted='';
   try{
    if(!navigator.clipboard?.readText)throw new Error('clipboard unavailable');
@@ -129,7 +151,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   }catch{
    // Safari on iOS may deny clipboard reads. Use a temporary native prompt,
    // never leave the old inline link form visible beneath the video.
-   pasted=window.prompt('유튜브 링크를 붙여넣어 줘.','')||'';
+   pasted=window.prompt('YouTube 또는 Instagram 링크를 붙여넣어 줘.','')||'';
   }
   if(!pasted.trim())return;
   addVideos(row,pasted);
@@ -141,7 +163,14 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  };
  const removeVideo=(row,index)=>{
   if(!confirm('이 영상 링크를 삭제할까?'))return;
-  update(d=>{const found=d.items.find(x=>x.id===row.id);if(found)found.videos=videosFor(found).filter((_,i)=>i!==index)});
+  const link=linksFor(row)[index];
+  if(!link)return;
+  update(d=>{
+   const found=d.items.find(x=>x.id===row.id);
+   if(!found)return;
+   if(link.type==='youtube')found.videos=videosFor(found).filter(id=>id!==link.id);
+   else found.instagramLinks=instagramsFor(found).filter(url=>url!==link.url);
+  });
   setActive(v=>({...v,[row.id]:0}));
  };
  const exportBackup=()=>{
@@ -157,7 +186,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    if(!confirm('현재 목록을 보존하면서 새 항목만 추가할까?'))return;
    update(d=>{
     const ids=new Set(d.items.map(x=>x.id));
-    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face','core'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:normalizeVideoIds(x.videos)});ids.add(x.id)}});
+    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face','core'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:normalizeVideoIds(x.videos),instagramLinks:instagramLinks(x.instagramLinks)});ids.add(x.id)}});
     d.levelNames={...(raw.levelNames||{}),...(d.levelNames||{})};
    });setShowImport(false);alertUser('JSON 백업에서 새 항목을 가져왔어.');
   }catch(e){alertUser('백업 가져오기 실패: '+e.message)}
@@ -175,8 +204,8 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   });
   setLevelRename(null);alertUser('단계 이름 저장 완료');
  };
- const recovered=scoped.filter(x=>videosFor(x).length);
- const totalSavedVideos=recovered.reduce((sum,x)=>sum+videosFor(x).length,0);
+ const recovered=scoped.filter(x=>linksFor(x).length);
+ const totalSavedVideos=recovered.reduce((sum,x)=>sum+linksFor(x).length,0);
  return <div className="stretching-page">
   <div className="care-page-title"><h1>{data.groupNames?.[groupKey(area,group)]||({massage:'마사지',stretch:'스트레치',bodyweight:'맨몸근력',machine:'기계근력'})[group]}</h1></div>
   <div className="stretching-levels" role="tablist" aria-label="바디케어 단계">
@@ -193,7 +222,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    </div>
   </div>
   <div className="stretching-drills">{visible.map(row=>{
-   const arr=videosFor(row),expanded=opened===row.id,index=Math.min(active[row.id]||0,Math.max(0,arr.length-1));
+   const arr=linksFor(row),expanded=opened===row.id,index=Math.min(active[row.id]||0,Math.max(0,arr.length-1));
    return <div className="stretching-drill" key={row.id}>
     <div className="stretching-drill-row">
      <button type="button" className="stretching-drill-toggle" aria-expanded={expanded} onClick={()=>{setOpened(expanded?null:row.id)}}>
@@ -211,14 +240,14 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
     {expanded&&<div className="stretching-video-detail">
      {arr.length?<>
       {arr.length>1&&<div className="stretching-video-switch">{arr.map((v,i)=><button type="button" key={v} className={index===i?'active':''} onClick={()=>setActive(a=>({...a,[row.id]:i}))}>영상 {i+1}</button>)}</div>}
-      <div className="stretching-video-frame"><iframe title={displayName(row)+' 영상'} key={arr[index]} src={'https://www.youtube-nocookie.com/embed/'+arr[index]+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/></div>
+      {arr[index]?.type==='youtube'?<div className="stretching-video-frame"><iframe title={displayName(row)+' 영상'} key={arr[index].id} src={'https://www.youtube-nocookie.com/embed/'+arr[index].id+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/></div>:<div className="stretching-no-video"><strong>Instagram 영상 북마크</strong><span>썸네일 없이 링크로 저장했어. 아래에서 Instagram으로 열 수 있어.</span></div>}
       <div className="stretching-video-actions">
-       <button type="button" onClick={()=>copyLink(arr[index])}><Link2 size={15}/> 링크 복사</button>
-       <a href={'https://www.youtube.com/watch?v='+arr[index]} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> 영상 열기</a>
+       <button type="button" onClick={()=>arr[index].type==='youtube'?copyLink(arr[index].id):navigator.clipboard.writeText(arr[index].url).then(()=>alertUser('링크 복사 완료')).catch(()=>alertUser('영상 열기를 이용해 줘.'))}><Link2 size={15}/> 링크 복사</button>
+       <a href={arr[index].url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> {arr[index].type==='instagram'?'Instagram에서 열기':'영상 열기'}</a>
        {!readOnly&&<button type="button" onClick={()=>removeVideo(row,index)}><Trash2 size={15}/> 링크 삭제</button>}
        {!readOnly&&arr.length<MAX&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
       </div>
-     </>:<div className="stretching-no-video"><strong>영상 링크 등록 대기</strong><span>오른쪽 링크 아이콘을 눌러 유튜브 주소를 등록해 줘.</span></div>}
+     </>:<div className="stretching-no-video"><strong>영상 링크 등록 대기</strong><span>오른쪽 링크 아이콘을 눌러 YouTube 또는 Instagram 주소를 등록해 줘.</span></div>}
     </div>}
    </div>
   })}</div>
@@ -230,7 +259,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    <button type="button" className="stretching-recovery-toggle" onClick={()=>setShowRecovery(v=>!v)}><span>저장된 영상 확인 · {recovered.length}개 동작 / {totalSavedVideos}개 링크</span>{showRecovery?<ChevronUp size={17}/>:<ChevronDown size={17}/>}</button>
    {showRecovery&&<div className="stretching-recovery-list"><p>현재 바디케어 계정에 저장된 링크야. 숨긴 항목의 영상도 표시돼.</p>
     {!recovered.length&&<p>등록된 영상 링크가 없어.</p>}
-    {recovered.map(row=><div className="stretching-recovery-row" key={row.id}><strong>{displayName(row)}{row.archived?' (목록에서 숨김)':''}</strong><div>{videosFor(row).map((id,i)=><a href={'https://www.youtube.com/watch?v='+id} key={id} target="_blank" rel="noopener noreferrer">영상 {i+1} <ExternalLink size={13}/></a>)}</div></div>)}
+    {recovered.map(row=><div className="stretching-recovery-row" key={row.id}><strong>{displayName(row)}{row.archived?' (목록에서 숨김)':''}</strong><div>{linksFor(row).map((link,i)=><a href={link.url} key={link.id} target="_blank" rel="noopener noreferrer">{link.type==='instagram'?'Instagram ':'YouTube '}{i+1} <ExternalLink size={13}/></a>)}</div></div>)}
    </div>}
   </section>}
 

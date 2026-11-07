@@ -4,7 +4,7 @@ import './RoutineTimer.css';
 
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 export const CORE_CATEGORIES=Object.freeze([
- '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측면 안정화','복합·통합'
+ '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합'
 ]);
 const uid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(36).slice(2);
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};

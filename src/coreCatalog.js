@@ -643,6 +643,60 @@ export const CORE_APPROVED_TECHNIQUES=[
     ],
     "imageUrl": "",
     "notes": "제공된 시퀀스 4~5번 · 오른쪽 움직임 03:07, 왼쪽 움직임 04:02 · 같은 기술의 양측 반복"
+  },
+  {
+    "id": "core-calisthenics-0217",
+    "time": "02:17",
+    "category": 0,
+    "name": "V-싯 컴프레션 레이즈",
+    "en": "Compression V-Sit Raises",
+    "posture": "앉은 자세에서 손으로 바닥 지지, 다리를 몸통 쪽으로 당김",
+    "muscles": "복직근·고관절 굴곡근·복횡근(안정화)",
+    "description": "V자 자세를 만들며 다리를 몸통 방향으로 능동적으로 끌어올리는 압축 레이즈. 고관절 굴곡과 몸통 굴곡의 복합 동작.",
+    "tags": [
+      "몸통 굴곡",
+      "고관절 굴곡",
+      "압축",
+      "맨몸근력"
+    ],
+    "imageUrl": "",
+    "notes": "제공된 Calisthenics Core Conditioning 시퀀스 · 02:17"
+  },
+  {
+    "id": "core-calisthenics-0542",
+    "time": "05:42",
+    "category": 0,
+    "name": "베개 지지 스파인 플렉션 크런치",
+    "en": "Supported Spine Flexion Crunch",
+    "posture": "바로 누워 등 중앙 아래 얇은 베개를 받쳐 몸통을 굽힘",
+    "muscles": "복직근",
+    "description": "등 아래 지지물을 이용한 시작 자세에서 몸통을 천천히 굴곡하는 크런치 변형. 허리를 강제로 꺾지 않고 통제 가능한 범위에서 수행.",
+    "tags": [
+      "몸통 굴곡",
+      "크런치",
+      "베개 지지",
+      "가동범위"
+    ],
+    "imageUrl": "",
+    "notes": "제공된 Calisthenics Core Conditioning 시퀀스 · 05:42 · 지지물 사용 변형"
+  },
+  {
+    "id": "core-calisthenics-0651",
+    "time": "06:51",
+    "category": 3,
+    "name": "싱글 레그 로어",
+    "en": "Single Leg Lowers",
+    "posture": "바로 누워 한 다리씩 바닥 방향으로 내렸다 올림",
+    "muscles": "복직근·복사근·복횡근(안정화)·고관절 굴곡근",
+    "description": "몸통과 골반 위치를 유지하며 한쪽 다리를 통제해 내렸다 올린다. 다리 하강 중 허리가 과도하게 젖혀지는 움직임에 저항.",
+    "tags": [
+      "신전 저항",
+      "레그 로어",
+      "골반 안정화",
+      "맨몸근력"
+    ],
+    "imageUrl": "",
+    "notes": "제공된 Calisthenics Core Conditioning 시퀀스 · 06:51 · 다리 하강형"
   }
 ];
 // Source video provided by the user; positions are the supplied chapter timestamps.
@@ -684,6 +738,8 @@ for(const tech of CORE_APPROVED_TECHNIQUES){
    tech.references[0].memo='왼발 지지 · 오른쪽 다리 움직임';
    tech.references.push({...base,id:sourceId+'-left',start:seconds('04:02'),memo:'오른발 지지 · 왼쪽 다리 움직임'});
   }
+ }else if(tech.id.startsWith('core-calisthenics-')){
+  tech.references=[{id:'source-grN046o8M7I-'+tech.id.slice(-4),url:'https://www.youtube.com/watch?v=grN046o8M7I',title:'Calisthenics Core Conditioning 7 Minute Follow Through',start:seconds(tech.time),end:null,memo:'해당 기술 구간'}];
  }else if(tech.id.startsWith('core-foam-rib-')){
   tech.references=[{
    id:'source-foam-rib-'+tech.id.slice(-4),
@@ -693,6 +749,18 @@ for(const tech of CORE_APPROVED_TECHNIQUES){
   }];
   tech.notes='폼롤러 지지 조건의 변형 기술';
  }
+}
+// Connect the same source to existing techniques rather than duplicating nearly identical moves.
+const calisthenicsExisting=[
+ ['core-pelvic-sequence-0012','00:00','TVA 활성화 · 골반 후방경사 준비'],
+ ['core-pelvic-sequence-0211','00:53','매트 토 탭'],
+ ['core-strong-abs-2520','03:21','할로우 홀드'],
+ ['core-superman-extension','04:30','리버스 할로우 · 슈퍼맨 계열']
+];
+for(const [id,time,memo] of calisthenicsExisting){
+ const tech=CORE_APPROVED_TECHNIQUES.find(t=>t.id===id);
+ if(!tech)continue;
+ tech.references=[...(tech.references||[]),{id:'source-grN046o8M7I-'+time.replace(':',''),url:'https://www.youtube.com/watch?v=grN046o8M7I',title:'Calisthenics Core Conditioning 7 Minute Follow Through',start:seconds(time),end:null,memo}];
 }
 
 export function seedCoreCatalog(snapshot){
@@ -711,8 +779,12 @@ export function seedCoreCatalog(snapshot){
    return match?{...ref,url:match.url,title:match.title}:ref;
   });
   const refs=[...migrated,...(source.references||[]).filter(ref=>!removed.has(ref.id)&&!present.has(ref.id))];
-  return {...x,...(!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{imageUrl:source.imageUrl}:{}),references:refs};
+  // Migrate only the originally seeded pelvic tilt from body flexion to the new preparation category.
+  // Do not overwrite later manual category choices.
+  const prepared=x.id==='core-pelvic-sequence-0012'&&Number(x.category)===0?{category:7}:{};
+  return {...x,...prepared,...(!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{imageUrl:source.imageUrl}:{}),references:refs};
  });
- const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id));
+ // Pelvic tilt is preparation even when added for the first time.
+ const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id)).map(x=>x.id==='core-pelvic-sequence-0012'?{...x,category:7}:x);
  return {...snapshot,coreTechniques:[...hydrated,...additional]};
 }

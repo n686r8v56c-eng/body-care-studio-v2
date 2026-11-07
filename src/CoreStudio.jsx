@@ -247,6 +247,25 @@ function CoreTechniques({data,onUpdate,database,userId}){
   {term&&totalMatches===0&&<p style={{fontSize:14,opacity:.7,textAlign:'center',padding:'18px 0'}}>일치하는 기술이 없어. 다른 검색어를 입력해 줘.</p>}
  </section>;
 }
+function CoreSequenceThumbnail({technique,database,userId}){
+ const [signedUrl,setSignedUrl]=useState('');
+ const [broken,setBroken]=useState(false);
+ const path=technique?.imageRemoved?'':technique?.imagePath||'';
+ const direct=technique?.imageRemoved?'':technique?.imageUrl||'';
+ useEffect(()=>{
+  let active=true;
+  setSignedUrl('');setBroken(false);
+  if(!path||!database||!userId||!path.startsWith(userId+'/'))return;
+  database.storage.from('body-care-technique-images').createSignedUrl(path,3600).then(({data,error})=>{
+   if(active&&!error)setSignedUrl(data?.signedUrl||'');
+  }).catch(()=>{});
+  return ()=>{active=false};
+ },[path,database,userId]);
+ const src=path?signedUrl:direct;
+ return <span aria-hidden="true" style={{width:56,height:56,flexShrink:0,borderRadius:11,overflow:'hidden',background:'#eee7f5',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid #e5d9ec'}}>
+  {src&&!broken?<img src={src} alt="" loading="lazy" onError={()=>setBroken(true)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:22,color:'#ae94c7'}}>▧</span>}
+ </span>;
+}
 function CoreTimer({data,onUpdate,database,userId}){
  const techniques=data.coreTechniques||[];
  const routines=data.coreRoutines||[];
@@ -256,24 +275,19 @@ function CoreTimer({data,onUpdate,database,userId}){
  const [adding,setAdding]=useState(false);
  const [pickerCategory,setPickerCategory]=useState(null);
  const [pickerSearch,setPickerSearch]=useState('');
- const [mediaOpen,setMediaOpen]=useState({photo:false,video:false});
+ const [mediaOpen,setMediaOpen]=useState({video:false});
  const [stepsOpen,setStepsOpen]=useState(false);
  const [editingStep,setEditingStep]=useState(null);
  const [index,setIndex]=useState(0);
  const [remaining,setRemaining]=useState(60);
  const [playing,setPlaying]=useState(false);
  const [done,setDone]=useState(false);
- const [imageLink,setImageLink]=useState('');
- const [imageFailed,setImageFailed]=useState(false);
  const [videoSelection,setVideoSelection]=useState(0);
  const [showVideo,setShowVideo]=useState(false);
  const currentStep=steps[index]||null;
  const currentTechnique=techniques.find(t=>t.id===currentStep?.techniqueId)||null;
  const currentName=currentTechnique?.name||'시퀀스를 구성해 줘';
  const nextName=steps[index+1]?nameOf(steps[index+1].techniqueId,techniques):'마지막 동작';
- const imagePath=currentTechnique?.imagePath||'';
- const directImage=currentTechnique?.imageRemoved?'':currentTechnique?.imageUrl||'';
- const imageSrc=imagePath?imageLink:directImage;
  const references=(currentTechnique?.references||[]).filter(ref=>parseVideoUrl(ref.url));
  const activeReference=references[Math.min(videoSelection,references.length-1)]||null;
  const activeVideo=activeReference?parseVideoUrl(activeReference.url):null;
@@ -285,17 +299,8 @@ function CoreTimer({data,onUpdate,database,userId}){
  const softButton={...btn,padding:'7px 11px',fontSize:13,borderRadius:10,background:'#faf7fe'};
  const matchingPicker=techniques.filter(t=>!pickerSearch.trim()||[t.name,t.en,t.posture,t.muscles,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(pickerSearch.trim().toLocaleLowerCase()));
  useEffect(()=>{
-  setVideoSelection(0);setShowVideo(false);setImageFailed(false);
+  setVideoSelection(0);setShowVideo(false);
  },[currentStep?.techniqueId]);
- useEffect(()=>{
-  let alive=true;
-  setImageLink('');
-  if(!imagePath||!database||!userId||!imagePath.startsWith(userId+'/'))return;
-  database.storage.from('body-care-technique-images').createSignedUrl(imagePath,3600).then(({data:result,error})=>{
-   if(alive&&!error)setImageLink(result?.signedUrl||'');
-  }).catch(()=>{});
-  return()=>{alive=false};
- },[imagePath,database,userId]);
  const endAt=useRef(0),lastTick=useRef(0),playingRef=useRef(false),stepsRef=useRef(steps),indexRef=useRef(index);
  stepsRef.current=steps;indexRef.current=index;playingRef.current=playing;
  const saveElapsed=seconds=>{
@@ -380,19 +385,7 @@ function CoreTimer({data,onUpdate,database,userId}){
     <button type="button" aria-label="처음부터" title="처음" style={btn} disabled={!steps.length} onClick={()=>{pause();setIndex(0);setRemaining(steps[0]?.seconds||60);setDone(false)}}>↻</button>
    </div>
   </div>
-  {currentTechnique&&<section aria-label="현재 기술 미디어" style={{display:'grid',gap:10,marginBottom:13}}>
-   <div style={accordionCard}>
-    <button type="button" aria-expanded={mediaOpen.photo} onClick={()=>setMediaOpen(v=>({...v,photo:!v.photo}))} style={accordionHeader}>
-     <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#f1e9f9',color:'#8562a9',fontSize:19}}>▧</span>
-     <span style={{flex:1,minWidth:0}}><strong style={{display:'block'}}>동작 사진</strong><small style={{display:'block',fontSize:12,color:'#9785a5',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{currentName} · {imageSrc&&!imageFailed?'등록됨':'사진 없음'}</small></span>
-     <span aria-hidden="true" style={{color:'#8d70aa',fontSize:19}}>{mediaOpen.photo?'⌃':'⌄'}</span>
-    </button>
-    {mediaOpen.photo&&<div style={{padding:'0 13px 14px'}}>
-     <div style={{aspectRatio:'4 / 3',borderRadius:12,overflow:'hidden',background:'#f5f0f8',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      {imageSrc&&!imageFailed?<img src={imageSrc} alt={currentName+' 참고 사진'} loading="lazy" onError={()=>setImageFailed(true)} style={{height:'100%',width:'100%',objectFit:'contain'}}/>:<span style={{fontSize:13,color:'#897896'}}>등록된 참고 사진이 없어.</span>}
-     </div>
-    </div>}
-   </div>
+  {currentTechnique&&<section aria-label="현재 기술 참고 영상" style={{display:'grid',gap:10,marginBottom:13}}>
    <div style={accordionCard}>
     <button type="button" aria-expanded={mediaOpen.video} onClick={()=>{setMediaOpen(v=>({...v,video:!v.video}));if(mediaOpen.video)setShowVideo(false)}} style={accordionHeader}>
      <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#f1e9f9',color:'#8562a9',fontSize:18}}>▷</span>
@@ -450,7 +443,8 @@ function CoreTimer({data,onUpdate,database,userId}){
     {!steps.length&&<p style={{fontSize:13,color:'#90829b',textAlign:'center',margin:'12px 0'}}>먼저 기술 라이브러리에서 동작을 추가해 줘.</p>}
     {steps.map((step,i)=><div key={i} style={{border:'1px solid '+(i===index?'#c0a0df':'#e8dff0'),background:i===index?'#f4edfb':'#fff',borderRadius:12,overflow:'hidden'}}>
      <button type="button" aria-expanded={editingStep===i} onClick={()=>{setEditingStep(editingStep===i?null:i);if(!playing){setIndex(i);setRemaining(step.seconds);setDone(false)}}} style={{border:0,background:'transparent',color:'#40334b',padding:'12px',width:'100%',display:'flex',alignItems:'center',textAlign:'left',gap:9,cursor:'pointer'}}>
-      <span style={{color:'#8968ab',fontWeight:700,fontSize:12,minWidth:22}}>{String(i+1).padStart(2,'0')}</span>
+      <CoreSequenceThumbnail technique={techniques.find(t=>t.id===step.techniqueId)} database={database} userId={userId}/>
+      <span style={{color:'#8968ab',fontWeight:700,fontSize:12,minWidth:20}}>{String(i+1).padStart(2,'0')}</span>
       <strong style={{flex:1,fontSize:14,overflowWrap:'anywhere'}}>{nameOf(step.techniqueId,techniques)}</strong>
       <span style={{fontSize:13,color:'#80668f',whiteSpace:'nowrap'}}>{fmt(step.seconds)}</span>
       <span style={{color:'#947dab',fontSize:15}}>{editingStep===i?'⌃':'⌄'}</span>

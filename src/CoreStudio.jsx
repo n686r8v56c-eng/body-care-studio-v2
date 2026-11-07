@@ -11,32 +11,55 @@ const day=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1)
 const btn={padding:'10px 12px',borderRadius:10,border:'1px solid #bca6d8',background:'transparent',color:'inherit',cursor:'pointer'};
 const panel={padding:14,border:'1px solid #ddd5e7',borderRadius:12,marginBottom:10};
 const nameOf=(id,techniques)=>techniques.find(t=>t.id===id)?.name||'삭제된 기술';
-function CoreTechniques({data}){
+function CoreTechniques({data,onUpdate}){
  const [filter,setFilter]=useState(-1);
  const [expanded,setExpanded]=useState([]);
+ const [editingImage,setEditingImage]=useState('');
+ const [imageDraft,setImageDraft]=useState('');
+ const [imageError,setImageError]=useState('');
  const [failedImages,setFailedImages]=useState([]);
  const techniques=data.coreTechniques||[];
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
+ const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
+ const updateImage=(id,value)=>{
+  const clean=value.trim();
+  if(!isValidUrl(clean)){setImageError('http:// 또는 https:// 이미지 URL을 입력해 줘.');return}
+  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imageRemoved=false}});
+  setFailedImages(ids=>ids.filter(x=>x!==id));setEditingImage('');setImageDraft('');setImageError('');
+ };
+ const deleteImage=id=>{
+  onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imageRemoved=true}});
+  setEditingImage('');setImageDraft('');setImageError('');
+ };
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
   <div style={{display:'grid',gap:8,marginBottom:16}}>
    {CORE_CATEGORIES.map((name,i)=><button type="button" key={name} onClick={()=>setFilter(filter===i?-1:i)} style={{...btn,textAlign:'left',background:filter===i?'#eee5fb':'transparent',color:filter===i?'#382552':'inherit',display:'flex',justifyContent:'space-between'}}><strong>{i+1}. {name}</strong><span>{techniques.filter(x=>x.category===i).length}개</span></button>)}
   </div>
   {filter!==-1&&<button style={{...btn,marginBottom:12}} onClick={()=>setFilter(-1)}>전체 보기</button>}
-  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,230px),1fr))',gap:12,alignItems:'start'}}>
+  <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:10,alignItems:'start'}}>
    {techniques.filter(x=>filter===-1||x.category===filter).map(t=>{
     const open=expanded.includes(t.id),hasImage=!!t.imageUrl&&!failedImages.includes(t.id);
-    return <article key={t.id} style={{border:'1px solid #ddd5e7',borderRadius:14,overflow:'hidden',background:'var(--card-bg,transparent)'}}>
+    return <article key={t.id} style={{minWidth:0,border:'1px solid #ddd5e7',borderRadius:14,overflow:'hidden',background:'var(--card-bg,transparent)'}}>
      <button type="button" aria-expanded={open} onClick={()=>toggle(t.id)} style={{border:0,padding:0,width:'100%',display:'block',textAlign:'left',background:'transparent',color:'inherit',cursor:'pointer'}}>
-      <div style={{height:210,background:'#f2eff6',display:'flex',justifyContent:'center',alignItems:'center',overflow:'hidden'}}>
-       {hasImage?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'contain'}}/>:<span style={{fontSize:13,color:'#857990'}}>참고 이미지 확인 중</span>}
+      <div style={{aspectRatio:'4 / 3',width:'100%',background:'#f2eff6',display:'flex',justifyContent:'center',alignItems:'center',overflow:'hidden'}}>
+       {hasImage?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>:<span style={{fontSize:12,color:'#857990',padding:8,textAlign:'center'}}>사진 추가</span>}
       </div>
-      <div style={{padding:'13px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-       <strong style={{fontSize:16,lineHeight:1.4}}>{t.name}</strong>
-       <span style={{fontSize:20,color:'#927ab8'}} aria-hidden="true">{open?'⌃':'⌄'}</span>
+      <div style={{padding:'10px 12px 6px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:5,minHeight:52}}>
+       <strong style={{fontSize:14,lineHeight:1.4,overflowWrap:'anywhere'}}>{t.name}</strong>
+       <span style={{fontSize:17,color:'#927ab8',flexShrink:0}} aria-hidden="true">{open?'⌃':'⌄'}</span>
       </div>
      </button>
-     {open&&<div style={{padding:'0 14px 14px',fontSize:13,lineHeight:1.6,borderTop:'1px solid #ebe5f0'}}>
+     <div style={{padding:'0 8px 9px',display:'flex',gap:5}}>
+      <button type="button" style={{...btn,flex:1,padding:'7px 4px',fontSize:12}} onClick={()=>{setEditingImage(editingImage===t.id?'':t.id);setImageDraft('');setImageError('')}}>{t.imageUrl?'사진 변경':'사진 추가'}</button>
+      <button type="button" style={{...btn,padding:'7px 8px',fontSize:12}} disabled={!t.imageUrl} onClick={()=>deleteImage(t.id)}>삭제</button>
+     </div>
+     {editingImage===t.id&&<form style={{padding:'0 9px 10px'}} onSubmit={e=>{e.preventDefault();updateImage(t.id,imageDraft)}}>
+      <input autoFocus type="url" value={imageDraft} placeholder="이미지 URL 붙여넣기" aria-label={t.name+' 이미지 URL'} onChange={e=>{setImageDraft(e.target.value);setImageError('')}} onPaste={e=>{const value=e.clipboardData.getData('text').trim();if(isValidUrl(value)){e.preventDefault();updateImage(t.id,value)}}} style={{width:'100%',minWidth:0,boxSizing:'border-box',fontSize:16,padding:9,borderRadius:9,border:'1px solid #bca6d8'}}/>
+      {imageError&&<p role="alert" style={{color:'#b34455',fontSize:12,margin:'5px 0'}}>{imageError}</p>}
+      <div style={{display:'flex',gap:6,marginTop:6}}><button type="submit" style={{...btn,flex:1,fontSize:12}}>저장</button><button type="button" style={{...btn,fontSize:12}} onClick={()=>{setEditingImage('');setImageError('')}}>취소</button></div>
+     </form>}
+     {open&&<div style={{padding:'4px 12px 12px',fontSize:13,lineHeight:1.6,borderTop:'1px solid #ebe5f0'}}>
       <p style={{opacity:.7,margin:'10px 0 6px'}}>{CORE_CATEGORIES[t.category]}{t.time?' · '+t.time:''}</p>
       {t.en&&<p style={{margin:'6px 0'}}><strong>영문명</strong> · {t.en}</p>}
       {t.posture&&<p style={{margin:'6px 0'}}><strong>자세</strong> · {t.posture}</p>}
@@ -175,5 +198,5 @@ export default function CoreStudio({tab,data,onUpdate,sync}){
  </section>;
  if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate}/>;
  if(tab==='records')return <CoreRecords logs={data.coreLogs||[]}/>;
- return <CoreTechniques data={data}/>;
+ return <CoreTechniques data={data} onUpdate={onUpdate}/>;
 }

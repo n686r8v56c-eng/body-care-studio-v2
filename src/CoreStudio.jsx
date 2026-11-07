@@ -366,7 +366,7 @@ function CoreRecords({logs=[]}){
 export default function CoreStudio({tab,data,onUpdate,sync,database,userId}){
  if(tab==='inbox')return <section aria-label="코어 영상 인박스">
   <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>코어 · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크만 저장해. 기술 분석은 나중에.</p></div>
-  <CareLibrary data={data} onUpdate={onUpdate} area="core" group="massage" sync={sync}/>
+  <CareLibrary data={data} onUpdate={onUpdate} area="core" group="massage" sync={sync} database={database} userId={userId}/>
  </section>;
  if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate}/>;
  if(tab==='records')return <CoreRecords logs={data.coreLogs||[]}/>;

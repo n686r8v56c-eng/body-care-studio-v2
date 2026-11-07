@@ -426,7 +426,11 @@ function CoreTimer({data,onUpdate,database,userId}){
        <strong style={{flex:1}}>{cat}</strong><small style={{color:'#957dac'}}>{entries.length}개</small><span aria-hidden="true">{open?'⌃':'⌄'}</span>
       </button>
       {open&&<div style={{padding:'2px 9px 9px',display:'grid',gap:6}}>
-       {entries.map(t=><button type="button" key={t.id} onClick={()=>add(t.id)} style={{...btn,borderColor:'#e5d7ef',padding:'11px 12px',textAlign:'left',fontSize:14,background:'#fff'}}>＋ {t.name}</button>)}
+       {entries.map(t=><button type="button" key={t.id} onClick={()=>add(t.id)} aria-label={t.name+' 시퀀스에 추가'} style={{...btn,borderColor:'#e5d7ef',padding:'7px 9px',display:'flex',alignItems:'center',gap:10,width:'100%',textAlign:'left',fontSize:14,background:'#fff',minWidth:0}}>
+        <CoreSequenceThumbnail technique={t} database={database} userId={userId}/>
+        <span style={{flex:1,minWidth:0,overflowWrap:'anywhere',fontWeight:600,color:'#40334b'}}>{t.name}</span>
+        <span style={{flexShrink:0,color:'#7954a5',fontWeight:700,fontSize:13,whiteSpace:'nowrap'}}>＋ 추가</span>
+       </button>)}
       </div>}
      </div>;
     })}

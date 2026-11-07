@@ -42,6 +42,15 @@ const normalize=obj=>({version:1,corePreparationMigrated:!!obj?.corePreparationM
  videos:videoList(x.videos),instagramLinks:[...new Set((Array.isArray(x.instagramLinks)?x.instagramLinks:[]).filter(v=>typeof v==='string').map(v=>{try{const u=new URL(v);const parts=u.pathname.split('/').filter(Boolean);if(!['instagram.com','www.instagram.com','m.instagram.com'].includes(u.hostname.toLowerCase())||!['p','reel','reels','tv'].includes(parts[0])||!/^[-\w]+$/.test(parts[1]||''))return '';return 'https://www.instagram.com/'+(parts[0]==='reels'?'reel':parts[0])+'/'+parts[1]+'/'}catch{return ''}}).filter(Boolean))].slice(0,5),instagramThumbnails:x.instagramThumbnails&&typeof x.instagramThumbnails==='object'&&!Array.isArray(x.instagramThumbnails)?Object.fromEntries(Object.entries(x.instagramThumbnails).filter(([url,path])=>typeof url==='string'&&/^https:\/\/www\.instagram\.com\/(?:reel|p|tv)\/[-\w]+\/$/.test(url)&&typeof path==='string'&&/^[0-9a-f-]{36}\/instagram\/[0-9a-z.-]+\.(?:jpg|png|webp)$/i.test(path))):{},sort:Number.isFinite(Number(x.sort))?Number(x.sort):i,archived:!!x.archived
 })):[]});
 // New independent studios reuse the Core catalog/routine schema without touching Core's saved data.
+const HIP_MOBILITY_SEED=[
+ {id:'hip-side-kneeling-hip-pulses',name:'Side-Kneeling Hip Pulses',en:'Side-Kneeling Hip Pulses',category:6,
+  posture:'한쪽 무릎을 바닥에 대고 반대쪽 발을 몸 옆에 놓는 측면 반무릎 자세',
+  muscles:'고관절 내전근군, 둔근 및 골반 안정화 근육',
+  description:'측면 반무릎 자세에서 골반을 천천히 낮췄다가 세우는 작은 반복 움직임. 영상에서는 20회 펄스 후 1분간 정적 유지한다.',
+  tags:['Side Kneeling','Hip Mobility','Adductors','Hip Abduction','Dynamic Mobility','Pulses'],
+  notes:'사용자가 제공한 Middle Splits 운동 사진 기준. 영상 참조 링크는 미등록.',
+  imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}
+];
 function normalizeRegionalStudio(raw,area){
  // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
  // not starting positions. Put them in a visible review group rather than mislabeling poses.
@@ -59,7 +68,12 @@ function normalizeRegionalStudio(raw,area){
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
- return {postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,techniques:parsed.coreTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs};
+ const hipSeedVersion=Number(raw?.hipSeedVersion)||0;
+ const hipTechniques=area==='hips'&&hipSeedVersion<1?[
+  ...parsed.coreTechniques,
+  ...HIP_MOBILITY_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase()))
+ ]:parsed.coreTechniques;
+ return {postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,techniques:hipTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs};
 }
 function download(name,data){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');

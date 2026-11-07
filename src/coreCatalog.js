@@ -376,13 +376,44 @@ export const CORE_APPROVED_TECHNIQUES=[
     "imageUrl": ""
   }
 ];
+// Source video provided by the user; positions are the supplied chapter timestamps.
+const STRONG_ABS_VIDEO='https://www.youtube.com/watch?v=wh_x9W0CNuE';
+const seconds=value=>value.split(':').reduce((n,v)=>n*60+Number(v),0);
+const alternateTimes={
+ '0625':['07:25'],
+ '0918':['10:16'],
+ '1217':['13:23'],
+ '1727':['18:25'],
+ '1918':['20:23'],
+ '2223':['23:20'],
+ '3123':['32:20'],
+ '3321':['34:20']
+};
+const sourceReference=(tech,time,index)=>({
+ id:'source-wh_x9W0CNuE-'+tech.id.slice(-4)+(index?'-'+index:''),
+ url:STRONG_ABS_VIDEO,
+ title:'복근 생기는 완벽한 루틴 · Strong core & Abs',
+ start:seconds(time),
+ end:null,
+ memo:index?'반대쪽 동작':''
+});
+for(const tech of CORE_APPROVED_TECHNIQUES){
+ if(!/^core-strong-abs-\\d{4}$/.test(tech.id)||!tech.time)continue;
+ const others=alternateTimes[tech.id.slice(-4)]||[];
+ tech.references=[sourceReference(tech,tech.time,0),...others.map((time,i)=>sourceReference(tech,time,i+1))];
+}
+
 export function seedCoreCatalog(snapshot){
  const existing=Array.isArray(snapshot.coreTechniques)?snapshot.coreTechniques:[];
  const approved=new Map(CORE_APPROVED_TECHNIQUES.map(x=>[x.id,x]));
  const ids=new Set(existing.map(x=>x.id));
  const hydrated=existing.map(x=>{
   const source=approved.get(x.id);
-  return source&&!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{...x,imageUrl:source.imageUrl}:x;
+  if(!source)return x;
+  const removed=new Set(x.removedReferenceIds||[]);
+  const present=new Set((x.references||[]).map(ref=>ref.id));
+  const refs=[...(x.references||[]),...(source.references||[]).filter(ref=>!removed.has(ref.id)&&!present.has(ref.id))];
+  return {...x,...(!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{imageUrl:source.imageUrl}:{}),references:refs};
  });
  const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id));
  return {...snapshot,coreTechniques:[...hydrated,...additional]};

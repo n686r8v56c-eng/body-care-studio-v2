@@ -101,6 +101,40 @@ const THIGH_ADDUCTOR_SEED=[
   imageUrl:'https://www.marattmd.com/learn/images/rehab/HipAdduction2Export.jpg',
   notes:'이미지 출처: Joseph Maratt, MD · https://www.marattmd.com/learn/rehab-tha-adductor-squeeze.php'}
 ].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
+// Back exercise starter cards, curated from the five movements requested by the user.
+// External images and their publisher pages remain editable on each technique card.
+const BACK_EXERCISE_SEED=[
+ {id:'back-lat-pulldown',name:'Lat Pulldown',en:'Lat Pulldown',category:0,
+  posture:'머신에 앉은 자세 · 위쪽 바를 잡기',muscles:'광배근·대원근·상완이두근',
+  description:'등을 길게 세운 채 팔꿈치를 아래로 당겨 바를 윗가슴 방향으로 내리고 천천히 되돌린다. 반동 없이 조절한다.',
+  tags:['Vertical Pull','Machine','Seated'],
+  imageUrl:'https://www.gym-studio.com/_astro/tirage-vertical-prise-serree-vs-prise-large-lequel-choisir.CpaLVt2l.webp',
+  notes:'사진 출처: Gym Studio · https://www.gym-studio.com/blog/tirage-vertical-prise-serree-vs-prise-large-lequel-choisir'},
+ {id:'back-seated-row',name:'Seated Row',en:'Seated Row',category:1,
+  posture:'앉은 자세 · 케이블 핸들 잡기',muscles:'능형근·중부 승모근·광배근',
+  description:'등을 중립으로 유지하며 손잡이를 배 쪽으로 당긴다. 견갑골을 자연스럽게 뒤로 움직인 뒤 천천히 팔을 뻗는다.',
+  tags:['Horizontal Pull','Cable','Seated'],
+  imageUrl:'https://www.moreleisure.com/media/p53mhyf4/wyndley-40.jpg',
+  notes:'사진 출처: Wyndley Leisure Centre · https://www.moreleisure.com/wyndley-leisure-centre/facilities/gym/'},
+ {id:'back-y-t-w-raise',name:'Y-T-W Raise',en:'Y-T-W Raise',category:1,
+  posture:'엎드린 자세 · 팔 Y/T/W 위치',muscles:'중부·하부 승모근·능형근·회전근개',
+  description:'엎드린 상태로 팔을 Y, T, W 모양으로 순서대로 들며 견갑골을 조절한다. 목과 허리를 과하게 젖히지 않는다.',
+  tags:['Scapular Control','Prone','Bodyweight'],
+  imageUrl:'https://backedapp.com/blog/content/images/2026/06/hf_20260611_080009_0565e187-26fd-4907-869e-0a7276ddc59.jpeg',
+  notes:'사진 출처: Backed · https://backedapp.com/blog/best-exercises-pain-between-shoulder-blades/'},
+ {id:'back-back-extension',name:'Back Extension',en:'Back Extension',category:3,
+  posture:'45도 백 익스텐션 벤치 · 골반 지지',muscles:'척추기립근·둔근·햄스트링',
+  description:'벤치에 골반을 지지하고 몸통을 제어하며 펴는 동작. 고관절 힌지 방식으로 수행할 수도 있으므로 척추를 과하게 젖히지 않는다.',
+  tags:['Spinal Extension','Hip Hinge','Bench'],
+  imageUrl:'https://fitnessexpressgym.com/cdn/shop/products/GHYP345-Exercise1-Cut.jpg?v=1679699852',
+  notes:'사진 출처: Fitness Express · https://fitnessexpressgym.com/products/body-solid-2x3-45-degree-back-hyper-extension'},
+ {id:'back-bird-dog-hold',name:'Bird Dog Hold',en:'Bird Dog Hold',category:3,
+  posture:'네발기기 · 반대쪽 팔·다리 뻗어 유지',muscles:'척추기립근·복횡근·둔근',
+  description:'네발기기에서 반대쪽 팔과 다리를 뻗어 몸통을 흔들림 없이 유지한다. 척추를 뒤로 젖히는 운동이 아니라 중립 상태를 지키는 안정화 운동이다.',
+  tags:['Spinal Stability','Isometric','Quadruped'],
+  imageUrl:'https://getfitcraft.com/images/exercises/bird-dogs-proper-form.webp',
+  notes:'사진 출처: FitCraft · https://getfitcraft.com/exercises/bird-dogs'}
+].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
 function normalizeRegionalStudio(raw,area){
  // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
  // not starting positions. Put them in a visible review group rather than mislabeling poses.
@@ -124,6 +158,11 @@ function normalizeRegionalStudio(raw,area){
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
+ const backSeedVersion=Number(raw?.backSeedVersion)||0;
+ const backTechniques=area==='back'&&backSeedVersion<1?[
+  ...parsed.coreTechniques,
+  ...BACK_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase()))
+ ]:parsed.coreTechniques;
  const hipSeedVersion=Number(raw?.hipSeedVersion)||0;
  const hipTechniques=area==='hips'&&hipSeedVersion<1?[
   ...parsed.coreTechniques,
@@ -154,7 +193,8 @@ function normalizeRegionalStudio(raw,area){
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
-  techniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
+  backSeedVersion:area==='back'?Math.max(1,backSeedVersion):backSeedVersion,
+  techniques:area==='back'?backTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }
 function download(name,data){

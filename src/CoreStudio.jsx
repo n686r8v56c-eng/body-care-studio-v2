@@ -5,7 +5,7 @@ import './RoutineTimer.css';
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
 const STUDIO_STRENGTH_CATEGORIES={
- glutes:['Quadruped','Supine','Side-Lying','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Seated','Bench-Supported','Prone','Half Kneeling','Tall Kneeling'],
+ glutes:['Quadruped','Supine','Side-Lying','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Seated','Bench-Supported','Prone','Half Kneeling','Tall Kneeling','Legacy Techniques · Review','Step up'],
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side Kneeling','Prone','Long Sitting / Straddle','Frog Position','Z-Shaped Legs'],
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
@@ -205,7 +205,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
    <button type="button" onClick={()=>setAddingTechnique(v=>!v)} style={{...btn,width:'100%',background:addingTechnique?'#f3eafa':'#fff',borderColor:'#c5adde',fontWeight:700,fontSize:14}}>{addingTechnique?'− 기술 등록 닫기':'＋ 새 기술 등록'}</button>
    {addingTechnique&&<form onSubmit={saveTechnique} style={{display:'grid',gap:9,padding:13,marginTop:8,border:'1px solid #e3d7ef',borderRadius:13,background:'#fff'}}>
     <label style={{display:'grid',gap:4,fontSize:13}}>기술명<input required maxLength={120} value={techniqueDraft.name} onChange={e=>setTechniqueDraft(v=>({...v,name:e.target.value}))} placeholder="동작 이름" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
-    <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{categories.map((name,i)=><option key={name} value={i}>{name}</option>)}</select></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{categories.map((name,i)=>name==='Legacy Techniques · Review'?null:<option key={name} value={i}>{name}</option>)}</select></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>영문명 (선택)<input maxLength={120} value={techniqueDraft.en} onChange={e=>setTechniqueDraft(v=>({...v,en:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>자세 (선택)<input maxLength={200} value={techniqueDraft.posture} onChange={e=>setTechniqueDraft(v=>({...v,posture:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>주요 근육 (선택)<input maxLength={400} value={techniqueDraft.muscles} onChange={e=>setTechniqueDraft(v=>({...v,muscles:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
@@ -222,6 +222,8 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
   {term&&<p role="status" style={{fontSize:12,color:'#8d78a4',margin:'0 0 12px'}}>검색 결과 {totalMatches}개</p>}
   <div style={{display:'grid',gap:10,marginBottom:16}}>
    {categories.map((name,i)=>{
+    // Only show the old review group when it contains saved techniques.
+    if(name==='Legacy Techniques · Review'&&!techniques.some(t=>t.category===i))return null;
     const entries=matchingEntries(i);
     if(term&&!entries.length)return null;
     const openCategory=term?!searchClosed.includes(i):openCategories.includes(i);
@@ -458,6 +460,7 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
     <input type="search" placeholder="기술명 · 근육 · 자세 검색" aria-label="추가할 코어 기술 검색" value={pickerSearch} onChange={e=>setPickerSearch(e.target.value)} style={{fontSize:16,padding:'11px 12px',borderRadius:11,border:'1px solid #d9c9e9',width:'100%',boxSizing:'border-box',background:'#fff',color:'#40334b'}}/>
     {strengthCategories.map((cat,i)=>{
      const entries=matchingPicker.filter(t=>t.category===i);
+     if(cat==='Legacy Techniques · Review'&&!techniques.some(t=>t.category===i))return null;
      if(pickerSearch.trim()&&!entries.length)return null;
      const open=pickerSearch.trim()?true:pickerCategory===i;
      return <div key={cat} style={{border:'1px solid #e8ddf1',borderRadius:12,overflow:'hidden'}}>
@@ -521,7 +524,9 @@ function CoreRecords({logs=[],title='코어'}){
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
  const title=STUDIO_NAMES[area]||'코어';
  const baseCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
- const strengthCategories=area==='glutes'&&(data.studios?.glutes?.techniques||[]).some(t=>t.category===12)?[...baseCategories,'Legacy Techniques · Review']:baseCategories;
+ // Keep legacy Glutes category at index 12 so saved techniques retain their original category.
+ // Step up uses index 13 and remains the last visible category.
+ const strengthCategories=baseCategories;
  const scoped=area==='core'?data:{
   ...data,
   coreTechniques:data.studios?.[area]?.techniques||[],

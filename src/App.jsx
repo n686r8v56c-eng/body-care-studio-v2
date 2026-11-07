@@ -57,7 +57,7 @@ function normalizeRegionalStudio(raw,area){
  const migrated=area==='glutes'&&!raw?.postureMigrated;
  const legacyLabels=['준비동작','고관절 신전','고관절 외전','고관절 외회전','단측 안정화','복합·통합'];
  const prepared=area==='glutes'&&migrated?(raw?.techniques||[]).map(t=>({
-  ...t,category:12,
+  ...t,category:13,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),...(legacyLabels[t.category]?['기존 분류: '+legacyLabels[t.category]]:[])])].slice(0,12)
  })):raw?.techniques||[];
  const parsed=normalize({

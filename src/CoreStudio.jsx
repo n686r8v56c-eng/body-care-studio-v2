@@ -247,7 +247,7 @@ function CoreTechniques({data,onUpdate,database,userId}){
   {term&&totalMatches===0&&<p style={{fontSize:14,opacity:.7,textAlign:'center',padding:'18px 0'}}>일치하는 기술이 없어. 다른 검색어를 입력해 줘.</p>}
  </section>;
 }
-function CoreTimer({data,onUpdate}){
+function CoreTimer({data,onUpdate,database,userId}){
  const techniques=data.coreTechniques||[];
  const routines=data.coreRoutines||[];
  const [routineId,setRoutineId]=useState('');
@@ -258,6 +258,35 @@ function CoreTimer({data,onUpdate}){
  const [remaining,setRemaining]=useState(60);
  const [playing,setPlaying]=useState(false);
  const [done,setDone]=useState(false);
+ const [imageLink,setImageLink]=useState('');
+ const [imageFailed,setImageFailed]=useState(false);
+ const [videoSelection,setVideoSelection]=useState(0);
+ const [showVideo,setShowVideo]=useState(false);
+ const currentStep=steps[index]||null;
+ const currentTechnique=techniques.find(t=>t.id===currentStep?.techniqueId)||null;
+ const currentName=currentTechnique?.name||'시퀀스를 구성해 줘';
+ const nextName=steps[index+1]?nameOf(steps[index+1].techniqueId,techniques):'마지막 동작';
+ const imagePath=currentTechnique?.imagePath||'';
+ const directImage=currentTechnique?.imageRemoved?'':currentTechnique?.imageUrl||'';
+ const imageSrc=imagePath?imageLink:directImage;
+ const references=(currentTechnique?.references||[]).filter(ref=>parseVideoUrl(ref.url));
+ const activeReference=references[Math.min(videoSelection,references.length-1)]||null;
+ const activeVideo=activeReference?parseVideoUrl(activeReference.url):null;
+ const duration=Math.max(1,Number(currentStep?.seconds)||60);
+ const progress=Math.min(1,Math.max(0,1-remaining/duration));
+ const ringRadius=106,ringLength=2*Math.PI*ringRadius;
+ useEffect(()=>{
+  setVideoSelection(0);setShowVideo(false);setImageFailed(false);
+ },[currentStep?.techniqueId]);
+ useEffect(()=>{
+  let alive=true;
+  setImageLink('');
+  if(!imagePath||!database||!userId||!imagePath.startsWith(userId+'/'))return;
+  database.storage.from('body-care-technique-images').createSignedUrl(imagePath,3600).then(({data:result,error})=>{
+   if(alive&&!error)setImageLink(result?.signedUrl||'');
+  }).catch(()=>{});
+  return()=>{alive=false};
+ },[imagePath,database,userId]);
  const endAt=useRef(0),lastTick=useRef(0),playingRef=useRef(false),stepsRef=useRef(steps),indexRef=useRef(index);
  stepsRef.current=steps;indexRef.current=index;playingRef.current=playing;
  const saveElapsed=seconds=>{
@@ -319,18 +348,54 @@ function CoreTimer({data,onUpdate}){
   <h2>코어 · 타이머</h2>
   <p style={{fontSize:13,opacity:.7}}>기술 라이브러리에서 동작을 선택하고 나만의 시퀀스를 만들어.</p>
   <select aria-label="저장된 시퀀스" value={routineId} onChange={e=>selectRoutine(e.target.value)} style={{width:'100%',padding:12,borderRadius:10,marginBottom:12}}><option value="">저장된 시퀀스 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
-  <div className="routine-root routine-face" style={{padding:10,borderRadius:16,marginBottom:12}}>
-   <div style={{textAlign:'center',padding:'15px 0'}}>
-    <div style={{fontSize:13,opacity:.7}}>{steps.length?nameOf(steps[index]?.techniqueId,techniques):'시퀀스를 구성해 줘'}</div>
-    <div style={{fontSize:56,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{fmt(remaining)}</div>
-    <div style={{fontSize:12,opacity:.7}}>총 {steps.length}개 동작 · {fmt(total)}</div>
+  <div className="routine-root routine-face" style={{padding:'22px 10px 20px',borderRadius:18,marginBottom:12,background:'#fff'}}>
+   <div style={{width:'min(100%,320px)',aspectRatio:'1',position:'relative',margin:'2px auto 10px'}}>
+    <svg viewBox="0 0 260 260" width="100%" height="100%" role="img" aria-label={'남은 시간 '+fmt(remaining)+' · 진행률 '+Math.round(progress*100)+'퍼센트'}>
+     <circle cx="130" cy="130" r={ringRadius} fill="none" stroke="#eee6f5" strokeWidth="21"/>
+     <circle cx="130" cy="130" r={ringRadius} fill="none" stroke="#a78acb" strokeWidth="21" strokeDasharray={ringLength} strokeDashoffset={ringLength*(1-progress)} transform="rotate(-90 130 130)" strokeLinecap="round" style={{transition:'stroke-dashoffset .2s linear'}}/>
+     <circle cx="130" cy="130" r="79" fill="white" stroke="#cfb5e6" strokeWidth="9"/>
+    </svg>
+    <div style={{position:'absolute',inset:'24%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',gap:5,pointerEvents:'none'}}>
+     <strong style={{fontSize:'clamp(12px,3.8vw,17px)',lineHeight:1.3,overflowWrap:'anywhere',maxHeight:50,overflow:'hidden'}}>{currentName}</strong>
+     <strong style={{fontSize:'clamp(34px,10vw,51px)',color:'#7751a1',fontVariantNumeric:'tabular-nums',lineHeight:1.12}}>{fmt(remaining)}</strong>
+    </div>
    </div>
-   <div style={{display:'flex',justifyContent:'center',gap:8,flexWrap:'wrap'}}>
-    <button style={btn} disabled={!steps.length} onClick={()=>{pause();setIndex(0);setRemaining(steps[0]?.seconds||60);setDone(false)}}>처음</button>
-    <button style={{...btn,background:'#a18acb',color:'#fff'}} disabled={!steps.length} onClick={playing?pause:start}>{playing?'일시정지':done?'다시 시작':'시작'}</button>
-    <button style={btn} disabled={!steps.length} onClick={skip}>다음</button>
+   <div style={{textAlign:'center',fontSize:13,margin:'0 0 14px',color:'#776483'}}>
+    <div>다음 · {nextName}</div>
+    <div style={{fontSize:12,marginTop:4}}>총 {steps.length}개 동작 · {fmt(total)} {steps.length?'· '+Math.min(index+1,steps.length)+'/'+steps.length:''}</div>
+   </div>
+   <div style={{display:'flex',justifyContent:'center',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+    <button type="button" aria-label="이전 동작" title="이전" style={btn} disabled={!steps.length||index===0} onClick={()=>{pause();const n=index-1;setIndex(n);setRemaining(steps[n].seconds);setDone(false)}}>❮</button>
+    <button type="button" style={{...btn,background:'#9474c0',color:'#fff',minWidth:92,fontWeight:700}} disabled={!steps.length} onClick={playing?pause:start}>{playing?'❚❚ 일시정지':done?'▶ 다시 시작':'▶ 시작'}</button>
+    <button type="button" aria-label="다음 동작" title="다음" style={btn} disabled={!steps.length||done} onClick={skip}>❯</button>
+    <button type="button" aria-label="처음부터" title="처음" style={btn} disabled={!steps.length} onClick={()=>{pause();setIndex(0);setRemaining(steps[0]?.seconds||60);setDone(false)}}>↻</button>
    </div>
   </div>
+  {currentTechnique&&<section aria-label="현재 동작 참고 사진과 영상" style={{display:'grid',gap:12,marginBottom:16}}>
+   <div style={{...panel,marginBottom:0,padding:12}}>
+    <strong style={{fontSize:15}}>현재 기술 · {currentName}</strong>
+    <div style={{fontSize:12,opacity:.65,margin:'4px 0 10px'}}>참고 사진</div>
+    <div style={{aspectRatio:'4 / 3',width:'100%',borderRadius:12,overflow:'hidden',background:'#f5f0f8',display:'flex',justifyContent:'center',alignItems:'center'}}>
+     {imageSrc&&!imageFailed?<img src={imageSrc} alt={currentName+' 참고 사진'} loading="lazy" onError={()=>setImageFailed(true)} style={{height:'100%',width:'100%',objectFit:'contain'}}/>:<span style={{color:'#897896',fontSize:13}}>이 기술에 등록된 사진이 없어.</span>}
+    </div>
+   </div>
+   <div style={{...panel,marginBottom:0,padding:12}}>
+    <strong style={{fontSize:15}}>참고 영상 ({references.length})</strong>
+    {references.length>0?<div>
+     {references.length>1&&<div role="tablist" aria-label="현재 기술 참고 영상 선택" style={{display:'flex',gap:7,overflowX:'auto',padding:'10px 0'}}>
+      {references.map((ref,i)=><button type="button" role="tab" aria-selected={videoSelection===i} key={ref.id||i} style={{...btn,whiteSpace:'nowrap',fontSize:12,background:videoSelection===i?'#ece2f8':'transparent'}} onClick={()=>{setVideoSelection(i);setShowVideo(false)}}>영상 {i+1}</button>)}
+     </div>}
+     <div style={{margin:'8px 0',display:'flex',justifyContent:'space-between',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:12}}>
+      <span>{activeReference?.title||'참고 영상'}</span>
+      <span>시작 {timeLabel(activeReference?.start)}</span>
+     </div>
+     <div style={{aspectRatio:'16 / 9',width:'100%',background:'#e9dff0',borderRadius:12,overflow:'hidden'}}>
+      {showVideo?<iframe key={String(currentStep.techniqueId)+'-'+String(activeReference?.id)} title={currentName+' 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?playsinline=1&start='+Math.max(0,Number(activeReference.start)||0)+(activeReference.end!=null?'&end='+Math.max(0,Number(activeReference.end)||0):'')} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{display:'block',width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowVideo(true)} style={{width:'100%',height:'100%',border:0,color:'#7955a0',background:'linear-gradient(120deg,#f2e9f9,#ddd1ec)',fontWeight:700,fontSize:16,cursor:'pointer'}}>▶ 참고 영상 재생</button>}
+     </div>
+     <a target="_blank" rel="noopener noreferrer" href={activeVideo.url+'&t='+Math.max(0,Number(activeReference?.start)||0)+'s'} style={{display:'inline-block',marginTop:10,fontSize:12,color:'#74509e'}}>↗ YouTube에서 열기</a>
+    </div>:<p style={{fontSize:13,color:'#84738b',marginBottom:0}}>연결된 참고 영상이 없어. 기술 라이브러리에서 추가할 수 있어.</p>}
+   </div>
+  </section>}
   <button style={{...btn,width:'100%',marginBottom:12}} onClick={()=>setAdding(v=>!v)}>+ 기술 라이브러리에서 선택</button>
   {adding&&<div style={panel}>
    {CORE_CATEGORIES.map((cat,i)=><div key={cat}>
@@ -368,7 +433,7 @@ export default function CoreStudio({tab,data,onUpdate,sync,database,userId}){
   <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>코어 · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크만 저장해. 기술 분석은 나중에.</p></div>
   <CareLibrary data={data} onUpdate={onUpdate} area="core" group="massage" sync={sync} database={database} userId={userId}/>
  </section>;
- if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate}/>;
+ if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate} database={database} userId={userId}/>;
  if(tab==='records')return <CoreRecords logs={data.coreLogs||[]}/>;
  return <CoreTechniques data={data} onUpdate={onUpdate} database={database} userId={userId}/>;
 }

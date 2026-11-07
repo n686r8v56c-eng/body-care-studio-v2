@@ -159,7 +159,6 @@ function CoreTechniques({data,onUpdate}){
       <div style={{display:'flex',gap:6,marginTop:6}}><button type="submit" style={{...btn,flex:1,fontSize:12}}>저장</button><button type="button" style={{...btn,fontSize:12}} onClick={()=>{setEditingImage('');setImageError('')}}>취소</button></div>
      </form>}
      {open&&<div style={{padding:'4px 12px 12px',fontSize:13,lineHeight:1.6,borderTop:'1px solid #ebe5f0'}}>
-      <p style={{opacity:.7,margin:'10px 0 6px'}}>{CORE_CATEGORIES[t.category]}{t.time?' · '+t.time:''}</p>
       {t.en&&<p style={{margin:'6px 0'}}><strong>영문명</strong> · {t.en}</p>}
       {t.posture&&<p style={{margin:'6px 0'}}><strong>자세</strong> · {t.posture}</p>}
       {t.muscles&&<p style={{margin:'6px 0'}}><strong>근육</strong> · {t.muscles}</p>}

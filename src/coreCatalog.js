@@ -12,7 +12,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근",
     "description": "상체를 약간 말아 올리고 손을 발목 방향으로 뻗는다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://gymbeastics.com/wp-content/uploads/2023/10/alternate-heels-ankles-touches.jpg"
   },
   {
     "id": "core-strong-abs-1121",
@@ -24,7 +24,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근",
     "description": "견갑골을 바닥에서 들어 올리고 복부 수축을 유지한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://cdn.mos.cms.futurecdn.net/NcEA4XHMn7MkxNyRJynpFM.jpg"
   },
   {
     "id": "core-strong-abs-1425",
@@ -36,7 +36,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·고관절 굴곡근",
     "description": "척추를 순차적으로 말아 올린 뒤 천천히 내려온다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://treinoemcasa.com/cdn/shop/articles/Exercicios-Pilates-Roll-Up.webp?v=1740411004"
   },
   {
     "id": "core-strong-abs-2427",
@@ -48,7 +48,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "척추기립근·다열근·대둔근",
     "description": "반대쪽 팔과 다리를 교차 들어 올려 후면을 사용한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://cdn.womansense.co.kr/news/photo/202102/20210219_6_47341.png"
   },
   {
     "id": "core-strong-abs-2824",
@@ -63,7 +63,7 @@ export const CORE_APPROVED_TECHNIQUES=[
       "고관절 신전",
       "후면 사슬"
     ],
-    "imageUrl": ""
+    "imageUrl": "https://www.healphysiotherapy.co.uk/storage/cms/classes/5df766672512461ab4bf3092e96e97df.jpg"
   },
   {
     "id": "core-strong-abs-0227",
@@ -75,7 +75,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복사근·복직근·고관절 굴곡근",
     "description": "몸통을 회전하며 반대편 무릎에 접근하고 다리를 교대로 뻗는다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://media1.popsugar-assets.com/files/thumbor/KsSOtBgDdBrFHi70c4pxf08H5u0=/fit-in/792x461/top/filters:format_auto():upscale()/2016/09/14/943/n/1922729/6665a69e_bicycle-crunch-1-summer.jpg"
   },
   {
     "id": "core-strong-abs-1217",
@@ -123,7 +123,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근(안정화)·고관절 굴곡근",
     "description": "두 다리를 들어 교차하며 골반이 흔들리지 않게 유지한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://suckhoedoisong.qltns.mediacdn.vn/324455921873985536/2025/8/3/gap-bung-kieu-cat-keo-17542230370991469284669.jpg"
   },
   {
     "id": "core-strong-abs-0321",
@@ -135,7 +135,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복횡근·복사근",
     "description": "반대쪽 팔과 다리를 뻗는 동안 허리와 골반 위치를 유지한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://t1.daumcdn.net/news/202504/25/weekly/20250425140810233jror.png"
   },
   {
     "id": "core-strong-abs-0423",
@@ -159,7 +159,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근·고관절 굴곡근",
     "description": "한쪽 다리를 길게 뻗는 동안 허리와 골반의 움직임을 조절한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://cdn.bestme.vn/images/bestme/dong-tac-cat-keo-scissor-switch.jpg"
   },
   {
     "id": "core-strong-abs-0823",
@@ -171,7 +171,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "고관절 굴곡근·복직근·복사근",
     "description": "두 다리를 동시에 내렸다 올리며 몸통 신전을 억제한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://images.yogajournal.jp/article/54073/OrSxt27toB98XhM9KV9HmDNU9f7zgx4cF8pw3HEg.jpeg"
   },
   {
     "id": "core-strong-abs-2124",
@@ -183,7 +183,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복횡근·복사근·둔근",
     "description": "몸통 정렬을 유지하며 허리가 처지지 않게 버틴다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://body.ba/pictures/plank_s_podlaktica.jpg"
   },
   {
     "id": "core-strong-abs-2520",
@@ -195,7 +195,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근·복횡근",
     "description": "상체와 다리를 띄우고 복부 긴장을 유지한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://stat.ameba.jp/user_images/20250112/19/takumi4290/52/c6/j/o1024102415532408166.jpg"
   },
   {
     "id": "core-strong-abs-2617",
@@ -255,7 +255,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "다열근·척추기립근·복사근·둔근",
     "description": "반대편 팔과 다리를 뻗는 동안 골반 회전을 억제한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://domf5oio6qrcr.cloudfront.net/medialibrary/18822/cc-i4-opposite-arm-and-leg-raise-0713.jpg"
   },
   {
     "id": "core-strong-abs-0918",
@@ -267,7 +267,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복사근·요방형근·중둔근",
     "description": "옆으로 몸을 지탱하며 골반이 무너지지 않도록 유지한다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://hips.hearstapps.com/hmg-prod/images/766/articles/2016/11/extremeplanking-mitchmandel-106596-1521822825.jpg"
   },
   {
     "id": "core-strong-abs-1727",
@@ -291,7 +291,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "중둔근·소둔근·복사근",
     "description": "무릎 지지 사이드 플랭크에서 윗무릎을 벌린다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://i0.wp.com/e3rehab.com/wp-content/uploads/2024/01/Side-Plank-Clamshell-scaled.jpg?fit=2560%2C1440&ssl=1"
   },
   {
     "id": "core-strong-abs-1524",
@@ -303,7 +303,7 @@ export const CORE_APPROVED_TECHNIQUES=[
     "muscles": "복직근·복사근·전거근·고관절 굴곡근",
     "description": "플랭크에서 무릎을 몸통 쪽으로 당겼다가 뻗는다.",
     "tags": [],
-    "imageUrl": ""
+    "imageUrl": "https://www.hola.com/horizon/original_aspect_ratio/480b14621571-plancha-abdominales7-a.jpg?im=Resize%3D%28640%29"
   },
   {
     "id": "core-strong-abs-3016",
@@ -362,7 +362,12 @@ export const CORE_APPROVED_TECHNIQUES=[
 ];
 export function seedCoreCatalog(snapshot){
  const existing=Array.isArray(snapshot.coreTechniques)?snapshot.coreTechniques:[];
+ const approved=new Map(CORE_APPROVED_TECHNIQUES.map(x=>[x.id,x]));
  const ids=new Set(existing.map(x=>x.id));
+ const hydrated=existing.map(x=>{
+  const source=approved.get(x.id);
+  return source&&(!x.imageUrl)&&source.imageUrl?{...x,imageUrl:source.imageUrl}:x;
+ });
  const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id));
- return {...snapshot,coreTechniques:[...existing,...additional]};
+ return {...snapshot,coreTechniques:[...hydrated,...additional]};
 }

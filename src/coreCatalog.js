@@ -1,4 +1,4 @@
-// Approved first Core Studio catalog: 29 movements from Strong core & Abs.
+// Approved Core Studio catalog, including foam roller variants. Stable IDs prevent duplicates.
 // Timecodes are metadata, not dependencies on the video inbox.
 // External image URLs remain blank until image identity, access, and reuse are verified.
 export const CORE_APPROVED_TECHNIQUES=[
@@ -374,6 +374,199 @@ export const CORE_APPROVED_TECHNIQUES=[
       "마무리"
     ],
     "imageUrl": ""
+  }
+,
+  {
+    "id": "core-foam-rib-0220",
+    "time": "02:20",
+    "category": 3,
+    "name": "폼롤러 레그 프로그",
+    "en": "Foam Roller Frog Leg Extension",
+    "posture": "천골 아래 폼롤러 지지·바로 누움",
+    "muscles": "복직근·복사근(안정화)·고관절 굴곡근·내전근",
+    "description": "발뒤꿈치를 맞대고 무릎을 벌린 상태에서 두 다리를 길게 뻗었다가 굽힌다. 갈비뼈와 골반 정렬이 무너지지 않는 범위에서 진행한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "골반 위치 조절",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-0415",
+    "time": "04:15",
+    "category": 3,
+    "name": "폼롤러 시저스",
+    "en": "Foam Roller Scissors",
+    "posture": "천골 아래 폼롤러 지지·바로 누움",
+    "muscles": "복직근·복사근(안정화)·고관절 굴곡근",
+    "description": "양다리를 교대로 내리고 올리되 날개뼈와 몸통 위치를 유지한다. 허리의 과도한 신전과 골반 흔들림에 저항한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "골반 안정화",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-0515",
+    "time": "05:15",
+    "category": 3,
+    "name": "폼롤러 싱글 레그 스트레치",
+    "en": "Foam Roller Single Leg Stretch",
+    "posture": "천골 아래 폼롤러 지지·바로 누움",
+    "muscles": "복직근·복사근·고관절 굴곡근",
+    "description": "한 무릎을 몸통 쪽으로 당기는 동안 반대 다리를 길게 뻗는다. 폼롤러에 지지된 골반 위치를 유지한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "골반 안정화",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-0620",
+    "time": "06:20",
+    "category": 3,
+    "name": "폼롤러 더블 레그 스트레치",
+    "en": "Foam Roller Double Leg Stretch",
+    "posture": "천골 아래 폼롤러 지지·바로 누움",
+    "muscles": "복직근·복사근·고관절 굴곡근",
+    "description": "두 다리를 모아 멀리 뻗었다가 되돌린다. 허리가 과하게 젖혀지거나 갈비뼈가 들리지 않도록 조절한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "갈비뼈 위치 조절",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-0738",
+    "time": "07:38",
+    "category": 3,
+    "name": "폼롤러 토 탭",
+    "en": "Foam Roller Toe Tap",
+    "posture": "천골 아래 폼롤러 지지·바로 누워 다리 90도",
+    "muscles": "복직근·복사근·복횡근",
+    "description": "테이블탑 자세에서 한 발씩 바닥을 터치하고 돌아온다. 골반과 아래 갈비뼈의 위치를 유지한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "골반 안정화",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-0845",
+    "time": "08:45",
+    "category": 3,
+    "name": "폼롤러 아웃 오픈 인",
+    "en": "Foam Roller Leg Open-Close",
+    "posture": "천골 아래 폼롤러 지지·바로 누움",
+    "muscles": "복직근·복사근(안정화)·고관절 외전근·내전근",
+    "description": "다리를 길게 뻗은 상태에서 좌우로 벌렸다 모은다. 복부로 골반 회전과 허리 신전을 억제한다.",
+    "tags": [
+      "폼롤러",
+      "천골 지지",
+      "고관절 외전·내전",
+      "신전 저항",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-1035",
+    "time": "10:35",
+    "category": 6,
+    "name": "폼롤러 발 지지 브릿지",
+    "en": "Foam Roller Supported Glute Bridge",
+    "posture": "발바닥 아래 폼롤러·바로 누워 무릎 굽힘",
+    "muscles": "대둔근·햄스트링·몸통 안정화 근육",
+    "description": "발을 폼롤러 위에 두고 발로 밀며 골반을 들어 올렸다가 천천히 내린다. 고관절 신전이 주동작이다.",
+    "tags": [
+      "폼롤러",
+      "발 지지",
+      "고관절 신전",
+      "둔근 강화",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-1159",
+    "time": "11:59",
+    "category": 6,
+    "name": "폼롤러 브릿지 마치",
+    "en": "Foam Roller Bridge March",
+    "posture": "발바닥 아래 폼롤러·브릿지 자세",
+    "muscles": "대둔근·햄스트링·복사근·골반 안정화 근육",
+    "description": "브릿지를 유지한 채 한쪽 무릎을 번갈아 당긴다. 골반이 좌우로 기울거나 돌아가지 않도록 버틴다.",
+    "tags": [
+      "폼롤러",
+      "발 지지",
+      "고관절 신전",
+      "회전 저항",
+      "골반 안정화",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-1330",
+    "time": "13:30",
+    "category": 6,
+    "name": "폼롤러 원 레그 브릿지",
+    "en": "Foam Roller Single Leg Bridge",
+    "posture": "한쪽 발 폼롤러 지지·바로 누움",
+    "muscles": "대둔근·햄스트링·복사근·골반 안정화 근육",
+    "description": "한쪽 다리를 뻗고 반대쪽 발로 지지하면서 골반을 들어 올린다. 양쪽 골반 높이를 맞춘다.",
+    "tags": [
+      "폼롤러",
+      "단측 발 지지",
+      "고관절 신전",
+      "회전 저항",
+      "둔근 강화",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
+  },
+  {
+    "id": "core-foam-rib-1500",
+    "time": "15:00",
+    "category": 3,
+    "name": "폼롤러 전완 플랭크",
+    "en": "Foam Roller Forearm Plank",
+    "posture": "전완을 폼롤러 위에 올린 플랭크",
+    "muscles": "복직근·복사근·복횡근·전거근",
+    "description": "폼롤러 위 전완으로 몸을 지지해 몸통 정렬을 유지한다. 배가 처지고 허리가 젖혀지려는 힘에 저항한다.",
+    "tags": [
+      "폼롤러",
+      "전완 지지",
+      "신전 저항",
+      "어깨 안정화",
+      "근력"
+    ],
+    "imageUrl": "",
+    "notes": "폼롤러 지지 조건의 변형 기술 · 참고 영상 URL 확인 전"
   }
 ];
 // Source video provided by the user; positions are the supplied chapter timestamps.

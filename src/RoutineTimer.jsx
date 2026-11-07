@@ -51,6 +51,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
  const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
  const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
+ const [stepsExpanded,setStepsExpanded]=useState(true),[videoExpanded,setVideoExpanded]=useState(false);
  const [expandedLevels,setExpandedLevels]=useState([]);
  const [selectedId,setSelectedId]=useState(initialDraft?.selectedId||''),[draftName,setDraftName]=useState(initialDraft?.draftName||'');
  const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);
@@ -236,6 +237,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const catalog=useMemo(()=>(data.items||[]).filter(x=>x.area===area&&x.group===group&&!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)),[data.items,area,group]);
  const available=useMemo(()=>catalog.flatMap(row=>normalizeVideoIds(row.videos).map((id,n)=>({key:row.id+':'+id,itemId:row.id,videoId:id,title:nameOf(row),level:row.level||1,videoNumber:n+1}))),[catalog]);
  const chosen=useMemo(()=>steps[index], [steps,index]);
+ useEffect(()=>{setVideoExpanded(false)},[index,chosen?.videoId]);
  const levels=useMemo(()=>Array.from({length:5},(_,i)=>i+1).map(level=>({level,rows:catalog.filter(row=>(row.level||1)===level&&normalizeVideoIds(row.videos).length>0)})),[catalog]);
  const stop=()=>{flushTracking();tracking.current=null;setPlaying(false);if(timer.current){clearInterval(timer.current);timer.current=null}};
  const sound=()=>{if(!tone)return;try{audio.current=audio.current||new (window.AudioContext||window.webkitAudioContext)();const ctx=audio.current;ctx.resume();const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=740;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.09,ctx.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);oscillator.connect(gain).connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.19)}catch{}};
@@ -298,16 +300,28 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
     <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong></div>
     <div className="routine-controls"><button type="button" disabled={!isOwner} onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" disabled={!isOwner} className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" disabled={!isOwner} onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" disabled={!isOwner} onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
     <div className="routine-options"><label><input type="checkbox" disabled={!isOwner} checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" disabled={!isOwner} checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
-    <div className="routine-step-list">{steps.map((step,i)=><div className="routine-step-wrapper" key={i}>
+    <div className="routine-list-accordion">
+     <button type="button" className="routine-list-toggle" aria-expanded={stepsExpanded} onClick={()=>{setStepsExpanded(v=>!v);if(stepsExpanded)setVideoExpanded(false)}}>
+      <span className="routine-list-icon"><ChevronDown size={18} className={stepsExpanded?'routine-chevron-open':''}/></span>
+      <span className="routine-list-heading"><strong>시퀀스 구성 · {steps.length}개</strong><small>총 {fmt(total)} · 펼쳐서 동작 선택</small></span>
+      <ChevronDown size={18} className={stepsExpanded?'routine-chevron-open':''}/>
+     </button>
+     {stepsExpanded&&<div className="routine-step-list">{steps.map((step,i)=><div className="routine-step-wrapper" key={i}>
      <div className={'routine-step '+(i===index&&!complete?'active':'')} onClick={()=>isOwner&&jump(i)}>
       <i style={{background:colors[i%colors.length]}}/>
       <span>{i<index||complete?'✓ ':''}{step.title}</span>
       <input aria-label={step.title+' 시간(초)'} type="number" disabled={!isOwner} min="5" max="3600" value={step.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small>
      </div>
-     {i===index&&step.videoId&&<div className="routine-embedded-video">
-      <iframe key={step.videoId} title={step.title+' 유튜브 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+step.videoId+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/>
+     {i===index&&step.videoId&&<div className="routine-video-accordion">
+      <button type="button" className="routine-video-toggle" aria-expanded={videoExpanded} onClick={()=>setVideoExpanded(v=>!v)}>
+       <Play size={15}/><span>현재 동작 참고 영상</span><ChevronDown size={16} className={videoExpanded?'routine-chevron-open':''}/>
+      </button>
+      {videoExpanded&&<div className="routine-embedded-video">
+       <iframe key={step.videoId} title={step.title+' 유튜브 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+step.videoId+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/>
+      </div>}
      </div>}
-    </div>)}</div>
+    </div>)}</div>}
+    </div>
     {!readOnly&&<div className="routine-save"><input aria-label="루틴 이름" disabled={!isOwner} placeholder="루틴 이름 (예: 아침 발성 6분)" value={draftName} onChange={e=>setDraftName(e.target.value)}/><button className="routine-purple" type="button" onClick={save} disabled={!isOwner||!draftName.trim()}><Save size={16}/> 저장</button>{selectedId&&<button type="button" onClick={remove} disabled={!isOwner} aria-label="루틴 삭제"><Trash2 size={17}/></button>}</div>}
    </div>}
   </>}

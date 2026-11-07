@@ -10,7 +10,7 @@ const STUDIO_STRENGTH_CATEGORIES={
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
 export const CORE_CATEGORIES=Object.freeze([
- '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작'
+ '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작','몸통 측굴'
 ]);
 const uid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(36).slice(2);
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};

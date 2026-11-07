@@ -3,6 +3,7 @@ import CareLibrary from './CareLibrary.jsx';
 import './RoutineTimer.css';
 
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
+const GLUTES_YOGA_CATEGORIES=Object.freeze(['의자자세 변형','피라미드 변형','전사자세 변형','한다리서기 변형','Legacy Techniques · Review']);
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',back:'등',arms:'팔'};
 const STUDIO_STRENGTH_CATEGORIES={
  glutes:['Quadruped','Supine','Prone','Side-Lying','Half Kneeling','Tall Kneeling','Seated','Bench-Supported','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Step up','Legacy Techniques · Review'],
@@ -121,7 +122,7 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
 
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
-function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
+function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES}){
  const [mode,setMode]=useState('strength');
  const [addingTechnique,setAddingTechnique]=useState(false);
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
@@ -139,7 +140,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
- const categories=yogaMode?YOGA_CATEGORIES:strengthCategories;
+ const categories=yogaMode?yogaCategories:strengthCategories;
  const thighMode=title==='허벅지'&&!yogaMode;
  const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
@@ -542,6 +543,7 @@ function CoreRecords({logs=[],title='코어'}){
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
  const title=STUDIO_NAMES[area]||'코어';
  const baseCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
+ const yogaCategories=area==='glutes'?GLUTES_YOGA_CATEGORIES:YOGA_CATEGORIES;
  // Step up is the 13th visible category (index 12) in the user's requested order.
  // Legacy review stays hidden unless there are saved legacy techniques (index 13).
  const strengthCategories=baseCategories;
@@ -575,5 +577,5 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
  </section>;
  if(tab==='timer')return <CoreTimer data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} database={database} userId={userId}/>;
  if(tab==='records')return <CoreRecords logs={scoped.coreLogs||[]} title={title}/>;
- return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} database={database} userId={userId}/>;
+ return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} database={database} userId={userId}/>;
 }

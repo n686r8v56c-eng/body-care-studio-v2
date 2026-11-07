@@ -111,6 +111,8 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
 
 function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
  const [mode,setMode]=useState('strength');
+ const [addingTechnique,setAddingTechnique]=useState(false);
+ const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
  const [openCategories,setOpenCategories]=useState([]);
  const [search,setSearch]=useState('');
  const [searchClosed,setSearchClosed]=useState([]);
@@ -141,10 +143,28 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t)));
  const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
  const totalMatches=term?categories.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
- const switchMode=next=>{setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
+ const switchMode=next=>{setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
  const storageKey=yogaMode?'coreYogaTechniques':'coreTechniques';
+ const saveTechnique=e=>{
+  e.preventDefault();
+  const label=techniqueDraft.name.trim(),cat=Number(techniqueDraft.category);
+  if(!label||!Number.isInteger(cat)||cat<0||cat>=categories.length)return;
+  const id=uid();
+  onUpdate(d=>{
+   d[storageKey]=[...(d[storageKey]||[]),{
+    id,name:label.slice(0,120),en:techniqueDraft.en.trim().slice(0,120),category:cat,
+    posture:techniqueDraft.posture.trim().slice(0,200),
+    muscles:techniqueDraft.muscles.trim().slice(0,400),
+    description:techniqueDraft.description.trim().slice(0,1500),
+    tags:techniqueDraft.tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),
+    imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[],notes:''
+   }];
+  });
+  setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
+  setSearch('');setOpenCategories([cat]);setExpanded([id]);
+ };
  const updateImage=(id,value)=>{
   const clean=value.trim();
   if(!isValidUrl(clean)){setImageError('http:// 또는 https:// 이미지 URL을 입력해 줘.');return}
@@ -179,6 +199,19 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
   <h2>{title} · 기술 라이브러리</h2>
   <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
    {[{id:'strength',label:'맨몸근력'},{id:'yoga',label:'요가'}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
+  </div>
+  <div style={{marginBottom:12}}>
+   <button type="button" onClick={()=>setAddingTechnique(v=>!v)} style={{...btn,width:'100%',background:addingTechnique?'#f3eafa':'#fff',borderColor:'#c5adde',fontWeight:700,fontSize:14}}>{addingTechnique?'− 기술 등록 닫기':'＋ 새 기술 등록'}</button>
+   {addingTechnique&&<form onSubmit={saveTechnique} style={{display:'grid',gap:9,padding:13,marginTop:8,border:'1px solid #e3d7ef',borderRadius:13,background:'#fff'}}>
+    <label style={{display:'grid',gap:4,fontSize:13}}>기술명<input required maxLength={120} value={techniqueDraft.name} onChange={e=>setTechniqueDraft(v=>({...v,name:e.target.value}))} placeholder="동작 이름" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{categories.map((name,i)=><option key={name} value={i}>{name}</option>)}</select></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>영문명 (선택)<input maxLength={120} value={techniqueDraft.en} onChange={e=>setTechniqueDraft(v=>({...v,en:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>자세 (선택)<input maxLength={200} value={techniqueDraft.posture} onChange={e=>setTechniqueDraft(v=>({...v,posture:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>주요 근육 (선택)<input maxLength={400} value={techniqueDraft.muscles} onChange={e=>setTechniqueDraft(v=>({...v,muscles:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>기술 설명 (선택)<textarea rows={3} maxLength={1500} value={techniqueDraft.description} onChange={e=>setTechniqueDraft(v=>({...v,description:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>태그 (쉼표로 구분)<input value={techniqueDraft.tags} onChange={e=>setTechniqueDraft(v=>({...v,tags:e.target.value}))} placeholder="예: 외전, 골반 안정화" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
+    <button type="submit" disabled={!techniqueDraft.name.trim()} style={{...btn,background:'#9474c0',color:'#fff',fontWeight:700}}>기술 저장</button>
+   </form>}
   </div>
   <div style={{display:'flex',alignItems:'center',gap:8,border:'1px solid #d9cae8',borderRadius:12,padding:'7px 11px',marginBottom:8,background:'transparent'}}>
    <span aria-hidden="true" style={{color:'#8f76ac',fontSize:18}}>⌕</span>

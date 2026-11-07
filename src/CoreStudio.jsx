@@ -10,8 +10,13 @@ const STUDIO_STRENGTH_CATEGORIES={
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
 export const CORE_CATEGORIES=Object.freeze([
- '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작','몸통 측굴'
+ '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작 · 마무리동작','몸통 측굴'
 ]);
+// Core category order is visual only; saved category indices remain unchanged.
+const orderedCategoryEntries=categories=>{
+ const order=categories===CORE_CATEGORIES?[0,1,2,8,3,4,5,6,7]:categories.map((_,i)=>i);
+ return order.map(i=>[categories[i],i]);
+};
 const uid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(36).slice(2);
 const fmt=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const day=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
@@ -205,7 +210,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
    <button type="button" onClick={()=>setAddingTechnique(v=>!v)} style={{...btn,width:'100%',background:addingTechnique?'#f3eafa':'#fff',borderColor:'#c5adde',fontWeight:700,fontSize:14}}>{addingTechnique?'− 기술 등록 닫기':'＋ 새 기술 등록'}</button>
    {addingTechnique&&<form onSubmit={saveTechnique} style={{display:'grid',gap:9,padding:13,marginTop:8,border:'1px solid #e3d7ef',borderRadius:13,background:'#fff'}}>
     <label style={{display:'grid',gap:4,fontSize:13}}>기술명<input required maxLength={120} value={techniqueDraft.name} onChange={e=>setTechniqueDraft(v=>({...v,name:e.target.value}))} placeholder="동작 이름" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
-    <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{categories.map((name,i)=>name==='Legacy Techniques · Review'?null:<option key={name} value={i}>{name}</option>)}</select></label>
+    <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{orderedCategoryEntries(categories).map(([name,i])=>name==='Legacy Techniques · Review'?null:<option key={name} value={i}>{name}</option>)}</select></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>영문명 (선택)<input maxLength={120} value={techniqueDraft.en} onChange={e=>setTechniqueDraft(v=>({...v,en:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>자세 (선택)<input maxLength={200} value={techniqueDraft.posture} onChange={e=>setTechniqueDraft(v=>({...v,posture:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>주요 근육 (선택)<input maxLength={400} value={techniqueDraft.muscles} onChange={e=>setTechniqueDraft(v=>({...v,muscles:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
@@ -221,7 +226,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
   </div>
   {term&&<p role="status" style={{fontSize:12,color:'#8d78a4',margin:'0 0 12px'}}>검색 결과 {totalMatches}개</p>}
   <div style={{display:'grid',gap:10,marginBottom:16}}>
-   {categories.map((name,i)=>{
+   {orderedCategoryEntries(categories).map(([name,i],displayIndex)=>{
     // Only show the old review group when it contains saved techniques.
     if(name==='Legacy Techniques · Review'&&!techniques.some(t=>t.category===i))return null;
     const entries=matchingEntries(i);
@@ -229,7 +234,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
     const openCategory=term?!searchClosed.includes(i):openCategories.includes(i);
     return <section key={name} style={{border:'1px solid #e4d9ed',borderRadius:13,overflow:'hidden'}}>
      <button type="button" aria-expanded={openCategory} onClick={()=>term?setSearchClosed(v=>openCategory?[...v,i]:v.filter(x=>x!==i)):setOpenCategories(v=>openCategory?v.filter(x=>x!==i):[...v,i])} style={{width:'100%',padding:'15px 14px',display:'flex',alignItems:'center',gap:12,border:0,background:'transparent',color:'inherit',textAlign:'left',cursor:'pointer'}}>
-      <span style={{fontSize:12,color:'#947ead',minWidth:22}}>{String(i+1).padStart(2,'0')}</span>
+      <span style={{fontSize:12,color:'#947ead',minWidth:22}}>{String(displayIndex+1).padStart(2,'0')}</span>
       <strong style={{fontSize:16,flex:1}}>{name}</strong>
       <span style={{fontSize:12,color:'#927eaa'}}>{entries.length}개</span>
       <span style={{color:'#977eb0',fontSize:17}} aria-hidden="true">{openCategory?'⌃':'⌄'}</span>
@@ -458,7 +463,7 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
    </button>
    {adding&&<div style={{padding:'0 12px 14px',display:'grid',gap:8}}>
     <input type="search" placeholder="기술명 · 근육 · 자세 검색" aria-label="추가할 코어 기술 검색" value={pickerSearch} onChange={e=>setPickerSearch(e.target.value)} style={{fontSize:16,padding:'11px 12px',borderRadius:11,border:'1px solid #d9c9e9',width:'100%',boxSizing:'border-box',background:'#fff',color:'#40334b'}}/>
-    {strengthCategories.map((cat,i)=>{
+    {orderedCategoryEntries(strengthCategories).map(([cat,i])=>{
      const entries=matchingPicker.filter(t=>t.category===i);
      if(cat==='Legacy Techniques · Review'&&!techniques.some(t=>t.category===i))return null;
      if(pickerSearch.trim()&&!entries.length)return null;

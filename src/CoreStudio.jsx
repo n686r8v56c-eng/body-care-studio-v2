@@ -13,27 +13,43 @@ const panel={padding:14,border:'1px solid #ddd5e7',borderRadius:12,marginBottom:
 const nameOf=(id,techniques)=>techniques.find(t=>t.id===id)?.name||'삭제된 기술';
 function CoreTechniques({data}){
  const [filter,setFilter]=useState(-1);
+ const [expanded,setExpanded]=useState([]);
+ const [failedImages,setFailedImages]=useState([]);
  const techniques=data.coreTechniques||[];
+ const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
-  <p style={{fontSize:13,opacity:.7}}>영상 인박스와 분리된 기술 공간. 검토·승인된 기술을 분류별로 볼 수 있어. 이미지가 확인되지 않은 기술은 텍스트로 표시돼.</p>
-  <div style={{display:'grid',gap:8,marginBottom:14}}>
+  <div style={{display:'grid',gap:8,marginBottom:16}}>
    {CORE_CATEGORIES.map((name,i)=><button type="button" key={name} onClick={()=>setFilter(filter===i?-1:i)} style={{...btn,textAlign:'left',background:filter===i?'#eee5fb':'transparent',color:filter===i?'#382552':'inherit',display:'flex',justifyContent:'space-between'}}><strong>{i+1}. {name}</strong><span>{techniques.filter(x=>x.category===i).length}개</span></button>)}
   </div>
-  {filter!==-1&&<button style={btn} onClick={()=>setFilter(-1)}>전체 보기</button>}
-  {techniques.filter(x=>filter===-1||x.category===filter).map(t=><article key={t.id} style={{...panel}}>
-   <div><strong>{t.name}</strong><p style={{margin:'4px 0',fontSize:12,opacity:.7}}>{CORE_CATEGORIES[t.category]}</p>{t.en&&<p style={{fontSize:12,margin:'4px 0',opacity:.65}}>{t.en}</p>}
-    {t.posture&&<p style={{fontSize:12,margin:'4px 0'}}><strong>자세</strong> · {t.posture}</p>}
-    {t.muscles&&<p style={{fontSize:12,margin:'4px 0'}}><strong>근육</strong> · {t.muscles}</p>}
-    {t.description&&<p style={{fontSize:13,margin:'6px 0'}}>{t.description}</p>}
-    {!!t.tags?.length&&<p style={{fontSize:12,opacity:.7}}>{t.tags.join(' · ')}</p>}
-    {t.notes&&<p style={{fontSize:13}}>{t.notes}</p>}</div>
-   <div style={{marginTop:12,background:'#f2eff6',borderRadius:12,overflow:'hidden',minHeight:150,display:'flex',alignItems:'center',justifyContent:'center'}}>
-    {t.imageUrl?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" style={{width:'100%',maxHeight:270,objectFit:'contain'}} onError={e=>{e.currentTarget.style.display='none';e.currentTarget.parentElement.dataset.failed='true';e.currentTarget.parentElement.textContent='이미지 연결 확인 필요'}}/>:<span style={{fontSize:13,color:'#857990'}}>참고 이미지 확인 중</span>}
-   </div>
-   {t.imageUrl&&<a href={t.imageUrl} target="_blank" rel="noopener noreferrer" style={{display:'inline-block',marginTop:8,fontSize:12}}>이미지 원본 열기</a>}
-  </article>)}
-  {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어. 타임라인 분석 뒤 승인된 기술만 추가할 예정이야.</p>}
+  {filter!==-1&&<button style={{...btn,marginBottom:12}} onClick={()=>setFilter(-1)}>전체 보기</button>}
+  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,230px),1fr))',gap:12,alignItems:'start'}}>
+   {techniques.filter(x=>filter===-1||x.category===filter).map(t=>{
+    const open=expanded.includes(t.id),hasImage=!!t.imageUrl&&!failedImages.includes(t.id);
+    return <article key={t.id} style={{border:'1px solid #ddd5e7',borderRadius:14,overflow:'hidden',background:'var(--card-bg,transparent)'}}>
+     <button type="button" aria-expanded={open} onClick={()=>toggle(t.id)} style={{border:0,padding:0,width:'100%',display:'block',textAlign:'left',background:'transparent',color:'inherit',cursor:'pointer'}}>
+      <div style={{height:210,background:'#f2eff6',display:'flex',justifyContent:'center',alignItems:'center',overflow:'hidden'}}>
+       {hasImage?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'contain'}}/>:<span style={{fontSize:13,color:'#857990'}}>참고 이미지 확인 중</span>}
+      </div>
+      <div style={{padding:'13px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+       <strong style={{fontSize:16,lineHeight:1.4}}>{t.name}</strong>
+       <span style={{fontSize:20,color:'#927ab8'}} aria-hidden="true">{open?'⌃':'⌄'}</span>
+      </div>
+     </button>
+     {open&&<div style={{padding:'0 14px 14px',fontSize:13,lineHeight:1.6,borderTop:'1px solid #ebe5f0'}}>
+      <p style={{opacity:.7,margin:'10px 0 6px'}}>{CORE_CATEGORIES[t.category]}{t.time?' · '+t.time:''}</p>
+      {t.en&&<p style={{margin:'6px 0'}}><strong>영문명</strong> · {t.en}</p>}
+      {t.posture&&<p style={{margin:'6px 0'}}><strong>자세</strong> · {t.posture}</p>}
+      {t.muscles&&<p style={{margin:'6px 0'}}><strong>근육</strong> · {t.muscles}</p>}
+      {t.description&&<p style={{margin:'8px 0'}}>{t.description}</p>}
+      {!!t.tags?.length&&<p style={{opacity:.7}}>{t.tags.join(' · ')}</p>}
+      {t.notes&&<p>{t.notes}</p>}
+      {hasImage&&<a href={t.imageUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>이미지 원본 열기</a>}
+     </div>}
+    </article>;
+   })}
+  </div>
+  {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어.</p>}
  </section>;
 }
 function CoreTimer({data,onUpdate}){

@@ -45,7 +45,7 @@ const normalize=obj=>({version:1,corePreparationMigrated:!!obj?.corePreparationM
 function normalizeRegionalStudio(raw,area){
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?9:8,
+  __regionalStrengthLimit:area==='hips'?11:8,
   coreTechniques:raw?.techniques||[],
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],

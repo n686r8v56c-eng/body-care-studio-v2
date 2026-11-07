@@ -109,7 +109,7 @@ function normalizeRegionalStudio(raw,area){
  const prepared=area==='glutes'&&migrated?(raw?.techniques||[]).map(t=>({
   ...t,category:13,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),...(legacyLabels[t.category]?['기존 분류: '+legacyLabels[t.category]]:[])])].slice(0,12)
- }):area==='thighs'&&!raw?.thighCategoryMigrated?(raw?.techniques||[]).map(t=>({
+ })):area==='thighs'&&!raw?.thighCategoryMigrated?(raw?.techniques||[]).map(t=>({
   ...t,category:3,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 허벅지 분류 · 재분류 필요'])].slice(0,12)
  })):raw?.techniques||[];

@@ -121,7 +121,7 @@ function CoreTechniques({data,onUpdate,database,userId}){
  const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
   let alive=true;
-  const missing=techniques.filter(t=>t.imagePath&&!signedImages[t.imagePath]);
+  const missing=techniques.filter(t=>t.imagePath&&signedImages[t.imagePath]===undefined);
   if(!database||!userId||!missing.length)return;
   Promise.all(missing.map(async t=>{
    const {data:link,error}=await database.storage.from('body-care-technique-images').createSignedUrl(t.imagePath,3600);

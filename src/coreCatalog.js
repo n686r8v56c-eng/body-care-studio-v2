@@ -781,10 +781,10 @@ export function seedCoreCatalog(snapshot){
   const refs=[...migrated,...(source.references||[]).filter(ref=>!removed.has(ref.id)&&!present.has(ref.id))];
   // Migrate only the originally seeded pelvic tilt from body flexion to the new preparation category.
   // Do not overwrite later manual category choices.
-  const prepared=x.id==='core-pelvic-sequence-0012'&&Number(x.category)===0?{category:7}:{};
+  const prepared=!snapshot.corePreparationMigrated&&x.id==='core-pelvic-sequence-0012'&&Number(x.category)===0?{category:7}:{};
   return {...x,...prepared,...(!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{imageUrl:source.imageUrl}:{}),references:refs};
  });
  // Pelvic tilt is preparation even when added for the first time.
  const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id)).map(x=>x.id==='core-pelvic-sequence-0012'?{...x,category:7}:x);
- return {...snapshot,coreTechniques:[...hydrated,...additional]};
+ return {...snapshot,corePreparationMigrated:true,coreTechniques:[...hydrated,...additional]};
 }

@@ -9,7 +9,7 @@ const STUDIO_STRENGTH_CATEGORIES={
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side-Kneeling','Prone','Long Sitting','Frog','Z-Shaped Legs'],
  thighs:['안벅지','뒷벅지','앞벅지','Legacy Techniques · Review'],
  // These new studios share the complete technique/routine/timer UI; taxonomy can be finalized later.
- back:['광배근','등 중앙','상부 승모근','척추기립근','Legacy Techniques · Review'],
+ back:['광배근','등 중앙','상부 승모근','척추기립근','흉추 가동성','Legacy Techniques · Review'],
  arms:['미분류']
 };
 export const CORE_CATEGORIES=Object.freeze([

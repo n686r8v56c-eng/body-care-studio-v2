@@ -53,6 +53,39 @@ const HIP_MOBILITY_SEED=[
   notes:'사용자가 제공한 Middle Splits 운동 사진 기준. 영상 참조 링크는 미등록.',
   imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}
 ];
+// Curated inner-thigh exercises. Images are linked to their original publishers rather than copied.
+const THIGH_ADDUCTOR_SEED=[
+ {id:'thigh-inner-seated-hip-adduction',name:'Seated Hip Adduction',en:'Seated Hip Adduction',category:0,
+  posture:'앉은 자세 · 어덕션 머신',muscles:'내전근군',
+  description:'어덕션 머신에 앉아 양 허벅지를 안쪽으로 모았다가 천천히 벌린다. 골반과 상체를 고정하고 반동을 사용하지 않는다.',
+  tags:['Inner Thigh','Adductors','Machine'],
+  imageUrl:'https://d2rf5xu5rxzcu4.cloudfront.net/video_thumbnails/dfebf7af-f9a5-4595-9262-a281133f77ae.jpg',
+  notes:'이미지 출처: Gravitus · https://gravitus.com/guides/exercises/seated-hip-adduction/'},
+ {id:'thigh-inner-side-lying-adduction',name:'Side-Lying Hip Adduction',en:'Side-Lying Hip Adduction',category:0,
+  posture:'옆으로 누운 자세 · 아래쪽 다리 들기',muscles:'내전근군',
+  description:'옆으로 누워 위쪽 다리를 앞쪽 바닥에 놓고 아래쪽 다리를 천천히 들어 올린다. 골반이 뒤로 넘어가지 않도록 유지한다.',
+  tags:['Inner Thigh','Adductors','Bodyweight','Side-Lying'],
+  imageUrl:'https://i0.wp.com/e3rehab.com/wp-content/uploads/2024/05/Side-Lying-Adduction-scaled.jpg?fit=2560%2C1440&ssl=1',
+  notes:'이미지 출처: E3 Rehab · https://e3rehab.com/how-to-perform-copenhagen-planks/'},
+ {id:'thigh-inner-copenhagen-adduction',name:'Copenhagen Adduction',en:'Copenhagen Adduction',category:0,
+  posture:'사이드 플랭크 · 벤치 위쪽 다리 지지',muscles:'내전근군·복사근(안정화)',
+  description:'옆으로 누워 위쪽 무릎을 벤치에 올리고 아래쪽 팔꿈치로 몸을 지지한다. 몸통을 곧게 유지하며 아래쪽 다리를 들어 올리는 쇼트 레버 동작부터 시작한다.',
+  tags:['Inner Thigh','Adductors','Copenhagen','Bench','Short Lever'],
+  imageUrl:'https://i0.wp.com/e3rehab.com/wp-content/uploads/2024/05/Short-Copenhagen-Plank-scaled.jpg?fit=2560%2C1440&ssl=1',
+  notes:'이미지 출처: E3 Rehab · https://e3rehab.com/how-to-perform-copenhagen-planks/'},
+ {id:'thigh-inner-standing-cable-adduction',name:'Standing Cable Hip Adduction',en:'Standing Cable Hip Adduction',category:0,
+  posture:'서서 한 발 지지 · 로우 케이블',muscles:'내전근군',
+  description:'낮은 케이블을 발목에 연결하고 지지대 옆에 선다. 운동 다리를 몸의 정중선 쪽으로 천천히 끌어와 반대쪽 다리 앞을 지나가게 한다.',
+  tags:['Inner Thigh','Adductors','Cable','Standing'],
+  imageUrl:'https://cdn.motra.com/exercise-assets/91b2dcfa08/thumbnailOriginal.jpg',
+  notes:'이미지 출처: Motra · https://motra.com/exercises/cableHipAdduction'},
+ {id:'thigh-inner-supine-ball-squeeze',name:'Supine Ball Squeeze',en:'Supine Ball Squeeze',category:0,
+  posture:'바로 누운 자세 · 무릎 사이 소프트볼',muscles:'내전근군',
+  description:'바로 누워 무릎을 굽히고 공이나 쿠션을 무릎 사이에 둔다. 허리에 힘을 과하게 주지 않고 허벅지 안쪽으로 부드럽게 조여 등척성 수축을 유지한다.',
+  tags:['Inner Thigh','Adductors','Isometric','Ball','Supine'],
+  imageUrl:'https://www.marattmd.com/learn/images/rehab/HipAdduction2Export.jpg',
+  notes:'이미지 출처: Joseph Maratt, MD · https://www.marattmd.com/learn/rehab-tha-adductor-squeeze.php'}
+].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
 function normalizeRegionalStudio(raw,area){
  // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
  // not starting positions. Put them in a visible review group rather than mislabeling poses.
@@ -61,10 +94,13 @@ function normalizeRegionalStudio(raw,area){
  const prepared=area==='glutes'&&migrated?(raw?.techniques||[]).map(t=>({
   ...t,category:13,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),...(legacyLabels[t.category]?['기존 분류: '+legacyLabels[t.category]]:[])])].slice(0,12)
+ }):area==='thighs'&&!raw?.thighCategoryMigrated?(raw?.techniques||[]).map(t=>({
+  ...t,category:3,
+  tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 허벅지 분류 · 재분류 필요'])].slice(0,12)
  })):raw?.techniques||[];
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:(area==='back'||area==='arms')?1:8,
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:(area==='back'||area==='arms')?1:8,
   coreTechniques:prepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
@@ -75,7 +111,18 @@ function normalizeRegionalStudio(raw,area){
   ...parsed.coreTechniques,
   ...HIP_MOBILITY_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase()))
  ]:parsed.coreTechniques;
- return {postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,techniques:hipTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs};
+ const thighSeedVersion=Number(raw?.thighSeedVersion)||0;
+ const thighTechniques=area==='thighs'?[
+  ...parsed.coreTechniques,
+  ...(thighSeedVersion<1?THIGH_ADDUCTOR_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
+ ]:hipTechniques;
+ return {
+  postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
+  thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
+  thighSeedVersion:area==='thighs'?Math.max(1,thighSeedVersion):thighSeedVersion,
+  hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
+  techniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
+ };
 }
 function download(name,data){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');

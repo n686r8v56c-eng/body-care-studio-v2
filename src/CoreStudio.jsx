@@ -103,7 +103,7 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
  </section>;
 }
 
-function CoreTechniques({data,onUpdate}){
+function CoreTechniques({data,onUpdate,database,userId}){
  const [mode,setMode]=useState('strength');
  const [openCategories,setOpenCategories]=useState([]);
  const [search,setSearch]=useState('');
@@ -112,29 +112,62 @@ function CoreTechniques({data,onUpdate}){
  const [editingImage,setEditingImage]=useState('');
  const [imageDraft,setImageDraft]=useState('');
  const [imageError,setImageError]=useState('');
+ const [imageMethod,setImageMethod]=useState('');
+ const [uploadingImage,setUploadingImage]=useState(false);
+ const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
  const categories=yogaMode?YOGA_CATEGORIES:CORE_CATEGORIES;
  const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
+ useEffect(()=>{
+  let alive=true;
+  const missing=techniques.filter(t=>t.imagePath&&!signedImages[t.imagePath]);
+  if(!database||!userId||!missing.length)return;
+  Promise.all(missing.map(async t=>{
+   const {data:link,error}=await database.storage.from('body-care-technique-images').createSignedUrl(t.imagePath,3600);
+   return [t.imagePath,error?'':link?.signedUrl||''];
+  })).then(entries=>{if(alive)setSignedImages(previous=>({...previous,...Object.fromEntries(entries)}))});
+  return ()=>{alive=false};
+ },[database,userId,techniques,signedImages]);
  const term=search.trim().toLocaleLowerCase();
  const searchable=t=>[t.name,t.en,t.posture,t.muscles,t.description,t.notes,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(term);
  const categoryMatches=i=>categories[i].toLocaleLowerCase().includes(term);
  const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t)));
  const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
  const totalMatches=term?categories.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
- const switchMode=next=>{setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('')};
+ const switchMode=next=>{setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
  const storageKey=yogaMode?'coreYogaTechniques':'coreTechniques';
  const updateImage=(id,value)=>{
   const clean=value.trim();
   if(!isValidUrl(clean)){setImageError('http:// 또는 https:// 이미지 URL을 입력해 줘.');return}
-  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imageRemoved=false}});
-  setFailedImages(ids=>ids.filter(x=>x!==id));setEditingImage('');setImageDraft('');setImageError('');
+  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imagePath='';row.imageRemoved=false}});
+  setFailedImages(ids=>ids.filter(x=>x!==id));setEditingImage('');setImageDraft('');setImageError('');setImageMethod('');
  };
  const deleteImage=id=>{
-  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imageRemoved=true}});
-  setEditingImage('');setImageDraft('');setImageError('');
+  onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imagePath='';row.imageRemoved=true}});
+  setEditingImage('');setImageDraft('');setImageError('');setImageMethod('');
+ };
+ const uploadImage=async(id,file)=>{
+  if(!file)return;
+  if(!database||!userId){setImageError('로그인 또는 Supabase 연결을 먼저 확인해 줘.');return}
+  const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+  if(!types[file.type]){setImageError('JPG, PNG, WEBP 형식의 사진만 올릴 수 있어.');return}
+  if(file.size>5*1024*1024){setImageError('사진은 최대 5MB까지 올릴 수 있어.');return}
+  setImageError('');setUploadingImage(true);
+  try{
+   const path=userId+'/'+(yogaMode?'yoga':'strength')+'/'+uid()+'.'+types[file.type];
+   const {error}=await database.storage.from('body-care-technique-images').upload(path,file,{contentType:file.type,upsert:false,cacheControl:'3600'});
+   if(error)throw error;
+   const signed=await database.storage.from('body-care-technique-images').createSignedUrl(path,3600);
+   if(signed.error)throw signed.error;
+   setSignedImages(prev=>({...prev,[path]:signed.data.signedUrl}));
+   onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imagePath=path;row.imageUrl='';row.imageRemoved=false}});
+   setFailedImages(ids=>ids.filter(x=>x!==id));
+   setEditingImage('');setImageMethod('');
+  }catch(error){setImageError('업로드 실패: '+(error?.message||'Storage 설정을 확인해 줘.'))}
+  finally{setUploadingImage(false)}
  };
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
@@ -163,11 +196,11 @@ function CoreTechniques({data,onUpdate}){
       {!entries.length&&<p style={{fontSize:13,opacity:.65,margin:'8px 4px'}}>등록된 동작이 없어.</p>}
       {entries.map(t=>{
 
-    const open=expanded.includes(t.id),hasImage=!!t.imageUrl&&!failedImages.includes(t.id);
+    const open=expanded.includes(t.id),imageSrc=t.imagePath?signedImages[t.imagePath]:t.imageUrl,hasImage=!!imageSrc&&!failedImages.includes(t.id);
     return <article key={t.id} style={{minWidth:0,border:'1px solid #ddd5e7',borderRadius:14,overflow:'hidden',background:'var(--card-bg,transparent)'}}>
      <button type="button" aria-expanded={open} onClick={()=>toggle(t.id)} style={{border:0,padding:0,width:'100%',display:'block',textAlign:'left',background:'transparent',color:'inherit',cursor:'pointer'}}>
       <div style={{aspectRatio:'4 / 3',width:'100%',background:'#f2eff6',display:'flex',justifyContent:'center',alignItems:'center',overflow:'hidden'}}>
-       {hasImage?<img src={t.imageUrl} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>:<span style={{fontSize:12,color:'#857990',padding:8,textAlign:'center'}}>사진 추가</span>}
+       {hasImage?<img src={imageSrc} alt={t.name+' 동작 참고 이미지'} loading="lazy" onError={()=>setFailedImages(ids=>ids.includes(t.id)?ids:[...ids,t.id])} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>:<span style={{fontSize:12,color:'#857990',padding:8,textAlign:'center'}}>사진 추가</span>}
       </div>
       <div style={{padding:'10px 12px 6px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:5,minHeight:52}}>
        <strong style={{fontSize:14,lineHeight:1.4,overflowWrap:'anywhere'}}>{t.name}</strong>
@@ -175,14 +208,25 @@ function CoreTechniques({data,onUpdate}){
       </div>
      </button>
      <div style={{padding:'0 8px 9px',display:'flex',gap:5}}>
-      <button type="button" style={{...btn,flex:1,padding:'7px 4px',fontSize:12}} onClick={()=>{setEditingImage(editingImage===t.id?'':t.id);setImageDraft('');setImageError('')}}>{t.imageUrl?'사진 변경':'사진 추가'}</button>
-      <button type="button" style={{...btn,padding:'7px 8px',fontSize:12}} disabled={!t.imageUrl} onClick={()=>deleteImage(t.id)}>삭제</button>
+      <button type="button" style={{...btn,flex:1,padding:'7px 4px',fontSize:12}} onClick={()=>{setEditingImage(editingImage===t.id?'':t.id);setImageDraft('');setImageError('');setImageMethod('')}}>{t.imageUrl||t.imagePath?'사진 변경':'사진 추가'}</button>
+      <button type="button" style={{...btn,padding:'7px 8px',fontSize:12}} disabled={!t.imageUrl&&!t.imagePath} onClick={()=>deleteImage(t.id)}>삭제</button>
      </div>
-     {editingImage===t.id&&<form style={{padding:'0 9px 10px'}} onSubmit={e=>{e.preventDefault();updateImage(t.id,imageDraft)}}>
-      <input autoFocus type="url" value={imageDraft} placeholder="이미지 URL 붙여넣기" aria-label={t.name+' 이미지 URL'} onChange={e=>{setImageDraft(e.target.value);setImageError('')}} onPaste={e=>{const value=e.clipboardData.getData('text').trim();if(isValidUrl(value)){e.preventDefault();updateImage(t.id,value)}}} style={{width:'100%',minWidth:0,boxSizing:'border-box',fontSize:16,padding:9,borderRadius:9,border:'1px solid #bca6d8'}}/>
-      {imageError&&<p role="alert" style={{color:'#b34455',fontSize:12,margin:'5px 0'}}>{imageError}</p>}
-      <div style={{display:'flex',gap:6,marginTop:6}}><button type="submit" style={{...btn,flex:1,fontSize:12}}>저장</button><button type="button" style={{...btn,fontSize:12}} onClick={()=>{setEditingImage('');setImageError('')}}>취소</button></div>
-     </form>}
+     {editingImage===t.id&&<div style={{padding:'0 9px 10px',display:'grid',gap:8}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7}}>
+       <button type="button" style={{...btn,background:imageMethod==='upload'?'#eee5fb':'transparent',fontWeight:imageMethod==='upload'?700:400}} onClick={()=>{setImageMethod('upload');setImageError('')}}>직접 업로드</button>
+       <button type="button" style={{...btn,background:imageMethod==='url'?'#eee5fb':'transparent',fontWeight:imageMethod==='url'?700:400}} onClick={()=>{setImageMethod('url');setImageError('')}}>이미지 URL</button>
+      </div>
+      {imageMethod==='upload'&&<label style={{display:'grid',gap:5,fontSize:13}}>사진 선택 (JPG · PNG · WEBP, 5MB 이하)
+       <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage} aria-label={t.name+' 사진 파일 선택'} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadImage(t.id,file);e.target.value=''}} style={{fontSize:14,width:'100%',minWidth:0}}/>
+      </label>}
+      {imageMethod==='url'&&<form onSubmit={e=>{e.preventDefault();updateImage(t.id,imageDraft)}} style={{display:'grid',gap:7}}>
+       <input type="url" value={imageDraft} placeholder="이미지 URL 붙여넣기" aria-label={t.name+' 이미지 URL'} onChange={e=>{setImageDraft(e.target.value);setImageError('')}} style={{width:'100%',minWidth:0,boxSizing:'border-box',fontSize:16,padding:9,borderRadius:9,border:'1px solid #bca6d8'}}/>
+       <button type="submit" style={{...btn,fontSize:12}}>URL 저장</button>
+      </form>}
+      {uploadingImage&&<p role="status" style={{fontSize:12,margin:0}}>사진을 Supabase에 업로드 중...</p>}
+      {imageError&&<p role="alert" style={{color:'#b34455',fontSize:12,margin:0}}>{imageError}</p>}
+      <button type="button" disabled={uploadingImage} style={{...btn,fontSize:12}} onClick={()=>{setEditingImage('');setImageError('');setImageMethod('')}}>취소</button>
+     </div>}
      {open&&<div style={{padding:'4px 12px 12px',fontSize:13,lineHeight:1.6,borderTop:'1px solid #ebe5f0'}}>
       {t.en&&<p style={{margin:'6px 0'}}><strong>영문명</strong> · {t.en}</p>}
       {t.posture&&<p style={{margin:'6px 0'}}><strong>자세</strong> · {t.posture}</p>}
@@ -190,7 +234,7 @@ function CoreTechniques({data,onUpdate}){
       {t.description&&<p style={{margin:'8px 0'}}>{t.description}</p>}
       {!!t.tags?.length&&<p style={{opacity:.7}}>{t.tags.join(' · ')}</p>}
       {t.notes&&<p>{t.notes}</p>}
-      {hasImage&&<a href={t.imageUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>이미지 원본 열기</a>}
+      {hasImage&&<a href={imageSrc} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>이미지 원본 열기</a>}
       <TechniqueReferences technique={t} onUpdate={onUpdate} storageKey={storageKey}/>
      </div>}
     </article>;
@@ -319,12 +363,12 @@ function CoreRecords({logs=[]}){
   <p style={{fontSize:12,opacity:.7}}>타이머에서 실제 진행한 시간만 기록해.</p>
  </section>;
 }
-export default function CoreStudio({tab,data,onUpdate,sync}){
+export default function CoreStudio({tab,data,onUpdate,sync,database,userId}){
  if(tab==='inbox')return <section aria-label="코어 영상 인박스">
   <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>코어 · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크만 저장해. 기술 분석은 나중에.</p></div>
   <CareLibrary data={data} onUpdate={onUpdate} area="core" group="massage" sync={sync}/>
  </section>;
  if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate}/>;
  if(tab==='records')return <CoreRecords logs={data.coreLogs||[]}/>;
- return <CoreTechniques data={data} onUpdate={onUpdate}/>;
+ return <CoreTechniques data={data} onUpdate={onUpdate} database={database} userId={userId}/>;
 }

@@ -51,7 +51,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  const draftKey='body-care-timer-draft:v1:'+String(userId||'guest')+':'+area+':'+group+':'+theme;
  const initialDraft=useMemo(()=>readDraft(draftKey),[draftKey]);
  const [visible,setVisible]=useState(embedded),[selecting,setSelecting]=useState(false),[checked,setChecked]=useState([]);
- const [stepsExpanded,setStepsExpanded]=useState(true),[videoExpanded,setVideoExpanded]=useState(false);
+ const [stepsExpanded,setStepsExpanded]=useState(false),[videoExpanded,setVideoExpanded]=useState(false);
  const [expandedLevels,setExpandedLevels]=useState([]);
  const [selectedId,setSelectedId]=useState(initialDraft?.selectedId||''),[draftName,setDraftName]=useState(initialDraft?.draftName||'');
  const [steps,setSteps]=useState(initialDraft?.steps||[]),[index,setIndex]=useState(initialDraft?.index||0),[remaining,setRemaining]=useState(initialDraft?.remaining??60);

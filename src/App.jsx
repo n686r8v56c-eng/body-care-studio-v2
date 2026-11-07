@@ -156,6 +156,259 @@ const THORACIC_MOBILITY_SEED=[
   imageUrl:'https://www.elitesportsandpt.com/wp-content/uploads/2025/12/T-spine-extension-on-FR-225x300.jpg',
   notes:'사진 출처: Elite Sports Performance & Physical Therapy · https://www.elitesportsandpt.com/blog/mobility-exercises-for-your-thoracic-spine/'}
 ].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
+const ARM_EXERCISE_SEED=[
+ {
+  "id": "arms-starter-1",
+  "name": "Dumbbell Curl",
+  "en": "Dumbbell Curl",
+  "category": 0,
+  "posture": "Standing · 양손 덤벨",
+  "muscles": "상완이두근·상완근",
+  "description": "양손에 덤벨을 들고 팔꿈치를 몸통 옆에 둔 채 손바닥을 위로 향하게 컬한다. 상체 반동 없이 천천히 내린다.",
+  "tags": [
+   "Standing",
+   "Dumbbell",
+   "Elbow Flexion",
+   "Underhand"
+  ],
+  "imageUrl": "https://mxp-media.ilnmedia.com/media/content/2017/Nov/bicep-curl-variations-to-kickstart-muscle-growth1-1511336774.jpg",
+  "notes": "사진 출처: https://www.mensxp.com/health/body-building/40846-3-biceps-curl-variations-to-get-skin-tearing-pumps-and-kickstart-muscle-growth.html",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-2",
+  "name": "Hammer Curl",
+  "en": "Hammer Curl",
+  "category": 0,
+  "posture": "Standing · 뉴트럴 그립 덤벨",
+  "muscles": "상완근·상완요골근·상완이두근",
+  "description": "엄지가 위로 향하도록 덤벨을 마주 잡고 팔꿈치를 굽힌다. 위팔이 앞뒤로 흔들리지 않게 유지한다.",
+  "tags": [
+   "Standing",
+   "Dumbbell",
+   "Neutral Grip",
+   "Elbow Flexion"
+  ],
+  "imageUrl": "https://weriselatam.com/wp-content/uploads/2020/09/Curl-martillo-1160x820.jpg",
+  "notes": "사진 출처: https://weriselatam.com/we-workout/como-hacer-crecer-los-biceps/",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-3",
+  "name": "Concentration Curl",
+  "en": "Concentration Curl",
+  "category": 0,
+  "posture": "Seated · 팔꿈치를 허벅지 안쪽에 지지",
+  "muscles": "상완이두근·상완근",
+  "description": "벤치에 앉아 팔꿈치를 허벅지 안쪽에 고정하고 한 팔씩 덤벨을 어깨 방향으로 들어 올린다.",
+  "tags": [
+   "Seated",
+   "Dumbbell",
+   "Single-Arm",
+   "Underhand"
+  ],
+  "imageUrl": "https://builderbody.ru/wp-content/uploads/2011/01/6-37.jpg",
+  "notes": "사진 출처: https://builderbody.ru/koncentrirovannyj-podem-na-biceps/",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-4",
+  "name": "Incline Dumbbell Curl",
+  "en": "Incline Dumbbell Curl",
+  "category": 0,
+  "posture": "Incline Seated · 경사 벤치에 등 지지",
+  "muscles": "상완이두근·상완근",
+  "description": "인클라인 벤치에 기대 팔을 몸통 옆 아래로 자연스럽게 내린 뒤 팔꿈치를 고정하고 덤벨을 컬한다.",
+  "tags": [
+   "Incline Seated",
+   "Dumbbell",
+   "Bench",
+   "Elbow Flexion"
+  ],
+  "imageUrl": "https://i0.wp.com/www.muscleandfitness.com/wp-content/uploads/2018/02/square-exercise-biceps-curl-incline.jpg?crop=1&h=630&quality=86&strip=all&w=800",
+  "notes": "사진 출처: https://www.muscleandfitness.com/exercise/workouts/arm-exercises/60-degree-incline-dumbbell-curl/",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-5",
+  "name": "Triceps Pushdown",
+  "en": "Triceps Pushdown",
+  "category": 1,
+  "posture": "Standing · 상부 케이블 로프",
+  "muscles": "상완삼두근",
+  "description": "케이블 로프를 잡고 팔꿈치를 몸통 옆에 붙인 상태에서 팔꿈치를 아래로 편다. 어깨와 몸통 반동을 줄인다.",
+  "tags": [
+   "Standing",
+   "Cable",
+   "Rope",
+   "Elbow Extension"
+  ],
+  "imageUrl": "https://www.bodybuilding.gr/forum/attachment.php?attachmentid=127544&d=1553595376",
+  "notes": "사진 출처: https://musclewiki.com/exercise/cable-rope-pushdown?model=f",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-6",
+  "name": "Overhead Triceps Extension",
+  "en": "Overhead Triceps Extension",
+  "category": 1,
+  "posture": "Seated · 머리 위 덤벨",
+  "muscles": "상완삼두근 특히 장두",
+  "description": "의자에 앉아 덤벨을 머리 위로 들고 팔꿈치를 굽혀 머리 뒤로 내렸다가 편다. 상완을 가능한 한 안정적으로 둔다.",
+  "tags": [
+   "Seated",
+   "Dumbbell",
+   "Overhead",
+   "Elbow Extension"
+  ],
+  "imageUrl": "https://fitnessg88.com/wp-content/uploads/2020/06/Dumbbell-Seated-Overhead-Triceps-Extension.jpg",
+  "notes": "사진 출처: https://fitnessg88.com/muscles/triceps/",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-7",
+  "name": "Skull Crusher",
+  "en": "Skull Crusher",
+  "category": 1,
+  "posture": "Supine · 벤치에 누워 덤벨",
+  "muscles": "상완삼두근",
+  "description": "벤치에 누워 덤벨을 가슴 위로 들어 올리고 팔꿈치를 굽혀 머리 양옆으로 내렸다가 다시 편다. 가벼운 무게로 시작한다.",
+  "tags": [
+   "Supine",
+   "Dumbbell",
+   "Bench",
+   "Elbow Extension"
+  ],
+  "imageUrl": "https://cdn.motra.com/exercise-assets/dd514ce030/thumbnailOriginal.jpg",
+  "notes": "사진 출처: https://motra.com/exercises/dumbbellInclineSkullCrusher",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-8",
+  "name": "Triceps Kickback",
+  "en": "Triceps Kickback",
+  "category": 1,
+  "posture": "Bent-Over · 몸통을 기울여 덤벨",
+  "muscles": "상완삼두근",
+  "description": "골반을 접어 몸통을 숙인 뒤 위팔을 옆구리 옆에 두고 팔꿈치를 뒤쪽으로 편다. 허리를 과하게 젖히지 않는다.",
+  "tags": [
+   "Bent-Over",
+   "Dumbbell",
+   "Elbow Extension"
+  ],
+  "imageUrl": "https://media3.popsugar-assets.com/files/2015/03/10/677/n/1922729/4dad4839_Triceps-Extensions-Red/i/Triceps-Kickback.jpg",
+  "notes": "사진 출처: https://musclewiki.com/exercise/dumbbell-tricep-kickback",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-9",
+  "name": "Wrist Curl",
+  "en": "Wrist Curl",
+  "category": 2,
+  "posture": "Seated · 팔뚝을 허벅지에 지지",
+  "muscles": "전완 굴근군",
+  "description": "손바닥을 위로 하여 팔뚝을 허벅지에 놓고 손목만 굽혀 덤벨을 들어 올린다.",
+  "tags": [
+   "Seated",
+   "Dumbbell",
+   "Wrist Flexion"
+  ],
+  "imageUrl": "https://www.mensfitness.com/.image/t_share/MTk2MTM3MzgzMjYwNzI2NDE3/dumbbell-wrist-curl.jpg",
+  "notes": "사진 출처: https://www.mensfitness.com/training/five-essential-exercises-bigger-arms",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-10",
+  "name": "Reverse Wrist Curl",
+  "en": "Reverse Wrist Curl",
+  "category": 2,
+  "posture": "Seated · 손등을 위로 팔뚝 지지",
+  "muscles": "전완 신근군",
+  "description": "손바닥을 아래로 한 채 팔뚝을 지지하고 손목만 위로 편다. 처음에는 가벼운 덤벨을 사용한다.",
+  "tags": [
+   "Seated",
+   "Dumbbell",
+   "Wrist Extension",
+   "Overhand"
+  ],
+  "imageUrl": "https://static.strengthlevel.com/images/illustrations/dumbbell-reverse-wrist-curl-1000x1000.jpg",
+  "notes": "사진 출처: https://strengthlevel.com/strength-standards/dumbbell-reverse-wrist-curl/kg",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-11",
+  "name": "Pronation / Supination",
+  "en": "Pronation / Supination",
+  "category": 2,
+  "posture": "Seated · 팔꿈치를 굽히고 팔뚝 지지",
+  "muscles": "원회내근·회외근 등 전완 회전근",
+  "description": "팔꿈치를 고정하고 가벼운 덤벨 또는 긴 손잡이를 쥔 채 손바닥을 천천히 아래·위로 돌린다. 손목 대신 전완 회전에 집중한다.",
+  "tags": [
+   "Seated",
+   "Dumbbell",
+   "Pronation",
+   "Supination"
+  ],
+  "imageUrl": "https://i0.wp.com/e3rehab.com/wp-content/uploads/2023/09/Summary-Supination-and-Pronation-Strength-scaled.jpg?fit=2560%2C1440&ssl=1",
+  "notes": "사진 출처: https://e3rehab.com/tennis-elbow-rehab/",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ },
+ {
+  "id": "arms-starter-12",
+  "name": "Farmer's Carry",
+  "en": "Farmer's Carry",
+  "category": 2,
+  "posture": "Standing · 양손 덤벨 들고 걷기",
+  "muscles": "전완 악력근·승모근·몸통 안정화 근육",
+  "description": "양손에 덤벨을 들고 어깨를 안정적으로 유지하며 일정 거리 또는 시간 동안 걷는다. 목과 어깨에 과한 긴장이 생기지 않게 한다.",
+  "tags": [
+   "Standing",
+   "Dumbbell",
+   "Carry",
+   "Grip",
+   "Isometric"
+  ],
+  "imageUrl": "https://www.gym-studio.com/_astro/farmer-walk.BgRb52CO_2kAnmV.webp",
+  "notes": "사진 출처: https://www.gym-studio.com/exercices",
+  "imagePath": "",
+  "imageRemoved": false,
+  "references": [],
+  "removedReferenceIds": []
+ }
+];
 function normalizeRegionalStudio(raw,area){
  // Preserve older Glutes techniques: their old 0–5 categories described muscle actions,
  // not starting positions. Put them in a visible review group rather than mislabeling poses.
@@ -170,6 +423,8 @@ function normalizeRegionalStudio(raw,area){
  })):area==='back'&&!raw?.backCategoryMigrated?(raw?.techniques||[]).map(t=>({
   ...t,category:4,
   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 등 미분류 · 재분류 필요'])].slice(0,12)
+ })):area==='arms'&&!raw?.armCategoryMigrated?(raw?.techniques||[]).map(t=>({
+  ...t,category:3,tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 팔 미분류 · 재분류 필요'])].slice(0,12)
  })):raw?.techniques||[];
  // Previous back category 4 was a legacy review bucket; reserve category 4 for thoracic mobility.
  const backPrepared=area==='back'&&!raw?.backMobilityCategoryMigrated
@@ -177,7 +432,7 @@ function normalizeRegionalStudio(raw,area){
   :prepared;
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?6:area==='arms'?1:8,
+  __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?6:area==='arms'?4:8,
   coreTechniques:backPrepared,
   coreYogaTechniques:raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
@@ -188,6 +443,11 @@ function normalizeRegionalStudio(raw,area){
   ...parsed.coreTechniques,
   ...(backSeedVersion<1?BACK_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[]),
   ...(backSeedVersion<2?THORACIC_MOBILITY_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
+ ]:parsed.coreTechniques;
+ const armSeedVersion=Number(raw?.armSeedVersion)||0;
+ const armTechniques=area==='arms'?[
+  ...parsed.coreTechniques,
+  ...(armSeedVersion<1?ARM_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
  ]:parsed.coreTechniques;
  const hipSeedVersion=Number(raw?.hipSeedVersion)||0;
  const hipTechniques=area==='hips'&&hipSeedVersion<1?[
@@ -216,12 +476,14 @@ function normalizeRegionalStudio(raw,area){
  return {
   postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
   backCategoryMigrated:area==='back'?true:!!raw?.backCategoryMigrated,
+  armCategoryMigrated:area==='arms'?true:!!raw?.armCategoryMigrated,
+  armSeedVersion:area==='arms'?Math.max(1,armSeedVersion):armSeedVersion,
   backMobilityCategoryMigrated:area==='back'?true:!!raw?.backMobilityCategoryMigrated,
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
   backSeedVersion:area==='back'?Math.max(2,backSeedVersion):backSeedVersion,
-  techniques:area==='back'?backTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
+  techniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }
 function download(name,data){

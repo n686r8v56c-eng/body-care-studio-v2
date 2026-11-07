@@ -122,6 +122,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [imageError,setImageError]=useState('');
  const [imageMethod,setImageMethod]=useState('');
  const [uploadingImage,setUploadingImage]=useState(false);
+ const imageFileInput=useRef(null);
  const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
@@ -252,12 +253,11 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
      </div>
      {editingImage===t.id&&<div style={{padding:'0 9px 10px',display:'grid',gap:8}}>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7}}>
-       <button type="button" style={{...btn,background:imageMethod==='upload'?'#eee5fb':'transparent',fontWeight:imageMethod==='upload'?700:400}} onClick={()=>{setImageMethod('upload');setImageError('')}}>직접 업로드</button>
+       <button type="button" disabled={uploadingImage} style={{...btn,background:imageMethod==='upload'?'#eee5fb':'transparent',fontWeight:imageMethod==='upload'?700:400}} onClick={()=>{setImageMethod('upload');setImageError('');imageFileInput.current?.click()}}>직접 업로드</button>
        <button type="button" style={{...btn,background:imageMethod==='url'?'#eee5fb':'transparent',fontWeight:imageMethod==='url'?700:400}} onClick={()=>{setImageMethod('url');setImageError('')}}>이미지 URL</button>
       </div>
-      {imageMethod==='upload'&&<label style={{display:'grid',gap:5,fontSize:13}}>사진 선택 (JPG · PNG · WEBP, 5MB 이하)
-       <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage} aria-label={t.name+' 사진 파일 선택'} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadImage(t.id,file);e.target.value=''}} style={{fontSize:14,width:'100%',minWidth:0}}/>
-      </label>}
+      <input ref={imageFileInput} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={uploadingImage} aria-label={t.name+' 사진 파일 선택'} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadImage(t.id,file);e.target.value=''}} style={{position:'absolute',width:1,height:1,opacity:0,pointerEvents:'none'}}/>
+      {imageMethod==='upload'&&<p style={{fontSize:12,color:'#85748e',margin:'0 2px'}}>직접 업로드를 누르면 사진을 선택할 수 있어. JPG · PNG · WEBP · HEIC, 5MB 이하</p>}
       {imageMethod==='url'&&<form onSubmit={e=>{e.preventDefault();updateImage(t.id,imageDraft)}} style={{display:'grid',gap:7}}>
        <input type="url" value={imageDraft} placeholder="이미지 URL 붙여넣기" aria-label={t.name+' 이미지 URL'} onChange={e=>{setImageDraft(e.target.value);setImageError('')}} style={{width:'100%',minWidth:0,boxSizing:'border-box',fontSize:16,padding:9,borderRadius:9,border:'1px solid #bca6d8'}}/>
        <button type="submit" style={{...btn,fontSize:12}}>URL 저장</button>

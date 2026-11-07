@@ -570,7 +570,8 @@ export const CORE_APPROVED_TECHNIQUES=[
   }
 ];
 // Source video provided by the user; positions are the supplied chapter timestamps.
-const STRONG_ABS_VIDEO='https://www.youtube.com/watch?v=wh_x9W0CNuE';
+const STRONG_ABS_VIDEO='https://www.youtube.com/watch?v=z6D727lTqB0';
+const FOAM_RIB_VIDEO='https://www.youtube.com/watch?v=wh_x9W0CNuE';
 const seconds=value=>value.split(':').reduce((n,v)=>n*60+Number(v),0);
 const alternateTimes={
  '0625':['07:25'],
@@ -591,9 +592,19 @@ const sourceReference=(tech,time,index)=>({
  memo:index?'반대쪽 동작':''
 });
 for(const tech of CORE_APPROVED_TECHNIQUES){
- if(!tech.id.startsWith('core-strong-abs-')||!tech.time)continue;
- const others=alternateTimes[tech.id.slice(-4)]||[];
- tech.references=[sourceReference(tech,tech.time,0),...others.map((time,i)=>sourceReference(tech,time,i+1))];
+ if(!tech.time)continue;
+ if(tech.id.startsWith('core-strong-abs-')){
+  const others=alternateTimes[tech.id.slice(-4)]||[];
+  tech.references=[sourceReference(tech,tech.time,0),...others.map((time,i)=>sourceReference(tech,time,i+1))];
+ }else if(tech.id.startsWith('core-foam-rib-')){
+  tech.references=[{
+   id:'source-foam-rib-'+tech.id.slice(-4),
+   url:FOAM_RIB_VIDEO,
+   title:'Deep core workout for Rib flare fixed · 데일리 딥코어 희정',
+   start:seconds(tech.time),end:null,memo:'폼롤러 변형 동작'
+  }];
+  tech.notes='폼롤러 지지 조건의 변형 기술';
+ }
 }
 
 export function seedCoreCatalog(snapshot){
@@ -605,7 +616,13 @@ export function seedCoreCatalog(snapshot){
   if(!source)return x;
   const removed=new Set(x.removedReferenceIds||[]);
   const present=new Set((x.references||[]).map(ref=>ref.id));
-  const refs=[...(x.references||[]),...(source.references||[]).filter(ref=>!removed.has(ref.id)&&!present.has(ref.id))];
+  // Only update automatic source links, preserving all manually attached videos.
+  // Keep legacy IDs so explicitly removed references stay removed.
+  const migrated=(x.references||[]).map(ref=>{
+   const match=(source.references||[]).find(candidate=>candidate.id===ref.id);
+   return match?{...ref,url:match.url,title:match.title}:ref;
+  });
+  const refs=[...migrated,...(source.references||[]).filter(ref=>!removed.has(ref.id)&&!present.has(ref.id))];
   return {...x,...(!x.imageRemoved&&!x.imageUrl&&source.imageUrl?{imageUrl:source.imageUrl}:{}),references:refs};
  });
  const additional=CORE_APPROVED_TECHNIQUES.filter(x=>!ids.has(x.id));

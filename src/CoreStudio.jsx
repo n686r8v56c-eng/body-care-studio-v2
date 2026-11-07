@@ -3,11 +3,14 @@ import CareLibrary from './CareLibrary.jsx';
 import './RoutineTimer.css';
 
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
-const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
+const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',back:'등',arms:'팔'};
 const STUDIO_STRENGTH_CATEGORIES={
  glutes:['Quadruped','Supine','Prone','Side-Lying','Half Kneeling','Tall Kneeling','Seated','Bench-Supported','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Step up','Legacy Techniques · Review'],
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side-Kneeling','Prone','Long Sitting','Frog','Z-Shaped Legs'],
- thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
+ thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합'],
+ // These new studios share the complete technique/routine/timer UI; taxonomy can be finalized later.
+ back:['미분류'],
+ arms:['미분류']
 };
 export const CORE_CATEGORIES=Object.freeze([
  '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작 · 마무리동작','몸통 측굴'

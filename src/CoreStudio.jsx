@@ -254,6 +254,11 @@ function CoreTimer({data,onUpdate,database,userId}){
  const [name,setName]=useState('');
  const [steps,setSteps]=useState([]);
  const [adding,setAdding]=useState(false);
+ const [pickerCategory,setPickerCategory]=useState(null);
+ const [pickerSearch,setPickerSearch]=useState('');
+ const [mediaOpen,setMediaOpen]=useState({photo:false,video:false});
+ const [stepsOpen,setStepsOpen]=useState(true);
+ const [editingStep,setEditingStep]=useState(null);
  const [index,setIndex]=useState(0);
  const [remaining,setRemaining]=useState(60);
  const [playing,setPlaying]=useState(false);
@@ -275,6 +280,10 @@ function CoreTimer({data,onUpdate,database,userId}){
  const duration=Math.max(1,Number(currentStep?.seconds)||60);
  const progress=Math.min(1,Math.max(0,1-remaining/duration));
  const ringRadius=106,ringLength=2*Math.PI*ringRadius;
+ const accordionCard={border:'1px solid #e1d5ec',borderRadius:16,background:'#fff',overflow:'hidden',boxShadow:'0 2px 12px rgba(82,54,107,.035)'};
+ const accordionHeader={width:'100%',display:'flex',alignItems:'center',gap:10,padding:'15px 16px',border:0,background:'transparent',color:'#40334b',textAlign:'left',fontSize:15,cursor:'pointer'};
+ const softButton={...btn,padding:'7px 11px',fontSize:13,borderRadius:10,background:'#faf7fe'};
+ const matchingPicker=techniques.filter(t=>!pickerSearch.trim()||[t.name,t.en,t.posture,t.muscles,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(pickerSearch.trim().toLocaleLowerCase()));
  useEffect(()=>{
   setVideoSelection(0);setShowVideo(false);setImageFailed(false);
  },[currentStep?.techniqueId]);
@@ -371,46 +380,90 @@ function CoreTimer({data,onUpdate,database,userId}){
     <button type="button" aria-label="처음부터" title="처음" style={btn} disabled={!steps.length} onClick={()=>{pause();setIndex(0);setRemaining(steps[0]?.seconds||60);setDone(false)}}>↻</button>
    </div>
   </div>
-  {currentTechnique&&<section aria-label="현재 동작 참고 사진과 영상" style={{display:'grid',gap:12,marginBottom:16}}>
-   <div style={{...panel,marginBottom:0,padding:12}}>
-    <strong style={{fontSize:15}}>현재 기술 · {currentName}</strong>
-    <div style={{fontSize:12,opacity:.65,margin:'4px 0 10px'}}>참고 사진</div>
-    <div style={{aspectRatio:'4 / 3',width:'100%',borderRadius:12,overflow:'hidden',background:'#f5f0f8',display:'flex',justifyContent:'center',alignItems:'center'}}>
-     {imageSrc&&!imageFailed?<img src={imageSrc} alt={currentName+' 참고 사진'} loading="lazy" onError={()=>setImageFailed(true)} style={{height:'100%',width:'100%',objectFit:'contain'}}/>:<span style={{color:'#897896',fontSize:13}}>이 기술에 등록된 사진이 없어.</span>}
-    </div>
+  {currentTechnique&&<section aria-label="현재 기술 미디어" style={{display:'grid',gap:10,marginBottom:13}}>
+   <div style={accordionCard}>
+    <button type="button" aria-expanded={mediaOpen.photo} onClick={()=>setMediaOpen(v=>({...v,photo:!v.photo}))} style={accordionHeader}>
+     <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#f1e9f9',color:'#8562a9',fontSize:19}}>▧</span>
+     <span style={{flex:1,minWidth:0}}><strong style={{display:'block'}}>동작 사진</strong><small style={{display:'block',fontSize:12,color:'#9785a5',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{currentName} · {imageSrc&&!imageFailed?'등록됨':'사진 없음'}</small></span>
+     <span aria-hidden="true" style={{color:'#8d70aa',fontSize:19}}>{mediaOpen.photo?'⌃':'⌄'}</span>
+    </button>
+    {mediaOpen.photo&&<div style={{padding:'0 13px 14px'}}>
+     <div style={{aspectRatio:'4 / 3',borderRadius:12,overflow:'hidden',background:'#f5f0f8',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      {imageSrc&&!imageFailed?<img src={imageSrc} alt={currentName+' 참고 사진'} loading="lazy" onError={()=>setImageFailed(true)} style={{height:'100%',width:'100%',objectFit:'contain'}}/>:<span style={{fontSize:13,color:'#897896'}}>등록된 참고 사진이 없어.</span>}
+     </div>
+    </div>}
    </div>
-   <div style={{...panel,marginBottom:0,padding:12}}>
-    <strong style={{fontSize:15}}>참고 영상 ({references.length})</strong>
-    {references.length>0?<div>
-     {references.length>1&&<div role="tablist" aria-label="현재 기술 참고 영상 선택" style={{display:'flex',gap:7,overflowX:'auto',padding:'10px 0'}}>
-      {references.map((ref,i)=><button type="button" role="tab" aria-selected={videoSelection===i} key={ref.id||i} style={{...btn,whiteSpace:'nowrap',fontSize:12,background:videoSelection===i?'#ece2f8':'transparent'}} onClick={()=>{setVideoSelection(i);setShowVideo(false)}}>영상 {i+1}</button>)}
-     </div>}
-     <div style={{margin:'8px 0',display:'flex',justifyContent:'space-between',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:12}}>
-      <span>{activeReference?.title||'참고 영상'}</span>
-      <span>시작 {timeLabel(activeReference?.start)}</span>
-     </div>
-     <div style={{aspectRatio:'16 / 9',width:'100%',background:'#e9dff0',borderRadius:12,overflow:'hidden'}}>
-      {showVideo?<iframe key={String(currentStep.techniqueId)+'-'+String(activeReference?.id)} title={currentName+' 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?playsinline=1&start='+Math.max(0,Number(activeReference.start)||0)+(activeReference.end!=null?'&end='+Math.max(0,Number(activeReference.end)||0):'')} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{display:'block',width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowVideo(true)} style={{width:'100%',height:'100%',border:0,color:'#7955a0',background:'linear-gradient(120deg,#f2e9f9,#ddd1ec)',fontWeight:700,fontSize:16,cursor:'pointer'}}>▶ 참고 영상 재생</button>}
-     </div>
-     <a target="_blank" rel="noopener noreferrer" href={activeVideo.url+'&t='+Math.max(0,Number(activeReference?.start)||0)+'s'} style={{display:'inline-block',marginTop:10,fontSize:12,color:'#74509e'}}>↗ YouTube에서 열기</a>
-    </div>:<p style={{fontSize:13,color:'#84738b',marginBottom:0}}>연결된 참고 영상이 없어. 기술 라이브러리에서 추가할 수 있어.</p>}
+   <div style={accordionCard}>
+    <button type="button" aria-expanded={mediaOpen.video} onClick={()=>{setMediaOpen(v=>({...v,video:!v.video}));if(mediaOpen.video)setShowVideo(false)}} style={accordionHeader}>
+     <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#f1e9f9',color:'#8562a9',fontSize:18}}>▷</span>
+     <span style={{flex:1,minWidth:0}}><strong style={{display:'block'}}>참고 영상 <span style={{fontSize:12,color:'#9a83b0'}}>({references.length})</span></strong><small style={{display:'block',fontSize:12,color:'#9785a5',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{references.length?'기술 타임라인에서 바로 재생':'연결된 영상 없음'}</small></span>
+     <span aria-hidden="true" style={{color:'#8d70aa',fontSize:19}}>{mediaOpen.video?'⌃':'⌄'}</span>
+    </button>
+    {mediaOpen.video&&<div style={{padding:'0 13px 14px'}}>
+     {references.length>0?<div>
+      {references.length>1&&<div role="tablist" aria-label="현재 기술 참고 영상 선택" style={{display:'flex',gap:7,overflowX:'auto',padding:'2px 0 10px'}}>
+       {references.map((ref,i)=><button type="button" role="tab" aria-selected={videoSelection===i} key={ref.id||i} style={{...softButton,flexShrink:0,background:videoSelection===i?'#eaddf7':'#fff'}} onClick={()=>{setVideoSelection(i);setShowVideo(false)}}>영상 {i+1}</button>)}
+      </div>}
+      <div style={{display:'flex',justifyContent:'space-between',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:12,marginBottom:9,color:'#6c5a7a'}}>
+       <span style={{flex:'1 1 120px',overflowWrap:'anywhere'}}>{activeReference?.title||'참고 영상'}</span>
+       <strong style={{color:'#8463a6'}}>▶ {timeLabel(activeReference?.start)}</strong>
+      </div>
+      <div style={{aspectRatio:'16 / 9',width:'100%',background:'#e9dff0',borderRadius:12,overflow:'hidden'}}>
+       {showVideo?<iframe key={String(currentStep.techniqueId)+'-'+String(activeReference?.id)} title={currentName+' 참고 영상'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?playsinline=1&start='+Math.max(0,Number(activeReference.start)||0)+(activeReference.end!=null?'&end='+Math.max(0,Number(activeReference.end)||0):'')} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{display:'block',width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowVideo(true)} style={{width:'100%',height:'100%',border:0,color:'#7955a0',background:'linear-gradient(120deg,#f2e9f9,#ddd1ec)',fontWeight:700,fontSize:16,cursor:'pointer'}}>▶ 해당 구간 재생</button>}
+      </div>
+      <a target="_blank" rel="noopener noreferrer" href={activeVideo.url+'&t='+Math.max(0,Number(activeReference?.start)||0)+'s'} style={{display:'inline-block',marginTop:10,fontSize:13,color:'#74509e'}}>↗ YouTube에서 열기</a>
+     </div>:<p style={{fontSize:13,color:'#84738b',margin:'4px 0'}}>기술 라이브러리에서 참고 영상을 연결할 수 있어.</p>}
+    </div>}
    </div>
   </section>}
-  <button style={{...btn,width:'100%',marginBottom:12}} onClick={()=>setAdding(v=>!v)}>+ 기술 라이브러리에서 선택</button>
-  {adding&&<div style={panel}>
-   {CORE_CATEGORIES.map((cat,i)=><div key={cat}>
-    <strong style={{fontSize:13}}>{cat}</strong>
-    {techniques.filter(t=>t.category===i).map(t=><button style={{...btn,display:'block',width:'100%',textAlign:'left',margin:'6px 0'}} key={t.id} onClick={()=>add(t.id)}>+ {t.name}</button>)}
-   </div>)}
-   {!techniques.length&&<p>승인·등록된 기술이 생기면 여기에서 선택할 수 있어.</p>}
-  </div>}
-  {steps.map((s,i)=><div style={{...panel,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',background:i===index?'rgba(155,125,210,.12)':'transparent'}} key={i}>
-   <strong style={{flex:'1 1 130px'}}>{i+1}. {nameOf(s.techniqueId,techniques)}</strong>
-   <label style={{fontSize:12}}>초 <input aria-label="동작 시간(초)" type="number" min="5" max="3600" value={s.seconds} onChange={e=>edit(i,{seconds:Math.min(3600,Math.max(5,Number(e.target.value)||60))})} style={{width:64,padding:6}}/></label>
-   <button style={btn} aria-label="위로 이동" disabled={i===0} onClick={()=>move(i,-1)}>↑</button>
-   <button style={btn} aria-label="아래로 이동" disabled={i===steps.length-1} onClick={()=>move(i,1)}>↓</button>
-   <button style={btn} aria-label="동작 제거" onClick={()=>remove(i)}>×</button>
-  </div>)}
+  <div style={{...accordionCard,marginBottom:12}}>
+   <button type="button" aria-expanded={adding} onClick={()=>setAdding(v=>!v)} style={{...accordionHeader,background:adding?'#f8f3fc':'#fff'}}>
+    <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#efe6f9',color:'#8260aa',fontSize:21}}>＋</span>
+    <span style={{flex:1}}><strong style={{display:'block'}}>기술 라이브러리에서 선택</strong><small style={{fontSize:12,color:'#9686a2'}}>필요한 동작을 시퀀스에 추가</small></span>
+    <span style={{color:'#8d70aa',fontSize:19}} aria-hidden="true">{adding?'⌃':'⌄'}</span>
+   </button>
+   {adding&&<div style={{padding:'0 12px 14px',display:'grid',gap:8}}>
+    <input type="search" placeholder="기술명 · 근육 · 자세 검색" aria-label="추가할 코어 기술 검색" value={pickerSearch} onChange={e=>setPickerSearch(e.target.value)} style={{fontSize:16,padding:'11px 12px',borderRadius:11,border:'1px solid #d9c9e9',width:'100%',boxSizing:'border-box',background:'#fff',color:'#40334b'}}/>
+    {CORE_CATEGORIES.map((cat,i)=>{
+     const entries=matchingPicker.filter(t=>t.category===i);
+     if(pickerSearch.trim()&&!entries.length)return null;
+     const open=pickerSearch.trim()?true:pickerCategory===i;
+     return <div key={cat} style={{border:'1px solid #e8ddf1',borderRadius:12,overflow:'hidden'}}>
+      <button type="button" aria-expanded={open} onClick={()=>setPickerCategory(old=>old===i?null:i)} style={{...accordionHeader,padding:'11px 12px',fontSize:14,background:open?'#faf6fd':'#fff'}}>
+       <strong style={{flex:1}}>{cat}</strong><small style={{color:'#957dac'}}>{entries.length}개</small><span aria-hidden="true">{open?'⌃':'⌄'}</span>
+      </button>
+      {open&&<div style={{padding:'2px 9px 9px',display:'grid',gap:6}}>
+       {entries.map(t=><button type="button" key={t.id} onClick={()=>add(t.id)} style={{...btn,borderColor:'#e5d7ef',padding:'11px 12px',textAlign:'left',fontSize:14,background:'#fff'}}>＋ {t.name}</button>)}
+      </div>}
+     </div>;
+    })}
+    {!matchingPicker.length&&<p style={{fontSize:13,color:'#9686a2',textAlign:'center'}}>일치하는 기술이 없어.</p>}
+   </div>}
+  </div>
+  <div style={{...accordionCard,marginBottom:13}}>
+   <button type="button" aria-expanded={stepsOpen} onClick={()=>setStepsOpen(v=>!v)} style={accordionHeader}>
+    <span style={{display:'flex',width:36,height:36,borderRadius:11,alignItems:'center',justifyContent:'center',background:'#f1e9f9',color:'#8562a9',fontSize:18}}>☷</span>
+    <span style={{flex:1}}><strong style={{display:'block'}}>시퀀스 구성 <span style={{color:'#947dab',fontSize:12}}>({steps.length})</span></strong><small style={{fontSize:12,color:'#9785a5'}}>총 {fmt(total)} · 동작별 시간·순서 수정</small></span>
+    <span style={{color:'#8d70aa',fontSize:19}} aria-hidden="true">{stepsOpen?'⌃':'⌄'}</span>
+   </button>
+   {stepsOpen&&<div style={{padding:'0 12px 12px',display:'grid',gap:7}}>
+    {!steps.length&&<p style={{fontSize:13,color:'#90829b',textAlign:'center',margin:'12px 0'}}>먼저 기술 라이브러리에서 동작을 추가해 줘.</p>}
+    {steps.map((step,i)=><div key={i} style={{border:'1px solid '+(i===index?'#c0a0df':'#e8dff0'),background:i===index?'#f4edfb':'#fff',borderRadius:12,overflow:'hidden'}}>
+     <button type="button" aria-expanded={editingStep===i} onClick={()=>{setEditingStep(editingStep===i?null:i);if(!playing){setIndex(i);setRemaining(step.seconds);setDone(false)}}} style={{border:0,background:'transparent',color:'#40334b',padding:'12px',width:'100%',display:'flex',alignItems:'center',textAlign:'left',gap:9,cursor:'pointer'}}>
+      <span style={{color:'#8968ab',fontWeight:700,fontSize:12,minWidth:22}}>{String(i+1).padStart(2,'0')}</span>
+      <strong style={{flex:1,fontSize:14,overflowWrap:'anywhere'}}>{nameOf(step.techniqueId,techniques)}</strong>
+      <span style={{fontSize:13,color:'#80668f',whiteSpace:'nowrap'}}>{fmt(step.seconds)}</span>
+      <span style={{color:'#947dab',fontSize:15}}>{editingStep===i?'⌃':'⌄'}</span>
+     </button>
+     {editingStep===i&&<div style={{borderTop:'1px solid #e4d4ef',padding:'10px 12px',display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
+      <label style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:13,flex:'1 1 125px'}}>시간 <input aria-label={(i+1)+'번 동작 시간(초)' } type="number" min="5" max="3600" value={step.seconds} onChange={e=>edit(i,{seconds:Math.min(3600,Math.max(5,Number(e.target.value)||60))})} style={{width:75,minWidth:0,padding:8,fontSize:16,border:'1px solid #d5c2e8',borderRadius:9}}/> 초</label>
+      <button type="button" style={softButton} aria-label="위로 이동" disabled={i===0} onClick={()=>move(i,-1)}>↑</button>
+      <button type="button" style={softButton} aria-label="아래로 이동" disabled={i===steps.length-1} onClick={()=>move(i,1)}>↓</button>
+      <button type="button" style={{...softButton,color:'#ad6274'}} aria-label="동작 제거" onClick={()=>{remove(i);setEditingStep(null)}}>삭제</button>
+     </div>}
+    </div>)}
+   </div>}
+  </div>
   <div style={{display:'flex',gap:8}}>
    <input value={name} aria-label="시퀀스 이름" placeholder="시퀀스 이름" onChange={e=>setName(e.target.value)} style={{flex:1,minWidth:0,padding:10,borderRadius:10}}/>
    <button style={btn} disabled={!name.trim()||!steps.length} onClick={save}>시퀀스 저장</button>

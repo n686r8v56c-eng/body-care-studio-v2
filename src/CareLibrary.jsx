@@ -61,7 +61,7 @@ export function seedBodyCatalog(value){
  if(!levelNames['face:stretch'])levelNames['face:stretch']=VOICE_LEVEL_NAMES;
  return {...value,items,levelNames,beautyCatalogSeedVersion:1};
 }
-export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false}){
+export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false,database=null,userId=null}){
  const [level,setLevel]=useState(1);
  const [editingMode,setEditingMode]=useState(false);
  const [showDeleted,setShowDeleted]=useState(false);
@@ -70,6 +70,8 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const [editor,setEditor]=useState(null);
  const [draft,setDraft]=useState({en:'',ko:'',level:1,note:''});
  const [message,setMessage]=useState('');
+ const [thumbnailSigned,setThumbnailSigned]=useState({});
+ const [thumbnailBusy,setThumbnailBusy]=useState('');
 
  const [showRecovery,setShowRecovery]=useState(false);
  const [showImport,setShowImport]=useState(false);
@@ -81,6 +83,39 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const alertUser=text=>{setMessage(text)};
  const update=fn=>{if(readOnly)return;onUpdate(d=>{fn(d)})};
  const scoped=(data.items||[]).filter(x=>x.area===area&&x.group===group);
+ const thumbnailPaths=[...new Set(scoped.flatMap(row=>Object.values(row.instagramThumbnails||{}).filter(path=>typeof path==='string'&&userId&&path.startsWith(userId+'/instagram/'))))];
+ const thumbnailPathsKey=thumbnailPaths.join('|');
+ useEffect(()=>{
+  if(!database||!userId||!thumbnailPaths.length)return;
+  let active=true;
+  Promise.all(thumbnailPaths.map(async path=>{
+   const {data:link,error}=await database.storage.from('body-care-technique-images').createSignedUrl(path,3600);
+   return [path,error?'':link?.signedUrl||''];
+  })).then(entries=>{if(active)setThumbnailSigned(old=>({...old,...Object.fromEntries(entries)}))});
+  return ()=>{active=false};
+ },[database,userId,thumbnailPathsKey]);
+ const uploadInstagramThumbnail=async(row,url,file)=>{
+  if(!file||readOnly)return;
+  if(!database||!userId){alertUser('Supabase 로그인이 필요해.');return}
+  const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+  if(!extensions[file.type]){alertUser('JPG, PNG, WEBP 사진을 선택해 줘.');return}
+  if(file.size>5*1024*1024){alertUser('사진은 5MB 이하로 선택해 줘.');return}
+  setThumbnailBusy(url);
+  try{
+   const path=userId+'/instagram/'+nextId()+'.'+extensions[file.type];
+   const {error}=await database.storage.from('body-care-technique-images').upload(path,file,{contentType:file.type,cacheControl:'3600',upsert:false});
+   if(error)throw error;
+   const {data:link,error:signError}=await database.storage.from('body-care-technique-images').createSignedUrl(path,3600);
+   if(signError)throw signError;
+   setThumbnailSigned(old=>({...old,[path]:link.signedUrl}));
+   update(d=>{
+    const target=d.items.find(x=>x.id===row.id);
+    if(target&&instagramsFor(target).includes(url))target.instagramThumbnails={...(target.instagramThumbnails||{}),[url]:path};
+   });
+   alertUser('인스타 썸네일 저장 완료');
+  }catch(e){alertUser('사진 업로드 실패: '+(e.message||'Storage 버킷 설정을 확인해 줘.'))}
+  finally{setThumbnailBusy('')}
+ };
  const ordered=scoped.filter(x=>!x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0)||String(a.id).localeCompare(String(b.id)));
  const visible=ordered.filter(x=>(x.level||1)===level);
  const archived=scoped.filter(x=>x.archived).sort((a,b)=>(a.level||1)-(b.level||1)||(a.sort||0)-(b.sort||0));
@@ -169,7 +204,10 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    const found=d.items.find(x=>x.id===row.id);
    if(!found)return;
    if(link.type==='youtube')found.videos=videosFor(found).filter(id=>id!==link.id);
-   else found.instagramLinks=instagramsFor(found).filter(url=>url!==link.url);
+   else{
+    found.instagramLinks=instagramsFor(found).filter(url=>url!==link.url);
+    if(found.instagramThumbnails){found.instagramThumbnails={...found.instagramThumbnails};delete found.instagramThumbnails[link.url]}
+   }
   });
   setActive(v=>({...v,[row.id]:0}));
  };
@@ -186,7 +224,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
    if(!confirm('현재 목록을 보존하면서 새 항목만 추가할까?'))return;
    update(d=>{
     const ids=new Set(d.items.map(x=>x.id));
-    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face','core'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:normalizeVideoIds(x.videos),instagramLinks:instagramLinks(x.instagramLinks)});ids.add(x.id)}});
+    raw.items.forEach(x=>{if(x?.id&&!ids.has(x.id)&&['upper','lower','face','core'].includes(x.area)&&['massage','stretch','bodyweight','machine'].includes(x.group)){d.items.push({...x,level:Number(x.level)||1,archived:!!x.archived,videos:normalizeVideoIds(x.videos),instagramLinks:instagramLinks(x.instagramLinks),instagramThumbnails:x.instagramThumbnails||{}});ids.add(x.id)}});
     d.levelNames={...(raw.levelNames||{}),...(d.levelNames||{})};
    });setShowImport(false);alertUser('JSON 백업에서 새 항목을 가져왔어.');
   }catch(e){alertUser('백업 가져오기 실패: '+e.message)}
@@ -240,7 +278,13 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
     {expanded&&<div className="stretching-video-detail">
      {arr.length?<>
       {arr.length>1&&<div className="stretching-video-switch">{arr.map((v,i)=><button type="button" key={v} className={index===i?'active':''} onClick={()=>setActive(a=>({...a,[row.id]:i}))}>영상 {i+1}</button>)}</div>}
-      {arr[index]?.type==='youtube'?<div className="stretching-video-frame"><iframe title={displayName(row)+' 영상'} key={arr[index].id} src={'https://www.youtube-nocookie.com/embed/'+arr[index].id+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/></div>:<div className="stretching-no-video"><strong>Instagram 영상 북마크</strong><span>썸네일 없이 링크로 저장했어. 아래에서 Instagram으로 열 수 있어.</span></div>}
+      {arr[index]?.type==='youtube'?<div className="stretching-video-frame"><iframe title={displayName(row)+' 영상'} key={arr[index].id} src={'https://www.youtube-nocookie.com/embed/'+arr[index].id+'?playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy"/></div>:<div className="stretching-no-video">
+       {thumbnailSigned[row.instagramThumbnails?.[arr[index]?.url]]?<a href={arr[index].url} target="_blank" rel="noopener noreferrer" style={{width:'100%',display:'block'}}><img src={thumbnailSigned[row.instagramThumbnails[arr[index].url]]} alt={displayName(row)+' Instagram 대표 사진'} style={{display:'block',width:'100%',maxHeight:340,objectFit:'contain',borderRadius:10}}/></a>:<><strong>Instagram 영상 북마크</strong><span>직접 썸네일을 올리거나 Instagram에서 열 수 있어.</span></>}
+       {!readOnly&&<label style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7,padding:'10px 12px',border:'1px solid #c4a9dc',borderRadius:10,cursor:thumbnailBusy?'wait':'pointer',fontSize:13}}>
+        {thumbnailBusy===arr[index].url?'업로드 중...':row.instagramThumbnails?.[arr[index].url]?'썸네일 변경':'사진으로 썸네일 등록'}
+        <input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!thumbnailBusy} style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadInstagramThumbnail(row,arr[index].url,file);e.target.value=''}}/>
+       </label>}
+      </div>}
       <div className="stretching-video-actions">
        <button type="button" onClick={()=>arr[index].type==='youtube'?copyLink(arr[index].id):navigator.clipboard.writeText(arr[index].url).then(()=>alertUser('링크 복사 완료')).catch(()=>alertUser('영상 열기를 이용해 줘.'))}><Link2 size={15}/> 링크 복사</button>
        <a href={arr[index].url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> {arr[index].type==='instagram'?'Instagram에서 열기':'영상 열기'}</a>

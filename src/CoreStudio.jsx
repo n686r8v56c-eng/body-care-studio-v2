@@ -10,7 +10,7 @@ const STUDIO_STRENGTH_CATEGORIES={
  thighs:['안벅지','뒷벅지','앞벅지','Legacy Techniques · Review'],
  // These new studios share the complete technique/routine/timer UI; taxonomy can be finalized later.
  back:['광배근','등 중앙','상부 승모근','척추기립근','흉추 가동성','Legacy Techniques · Review'],
- arms:['미분류']
+ arms:['이두근','삼두근','전완근','Legacy Techniques · Review']
 };
 export const CORE_CATEGORIES=Object.freeze([
  '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작 · 마무리동작','몸통 측굴'

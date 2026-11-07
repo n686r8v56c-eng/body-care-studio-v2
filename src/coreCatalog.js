@@ -672,6 +672,18 @@ for(const tech of CORE_APPROVED_TECHNIQUES){
  if(tech.id.startsWith('core-strong-abs-')){
   const others=alternateTimes[tech.id.slice(-4)]||[];
   tech.references=[sourceReference(tech,tech.time,0),...others.map((time,i)=>sourceReference(tech,time,i+1))];
+ }else if(tech.id.startsWith('core-pelvic-sequence-')){
+  const base={
+   url:'https://www.youtube.com/watch?v=KnxNfJ38Wz8',
+   title:'골반 틸트 · 딥 코어 브릿지 · 토 탭 루틴',
+   end:null
+  };
+  const sourceId='source-KnxNfJ38Wz8-'+tech.id.slice(-4);
+  tech.references=[{...base,id:sourceId,start:seconds(tech.time),memo:''}];
+  if(tech.id==='core-pelvic-sequence-0307'){
+   tech.references[0].memo='왼발 지지 · 오른쪽 다리 움직임';
+   tech.references.push({...base,id:sourceId+'-left',start:seconds('04:02'),memo:'오른발 지지 · 왼쪽 다리 움직임'});
+  }
  }else if(tech.id.startsWith('core-foam-rib-')){
   tech.references=[{
    id:'source-foam-rib-'+tech.id.slice(-4),

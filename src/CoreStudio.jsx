@@ -41,6 +41,7 @@ function TechniqueReferences({technique,onUpdate}){
  const [adding,setAdding]=useState(false);
  const [selectedRef,setSelectedRef]=useState(null);
  const [showPlayer,setShowPlayer]=useState(false);
+ const [seekVersion,setSeekVersion]=useState(0);
  const active=refs.find(x=>x.id===selectedRef)||refs[0]||null;
  const activeVideo=active?parseVideoUrl(active.url):null;
  const [draft,setDraft]=useState({url:'',title:'',start:'',end:'',memo:''});
@@ -75,11 +76,11 @@ function TechniqueReferences({technique,onUpdate}){
    {active&&<div style={{minWidth:0}}>
     <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
      <strong style={{fontSize:13,overflowWrap:'anywhere'}}>{active.title||'참고 영상'}</strong>
-     <span style={{fontSize:12,color:'#876ca3'}}>시작 {timeLabel(active.start)}{active.end!=null?' · 종료 '+timeLabel(active.end):''}</span>
+     <button type="button" title="영상의 해당 시점으로 이동" aria-label={'영상 '+timeLabel(active.start)+'부터 재생'} onClick={()=>{setSeekVersion(v=>v+1);setShowPlayer(true)}} style={{border:0,background:'transparent',padding:'6px 2px',fontSize:12,color:'#7950ad',fontWeight:700,textDecoration:'underline',textUnderlineOffset:3,cursor:'pointer'}}>▶ 시작 {timeLabel(active.start)}{active.end!=null?' · 종료 '+timeLabel(active.end):''}</button>
     </div>
     {active.memo&&<p style={{fontSize:12,margin:'5px 0'}}>{active.memo}</p>}
     {activeVideo&&<div style={{width:'100%',aspectRatio:'16 / 9',background:'#eee9f3',borderRadius:10,overflow:'hidden',marginTop:9}}>
-     {showPlayer?<iframe key={active.id} title={(active.title||'참고 영상')+' 재생'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?start='+Math.max(0,Number(active.start)||0)+(active.end!=null?'&end='+Math.max(0,Number(active.end)||0):'')+'&playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowPlayer(true)} style={{width:'100%',height:'100%',border:0,background:'linear-gradient(120deg,#f2e9fa,#ddd1eb)',color:'#69478a',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',fontSize:16,fontWeight:700}}>▶ 영상 {refs.findIndex(x=>x.id===active.id)+1} 재생</button>}
+     {showPlayer?<iframe key={active.id+'-'+seekVersion} title={(active.title||'참고 영상')+' 재생'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?start='+Math.max(0,Number(active.start)||0)+(active.end!=null?'&end='+Math.max(0,Number(active.end)||0):'')+'&playsinline=1&autoplay=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowPlayer(true)} style={{width:'100%',height:'100%',border:0,background:'linear-gradient(120deg,#f2e9fa,#ddd1eb)',color:'#69478a',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',fontSize:16,fontWeight:700}}>▶ 영상 {refs.findIndex(x=>x.id===active.id)+1} 재생</button>}
     </div>}
     <div style={{display:'flex',flexWrap:'wrap',gap:7,marginTop:9}}>
      {activeVideo&&<a href={activeVideo.url+'&t='+Math.max(0,Number(active.start)||0)+'s'} target="_blank" rel="noopener noreferrer" style={{...btn,textDecoration:'none',fontSize:12}}>↗ YouTube에서 열기</a>}

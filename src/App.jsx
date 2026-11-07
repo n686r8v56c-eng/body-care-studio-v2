@@ -434,13 +434,16 @@ function normalizeRegionalStudio(raw,area){
   __skipStudios:true,
   __regionalStrengthLimit:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?6:area==='arms'?4:8,
   coreTechniques:backPrepared,
-  __regionalYogaLimit:(area==='glutes'||area==='back')?5:4,
+  __regionalYogaLimit:(area==='glutes'||area==='back')?5:area==='arms'?3:4,
   coreYogaTechniques:area==='glutes'&&!raw?.glutesYogaCategoryMigrated?(raw?.yogaTechniques||[]).map(t=>({
    ...t,category:4,
    tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 요가 분류 · 재분류 필요'])].slice(0,12)
   })):area==='back'&&!raw?.backYogaCategoryMigrated?(raw?.yogaTechniques||[]).map(t=>({
    ...t,category:4,
    tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 등 요가 분류 · 재분류 필요'])].slice(0,12)
+  })):area==='arms'&&!raw?.armsYogaCategoryMigrated?(raw?.yogaTechniques||[]).map(t=>({
+   ...t,category:2,
+   tags:[...new Set([...(Array.isArray(t.tags)?t.tags:[]),'기존 팔 요가 분류 · 재분류 필요'])].slice(0,12)
   })):raw?.yogaTechniques||[],
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
@@ -484,6 +487,7 @@ function normalizeRegionalStudio(raw,area){
   postureMigrated:area==='glutes'?true:!!raw?.postureMigrated,
   glutesYogaCategoryMigrated:area==='glutes'?true:!!raw?.glutesYogaCategoryMigrated,
   backYogaCategoryMigrated:area==='back'?true:!!raw?.backYogaCategoryMigrated,
+  armsYogaCategoryMigrated:area==='arms'?true:!!raw?.armsYogaCategoryMigrated,
   backCategoryMigrated:area==='back'?true:!!raw?.backCategoryMigrated,
   armCategoryMigrated:area==='arms'?true:!!raw?.armCategoryMigrated,
   armSeedVersion:area==='arms'?Math.max(1,armSeedVersion):armSeedVersion,

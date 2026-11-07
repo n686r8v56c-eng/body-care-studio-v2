@@ -61,7 +61,10 @@ function CoreTimer({data,onUpdate}){
     setPlaying(false);playingRef.current=false;
     const next=indexRef.current+1;
     if(next<stepsRef.current.length){
-     indexRef.current=next;setIndex(next);setRemaining(stepsRef.current[next].seconds);
+     indexRef.current=next;setIndex(next);
+     const duration=stepsRef.current[next].seconds;
+     lastTick.current=now;endAt.current=now+duration*1000;
+     setRemaining(duration);setPlaying(true);playingRef.current=true;
     }else setDone(true);
    }
   };

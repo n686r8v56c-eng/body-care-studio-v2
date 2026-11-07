@@ -6,7 +6,7 @@ export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
 const STUDIO_STRENGTH_CATEGORIES={
  glutes:['Quadruped','Supine','Prone','Side-Lying','Half Kneeling','Tall Kneeling','Seated','Bench-Supported','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Step up','Legacy Techniques · Review'],
- hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side Kneeling','Prone','Long Sitting / Straddle','Frog Position','Z-Shaped Legs'],
+ hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side-Kneeling','Prone','Long Sitting','Frog','Z-Shaped Legs'],
  thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
 };
 export const CORE_CATEGORIES=Object.freeze([
@@ -14,7 +14,9 @@ export const CORE_CATEGORIES=Object.freeze([
 ]);
 // Core category order is visual only; saved category indices remain unchanged.
 const orderedCategoryEntries=categories=>{
- const order=categories===CORE_CATEGORIES?[0,1,2,8,3,4,5,6,7]:categories.map((_,i)=>i);
+ const order=categories===CORE_CATEGORIES?[0,1,2,8,3,4,5,6,7]
+  :categories===STUDIO_STRENGTH_CATEGORIES.hips?[1,9,6,2,0,10,5,8,3,7,4]
+  :categories.map((_,i)=>i);
  return order.map(i=>[categories[i],i]);
 };
 const uid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(36).slice(2);

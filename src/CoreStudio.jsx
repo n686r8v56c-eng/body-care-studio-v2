@@ -39,6 +39,10 @@ const timeLabel=n=>{
 function TechniqueReferences({technique,onUpdate}){
  const refs=technique.references||[];
  const [adding,setAdding]=useState(false);
+ const [selectedRef,setSelectedRef]=useState(null);
+ const [showPlayer,setShowPlayer]=useState(false);
+ const active=refs.find(x=>x.id===selectedRef)||refs[0]||null;
+ const activeVideo=active?parseVideoUrl(active.url):null;
  const [draft,setDraft]=useState({url:'',title:'',start:'',end:'',memo:''});
  const [error,setError]=useState('');
  const reset=()=>{setDraft({url:'',title:'',start:'',end:'',memo:''});setError('');setAdding(false)};
@@ -51,11 +55,12 @@ function TechniqueReferences({technique,onUpdate}){
   onUpdate(d=>{
    const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);
    if(row){row.references=Array.isArray(row.references)?row.references:[];row.references.push({id:uid(),url:vid.url,title:draft.title.trim().slice(0,150)||'참고 영상',start,end,memo:draft.memo.trim().slice(0,500)})}
-  });reset();
+  });setSelectedRef(null);setShowPlayer(false);reset();
  };
  const remove=id=>{
   if(!window.confirm('이 기술에 연결된 참고 영상만 삭제할까? 원본 영상과 기술은 유지돼.'))return;
   onUpdate(d=>{const row=(d.coreTechniques||[]).find(x=>x.id===technique.id);if(row){row.references=(row.references||[]).filter(x=>x.id!==id);row.removedReferenceIds=[...new Set([...(row.removedReferenceIds||[]),id])]}});
+  if(active?.id===id){setSelectedRef(null);setShowPlayer(false)}
  };
  return <section style={{borderTop:'1px solid #ebe5f0',marginTop:12,paddingTop:12}}>
   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
@@ -63,19 +68,25 @@ function TechniqueReferences({technique,onUpdate}){
    <button type="button" style={{...btn,fontSize:12,padding:'7px 9px'}} onClick={()=>{setAdding(v=>!v);setError('')}}>{adding?'취소':'+ 영상 추가'}</button>
   </div>
   {refs.length===0&&!adding&&<p style={{opacity:.65,fontSize:12}}>아직 연결된 참고 영상이 없어.</p>}
-  {refs.map(ref=>{
-   const vid=parseVideoUrl(ref.url);
-   const href=vid?vid.url+'&t='+Math.max(0,Number(ref.start)||0)+'s':null;
-   return <div key={ref.id} style={{padding:'9px 0',borderBottom:'1px solid #eee7f4'}}>
-    <div style={{fontWeight:600,fontSize:13}}>{ref.title||'참고 영상'}</div>
-    <div style={{fontSize:12,opacity:.7}}>시작 {timeLabel(ref.start)}{ref.end!==null&&ref.end!==undefined?' · 종료 '+timeLabel(ref.end):''}</div>
-    {ref.memo&&<p style={{fontSize:12,margin:'4px 0'}}>{ref.memo}</p>}
-    <div style={{display:'flex',gap:6,alignItems:'center',marginTop:6,flexWrap:'wrap'}}>
-     {href&&<a href={href} target="_blank" rel="noopener noreferrer" style={{...btn,fontSize:12,textDecoration:'none',display:'inline-flex'}}>▶ {timeLabel(ref.start)} 재생</a>}
-     <button type="button" style={{...btn,fontSize:12}} onClick={()=>remove(ref.id)}>연결 삭제</button>
+  {refs.length>0&&<>
+   <div role="tablist" aria-label={technique.name+' 참고 영상 선택'} style={{display:'flex',gap:7,overflowX:'auto',WebkitOverflowScrolling:'touch',padding:'10px 0',scrollSnapType:'x proximity'}}>
+    {refs.map((ref,i)=><button type="button" role="tab" aria-selected={active?.id===ref.id} key={ref.id} onClick={()=>{setSelectedRef(ref.id);setShowPlayer(false)}} style={{...btn,flex:'0 0 auto',scrollSnapAlign:'start',fontSize:12,whiteSpace:'nowrap',background:active?.id===ref.id?'#e9ddf7':'transparent',color:active?.id===ref.id?'#624184':'inherit',borderColor:active?.id===ref.id?'#ae8ccf':'#e3d9ed'}}>영상 {i+1}</button>)}
+   </div>
+   {active&&<div style={{minWidth:0}}>
+    <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+     <strong style={{fontSize:13,overflowWrap:'anywhere'}}>{active.title||'참고 영상'}</strong>
+     <span style={{fontSize:12,color:'#876ca3'}}>시작 {timeLabel(active.start)}{active.end!=null?' · 종료 '+timeLabel(active.end):''}</span>
     </div>
-   </div>;
-  })}
+    {active.memo&&<p style={{fontSize:12,margin:'5px 0'}}>{active.memo}</p>}
+    {activeVideo&&<div style={{width:'100%',aspectRatio:'16 / 9',background:'#eee9f3',borderRadius:10,overflow:'hidden',marginTop:9}}>
+     {showPlayer?<iframe key={active.id} title={(active.title||'참고 영상')+' 재생'} src={'https://www.youtube-nocookie.com/embed/'+activeVideo.id+'?start='+Math.max(0,Number(active.start)||0)+(active.end!=null?'&end='+Math.max(0,Number(active.end)||0):'')+'&playsinline=1'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen loading="lazy" style={{width:'100%',height:'100%',border:0}}/>:<button type="button" onClick={()=>setShowPlayer(true)} style={{width:'100%',height:'100%',border:0,background:'linear-gradient(120deg,#f2e9fa,#ddd1eb)',color:'#69478a',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',fontSize:16,fontWeight:700}}>▶ 영상 {refs.findIndex(x=>x.id===active.id)+1} 재생</button>}
+    </div>}
+    <div style={{display:'flex',flexWrap:'wrap',gap:7,marginTop:9}}>
+     {activeVideo&&<a href={activeVideo.url+'&t='+Math.max(0,Number(active.start)||0)+'s'} target="_blank" rel="noopener noreferrer" style={{...btn,textDecoration:'none',fontSize:12}}>↗ YouTube에서 열기</a>}
+     <button type="button" style={{...btn,fontSize:12}} onClick={()=>remove(active.id)}>영상 연결 삭제</button>
+    </div>
+   </div>}
+  </>}
   {adding&&<form onSubmit={save} style={{display:'grid',gap:8,marginTop:10}}>
    <input autoFocus type="url" required value={draft.url} aria-label="참고 영상 YouTube URL" placeholder="YouTube URL 붙여넣기" onChange={e=>setDraft(v=>({...v,url:e.target.value}))} onPaste={e=>{const value=e.clipboardData.getData('text').trim();if(parseVideoUrl(value)){e.preventDefault();setDraft(v=>({...v,url:value}))}}} style={{fontSize:16,padding:10,minWidth:0,width:'100%',boxSizing:'border-box',borderRadius:9,border:'1px solid #bca6d8'}}/>
    <input value={draft.title} aria-label="참고 영상 제목" placeholder="영상 제목 (선택)" onChange={e=>setDraft(v=>({...v,title:e.target.value}))} style={{fontSize:16,padding:10,minWidth:0,width:'100%',boxSizing:'border-box',borderRadius:9,border:'1px solid #bca6d8'}}/>
@@ -91,7 +102,7 @@ function TechniqueReferences({technique,onUpdate}){
 }
 
 function CoreTechniques({data,onUpdate}){
- const [filter,setFilter]=useState(-1);
+ const [openCategories,setOpenCategories]=useState([]);
  const [expanded,setExpanded]=useState([]);
  const [editingImage,setEditingImage]=useState('');
  const [imageDraft,setImageDraft]=useState('');
@@ -112,12 +123,20 @@ function CoreTechniques({data,onUpdate}){
  };
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
-  <div style={{display:'grid',gap:8,marginBottom:16}}>
-   {CORE_CATEGORIES.map((name,i)=><button type="button" key={name} onClick={()=>setFilter(filter===i?-1:i)} style={{...btn,textAlign:'left',background:filter===i?'#eee5fb':'transparent',color:filter===i?'#382552':'inherit',display:'flex',justifyContent:'space-between'}}><strong>{i+1}. {name}</strong><span>{techniques.filter(x=>x.category===i).length}개</span></button>)}
-  </div>
-  {filter!==-1&&<button style={{...btn,marginBottom:12}} onClick={()=>setFilter(-1)}>전체 보기</button>}
-  <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:10,alignItems:'start'}}>
-   {techniques.filter(x=>filter===-1||x.category===filter).map(t=>{
+  <div style={{display:'grid',gap:10,marginBottom:16}}>
+   {CORE_CATEGORIES.map((name,i)=>{
+    const openCategory=openCategories.includes(i);
+    const entries=techniques.filter(t=>t.category===i);
+    return <section key={name} style={{border:'1px solid #e4d9ed',borderRadius:13,overflow:'hidden'}}>
+     <button type="button" aria-expanded={openCategory} onClick={()=>setOpenCategories(v=>openCategory?v.filter(x=>x!==i):[...v,i])} style={{width:'100%',padding:'15px 14px',display:'flex',alignItems:'center',gap:12,border:0,background:'transparent',color:'inherit',textAlign:'left',cursor:'pointer'}}>
+      <span style={{fontSize:12,color:'#947ead',minWidth:22}}>{String(i+1).padStart(2,'0')}</span>
+      <strong style={{fontSize:16,flex:1}}>{name}</strong>
+      <span style={{fontSize:12,color:'#927eaa'}}>{entries.length}개</span>
+      <span style={{color:'#977eb0',fontSize:17}} aria-hidden="true">{openCategory?'⌃':'⌄'}</span>
+     </button>
+     {openCategory&&<div style={{borderTop:'1px solid #e9e1ef',padding:'10px',display:'grid',gridTemplateColumns:'minmax(0,1fr)',gap:12}}>
+      {entries.map(t=>{
+
     const open=expanded.includes(t.id),hasImage=!!t.imageUrl&&!failedImages.includes(t.id);
     return <article key={t.id} style={{minWidth:0,border:'1px solid #ddd5e7',borderRadius:14,overflow:'hidden',background:'var(--card-bg,transparent)'}}>
      <button type="button" aria-expanded={open} onClick={()=>toggle(t.id)} style={{border:0,padding:0,width:'100%',display:'block',textAlign:'left',background:'transparent',color:'inherit',cursor:'pointer'}}>
@@ -150,6 +169,9 @@ function CoreTechniques({data,onUpdate}){
       <TechniqueReferences technique={t} onUpdate={onUpdate}/>
      </div>}
     </article>;
+      })}
+     </div>}
+    </section>;
    })}
   </div>
   {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어.</p>}

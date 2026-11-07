@@ -3,6 +3,12 @@ import CareLibrary from './CareLibrary.jsx';
 import './RoutineTimer.css';
 
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
+const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지'};
+const STUDIO_STRENGTH_CATEGORIES={
+ glutes:['준비동작','고관절 신전','고관절 외전','고관절 외회전','단측 안정화','복합·통합'],
+ hips:['준비동작','고관절 굴곡','고관절 신전','고관절 외전·내전','고관절 회전','고관절 안정화','복합·통합'],
+ thighs:['준비동작','무릎 신전','무릎 굴곡','고관절 내전','고관절 외전','단측 안정화','복합·통합']
+};
 export const CORE_CATEGORIES=Object.freeze([
  '몸통 굴곡','몸통 신전','몸통 회전','신전 저항','회전 저항','측굴 저항','복합·통합','준비동작'
 ]);
@@ -103,7 +109,7 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
  </section>;
 }
 
-function CoreTechniques({data,onUpdate,database,userId}){
+function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
  const [mode,setMode]=useState('strength');
  const [openCategories,setOpenCategories]=useState([]);
  const [search,setSearch]=useState('');
@@ -117,7 +123,7 @@ function CoreTechniques({data,onUpdate,database,userId}){
  const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
- const categories=yogaMode?YOGA_CATEGORIES:CORE_CATEGORIES;
+ const categories=yogaMode?YOGA_CATEGORIES:strengthCategories;
  const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
   let alive=true;
@@ -170,13 +176,13 @@ function CoreTechniques({data,onUpdate,database,userId}){
   finally{setUploadingImage(false)}
  };
  return <section style={{padding:'16px'}}>
-  <h2>코어 · 기술 라이브러리</h2>
-  <div role="tablist" aria-label="코어 운동 유형" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
+  <h2>{title} · 기술 라이브러리</h2>
+  <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
    {[{id:'strength',label:'맨몸근력'},{id:'yoga',label:'요가'}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
   </div>
   <div style={{display:'flex',alignItems:'center',gap:8,border:'1px solid #d9cae8',borderRadius:12,padding:'7px 11px',marginBottom:8,background:'transparent'}}>
    <span aria-hidden="true" style={{color:'#8f76ac',fontSize:18}}>⌕</span>
-   <input type="search" aria-label="코어 기술 검색" value={search} onChange={e=>{setSearch(e.target.value);setSearchClosed([])}} placeholder="기술명 · 영문명 · 근육 · 자세 · 태그 검색" style={{flex:1,minWidth:0,border:0,outline:'none',background:'transparent',color:'inherit',fontSize:16,padding:'7px 0'}}/>
+   <input type="search" aria-label={title+" 기술 검색"} value={search} onChange={e=>{setSearch(e.target.value);setSearchClosed([])}} placeholder="기술명 · 영문명 · 근육 · 자세 · 태그 검색" style={{flex:1,minWidth:0,border:0,outline:'none',background:'transparent',color:'inherit',fontSize:16,padding:'7px 0'}}/>
    {!!search&&<button type="button" aria-label="검색어 지우기" onClick={clearSearch} style={{...btn,padding:'5px 9px',fontSize:12}}>지우기</button>}
   </div>
   {term&&<p role="status" style={{fontSize:12,color:'#8d78a4',margin:'0 0 12px'}}>검색 결과 {totalMatches}개</p>}
@@ -266,7 +272,7 @@ function CoreSequenceThumbnail({technique,database,userId}){
   {src&&!broken?<img src={src} alt="" loading="lazy" onError={()=>setBroken(true)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:22,color:'#ae94c7'}}>▧</span>}
  </span>;
 }
-function CoreTimer({data,onUpdate,database,userId}){
+function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
  const techniques=data.coreTechniques||[];
  const routines=data.coreRoutines||[];
  const [routineId,setRoutineId]=useState('');
@@ -359,7 +365,7 @@ function CoreTimer({data,onUpdate,database,userId}){
  const skip=()=>{pause();const n=index+1;if(n<steps.length){setIndex(n);setRemaining(steps[n].seconds)}else{setDone(true);setRemaining(0)}};
  const save=()=>{if(!steps.length||!name.trim())return;const id=routineId||uid();onUpdate(d=>{d.coreRoutines=d.coreRoutines||[];const value={id,name:name.trim(),steps:steps.map(x=>({...x}))};const at=d.coreRoutines.findIndex(x=>x.id===id);if(at<0)d.coreRoutines.push(value);else d.coreRoutines[at]=value});setRoutineId(id)};
  return <section style={{padding:'16px'}}>
-  <h2>코어 · 타이머</h2>
+  <h2>{title} · 타이머</h2>
   <p style={{fontSize:13,opacity:.7}}>기술 라이브러리에서 동작을 선택하고 나만의 시퀀스를 만들어.</p>
   <select aria-label="저장된 시퀀스" value={routineId} onChange={e=>selectRoutine(e.target.value)} style={{width:'100%',padding:12,borderRadius:10,marginBottom:12}}><option value="">저장된 시퀀스 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
   <div className="routine-root routine-face" style={{padding:'22px 10px 20px',borderRadius:18,marginBottom:12,background:'#fff'}}>
@@ -417,7 +423,7 @@ function CoreTimer({data,onUpdate,database,userId}){
    </button>
    {adding&&<div style={{padding:'0 12px 14px',display:'grid',gap:8}}>
     <input type="search" placeholder="기술명 · 근육 · 자세 검색" aria-label="추가할 코어 기술 검색" value={pickerSearch} onChange={e=>setPickerSearch(e.target.value)} style={{fontSize:16,padding:'11px 12px',borderRadius:11,border:'1px solid #d9c9e9',width:'100%',boxSizing:'border-box',background:'#fff',color:'#40334b'}}/>
-    {CORE_CATEGORIES.map((cat,i)=>{
+    {strengthCategories.map((cat,i)=>{
      const entries=matchingPicker.filter(t=>t.category===i);
      if(pickerSearch.trim()&&!entries.length)return null;
      const open=pickerSearch.trim()?true:pickerCategory===i;
@@ -468,23 +474,48 @@ function CoreTimer({data,onUpdate,database,userId}){
   </div>
  </section>;
 }
-function CoreRecords({logs=[]}){
+function CoreRecords({logs=[],title='코어'}){
  const today=day(),current=logs.filter(x=>x.date===today).reduce((n,x)=>n+x.seconds,0);
  const dates=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')});
  return <section style={{padding:16}}>
-  <h2>코어 · 기록</h2>
-  <div style={panel}><span>오늘의 코어 운동</span><h2 style={{margin:'8px 0'}}>{fmt(current)}</h2></div>
+  <h2>{title} · 기록</h2>
+  <div style={panel}><span>오늘의 {title} 운동</span><h2 style={{margin:'8px 0'}}>{fmt(current)}</h2></div>
   <h3>최근 7일</h3>
   {dates.map(date=><div key={date} style={{...panel,display:'flex',justifyContent:'space-between'}}><span>{date}</span><strong>{fmt(logs.filter(x=>x.date===date).reduce((n,x)=>n+x.seconds,0))}</strong></div>)}
   <p style={{fontSize:12,opacity:.7}}>타이머에서 실제 진행한 시간만 기록해.</p>
  </section>;
 }
-export default function CoreStudio({tab,data,onUpdate,sync,database,userId}){
- if(tab==='inbox')return <section aria-label="코어 영상 인박스">
-  <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>코어 · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크만 저장해. 기술 분석은 나중에.</p></div>
-  <CareLibrary data={data} onUpdate={onUpdate} area="core" group="massage" sync={sync} database={database} userId={userId}/>
+export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
+ const title=STUDIO_NAMES[area]||'코어';
+ const strengthCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
+ const scoped=area==='core'?data:{
+  ...data,
+  coreTechniques:data.studios?.[area]?.techniques||[],
+  coreYogaTechniques:data.studios?.[area]?.yogaTechniques||[],
+  coreRoutines:data.studios?.[area]?.routines||[],
+  coreLogs:data.studios?.[area]?.logs||[]
+ };
+ const scopedUpdate=area==='core'?onUpdate:fn=>onUpdate(d=>{
+  const current=d.studios?.[area]||{};
+  const virtual={
+   coreTechniques:current.techniques||[],
+   coreYogaTechniques:current.yogaTechniques||[],
+   coreRoutines:current.routines||[],
+   coreLogs:current.logs||[]
+  };
+  fn(virtual);
+  d.studios={...(d.studios||{}),[area]:{
+   techniques:virtual.coreTechniques,
+   yogaTechniques:virtual.coreYogaTechniques,
+   routines:virtual.coreRoutines,
+   logs:virtual.coreLogs
+  }};
+ });
+ if(tab==='inbox')return <section aria-label={title+' 영상 인박스'}>
+  <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>{title} · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크를 모으고 기술은 라이브러리에서 정리해.</p></div>
+  <CareLibrary data={data} onUpdate={onUpdate} area={area} group="massage" sync={sync} database={database} userId={userId}/>
  </section>;
- if(tab==='timer')return <CoreTimer data={data} onUpdate={onUpdate} database={database} userId={userId}/>;
- if(tab==='records')return <CoreRecords logs={data.coreLogs||[]}/>;
- return <CoreTechniques data={data} onUpdate={onUpdate} database={database} userId={userId}/>;
+ if(tab==='timer')return <CoreTimer data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} database={database} userId={userId}/>;
+ if(tab==='records')return <CoreRecords logs={scoped.coreLogs||[]} title={title}/>;
+ return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} database={database} userId={userId}/>;
 }

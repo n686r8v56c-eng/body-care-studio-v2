@@ -104,12 +104,20 @@ function TechniqueReferences({technique,onUpdate}){
 
 function CoreTechniques({data,onUpdate}){
  const [openCategories,setOpenCategories]=useState([]);
+ const [search,setSearch]=useState('');
+ const [searchClosed,setSearchClosed]=useState([]);
  const [expanded,setExpanded]=useState([]);
  const [editingImage,setEditingImage]=useState('');
  const [imageDraft,setImageDraft]=useState('');
  const [imageError,setImageError]=useState('');
  const [failedImages,setFailedImages]=useState([]);
  const techniques=data.coreTechniques||[];
+ const term=search.trim().toLocaleLowerCase();
+ const searchable=t=>[t.name,t.en,t.posture,t.muscles,t.description,t.notes,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(term);
+ const categoryMatches=i=>CORE_CATEGORIES[i].toLocaleLowerCase().includes(term);
+ const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t)));
+ const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
+ const totalMatches=term?CORE_CATEGORIES.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
  const updateImage=(id,value)=>{
@@ -124,12 +132,19 @@ function CoreTechniques({data,onUpdate}){
  };
  return <section style={{padding:'16px'}}>
   <h2>코어 · 기술 라이브러리</h2>
+  <div style={{display:'flex',alignItems:'center',gap:8,border:'1px solid #d9cae8',borderRadius:12,padding:'7px 11px',marginBottom:8,background:'transparent'}}>
+   <span aria-hidden="true" style={{color:'#8f76ac',fontSize:18}}>⌕</span>
+   <input type="search" aria-label="코어 기술 검색" value={search} onChange={e=>{setSearch(e.target.value);setSearchClosed([])}} placeholder="기술명 · 영문명 · 근육 · 자세 · 태그 검색" style={{flex:1,minWidth:0,border:0,outline:'none',background:'transparent',color:'inherit',fontSize:16,padding:'7px 0'}}/>
+   {!!search&&<button type="button" aria-label="검색어 지우기" onClick={clearSearch} style={{...btn,padding:'5px 9px',fontSize:12}}>지우기</button>}
+  </div>
+  {term&&<p role="status" style={{fontSize:12,color:'#8d78a4',margin:'0 0 12px'}}>검색 결과 {totalMatches}개</p>}
   <div style={{display:'grid',gap:10,marginBottom:16}}>
    {CORE_CATEGORIES.map((name,i)=>{
-    const openCategory=openCategories.includes(i);
-    const entries=techniques.filter(t=>t.category===i);
+    const entries=matchingEntries(i);
+    if(term&&!entries.length)return null;
+    const openCategory=term?!searchClosed.includes(i):openCategories.includes(i);
     return <section key={name} style={{border:'1px solid #e4d9ed',borderRadius:13,overflow:'hidden'}}>
-     <button type="button" aria-expanded={openCategory} onClick={()=>setOpenCategories(v=>openCategory?v.filter(x=>x!==i):[...v,i])} style={{width:'100%',padding:'15px 14px',display:'flex',alignItems:'center',gap:12,border:0,background:'transparent',color:'inherit',textAlign:'left',cursor:'pointer'}}>
+     <button type="button" aria-expanded={openCategory} onClick={()=>term?setSearchClosed(v=>openCategory?[...v,i]:v.filter(x=>x!==i)):setOpenCategories(v=>openCategory?v.filter(x=>x!==i):[...v,i])} style={{width:'100%',padding:'15px 14px',display:'flex',alignItems:'center',gap:12,border:0,background:'transparent',color:'inherit',textAlign:'left',cursor:'pointer'}}>
       <span style={{fontSize:12,color:'#947ead',minWidth:22}}>{String(i+1).padStart(2,'0')}</span>
       <strong style={{fontSize:16,flex:1}}>{name}</strong>
       <span style={{fontSize:12,color:'#927eaa'}}>{entries.length}개</span>
@@ -175,6 +190,7 @@ function CoreTechniques({data,onUpdate}){
    })}
   </div>
   {!techniques.length&&<p style={{fontSize:13,opacity:.7}}>아직 등록된 기술이 없어.</p>}
+  {term&&totalMatches===0&&<p style={{fontSize:14,opacity:.7,textAlign:'center',padding:'18px 0'}}>일치하는 기술이 없어. 다른 검색어를 입력해 줘.</p>}
  </section>;
 }
 function CoreTimer({data,onUpdate}){

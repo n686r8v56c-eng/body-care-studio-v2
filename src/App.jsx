@@ -409,6 +409,68 @@ const ARM_EXERCISE_SEED=[
   "removedReferenceIds": []
  }
 ];
+const LEG_STRETCH_PHOTO_URLS={
+ "Wall Calf Stretch": {
+  "url": "https://eneslow.com/media/wysiwyg/email-for-Strech_Exersies.jpg",
+  "source": "https://eneslow.com/timely-stretching"
+ },
+ "Bent-Knee Soleus Stretch": {
+  "url": "https://cdn.shopify.com/s/files/1/0982/9017/2183/files/wall-calf-stretch-bent-knee-soleus-technique.jpg?v=1776814957",
+  "source": "https://carevion.myshopify.com/blogs/news/posterior-tibial-tendonitis-exercises"
+ },
+ "Towel Calf Stretch": {
+  "url": "https://hep.pro/_next/image?q=75&url=%2Fimg%2Fexercises%2Fseated-calf-stretch-gastrocnemius.png&w=3840",
+  "source": "https://hep.pro/exercises/ankle-foot"
+ },
+ "Ankle Pumps": {
+  "url": "https://www.thereadypatient.com/content/zb-content-hub/us/en/knee/exercises-for-knee-pain/jcr%3Acontent/root/responsivegrid/responsivegrid/responsivegrid_1694517879/layout_container_cop_125737937/image_886309941.coreimg.jpeg/1707854181172/ankle-pumps.jpeg",
+  "source": "https://www.thereadypatient.com/knee/exercises-for-knee-pain.html"
+ },
+ "Ankle Circles": {
+  "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Exercise_Ankle_Rotation.png",
+  "source": "https://commons.wikimedia.org/wiki/File:Exercise_Ankle_Rotation.png"
+ },
+ "Ankle Alphabet": {
+  "url": "https://i.pinimg.com/736x/24/56/50/245650cab23167d74af064d99b20bf25.jpg",
+  "source": "https://www.pinterest.com/pin/127015651976906498/"
+ },
+ "Toe Spreads": {
+  "url": "https://images.yogajournal.jp/article/29994/tHi2d10RurY86T3bwDLGdbRYmaITJxldtc0Ag5AI.jpeg",
+  "source": "https://yogajournal.jp/4055/5"
+ },
+ "Plantar Fascia Stretch": {
+  "url": "https://www.algeos.com/media/.renditions/wysiwyg/58A1E26D-EE38-4D1F-96CB-B3FCF9C419FA.png",
+  "source": "https://www.algeos.com/company-news/post/algeos-product-guides/8-proven-exercises-for-plantar-fasciitis"
+ },
+ "Toe Flexion and Extension": {
+  "url": "https://www.opz.at/templates/yootheme/cache/5a/Hallux%20Valgus-205003_gute%20Beweglichkeit-5ae01baa.jpeg",
+  "source": "https://www.opz.at/fuss/hallux-valgus"
+ },
+ "Tibialis Anterior Stretch": {
+  "url": "https://www.tylino.co.uk/files/Stretching%20and%20Mobility/Lower%20Leg%20Ankle%20and%20Foot/Tibialis-anterior-stretch-kneeling-2%20not%20used",
+  "source": "https://www.tylino.co.uk/lower-leg-ankle-and-foot"
+ },
+ "Heel Walks": {
+  "url": "https://i0.wp.com/www.kinetic-revolution.com/wp-content/uploads/2013/10/Screen-Shot-2013-10-10-at-10.53.38.png?fit=1098%2C700&ssl=1",
+  "source": "https://www.kinetic-revolution.com/shin-strengthening-heel-walk-drill-for-runners/"
+ },
+ "Seated Toe Raises": {
+  "url": "https://stat.ameba.jp/user_images/20160526/13/toyosuchiro/0d/9f/j/o0450060013655938647.jpg",
+  "source": "https://ameblo.jp/toyosuchiro/entry-12164260746.html"
+ },
+ "Legs Up the Wall": {
+  "url": "https://cdn.shopify.com/s/files/1/1456/4530/files/legs-up-the-wall.jpg?v=1751650996",
+  "source": "https://polysleep.ca/fr/blogs/bien-etre/postures-yoga-systeme-nerveux"
+ },
+ "Elevated Ankle Pumps": {
+  "url": "https://static.tvbs.com.tw/health2.0/images/uploads/2023/07/20230731135612-XADUFk2r.jpg",
+  "source": "https://health.tvbs.com.tw/medical/341021"
+ },
+ "Supine Heel Slides": {
+  "url": "https://www.fhft.nhs.uk/application/files/2917/7279/7363/Heel_Slides.png",
+  "source": "https://www.fhft.nhs.uk/patients-and-visitors/patient-information-library/knee-injury-advice-sheet"
+ }
+};
 function normalizeRegionalStudio(raw,area,legacyItems=[]){
  // Import the previous Lv.1–5 legs catalog once into the same technique model
  // used by glutes/hips/thighs. Keep the source items untouched for backups.
@@ -466,6 +528,12 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
+ // Fill only missing leg-stretch images. Preserve any user-added photo and removal choice.
+ const legPhotoTechniques=area==='legs'?parsed.coreTechniques.map(t=>{
+  const photo=LEG_STRETCH_PHOTO_URLS[t.name]||LEG_STRETCH_PHOTO_URLS[t.en];
+  if(!photo||t.imageUrl||t.imagePath||t.imageRemoved)return t;
+  return {...t,imageUrl:photo.url,notes:t.notes||('사진 출처: '+photo.source)};
+ }):parsed.coreTechniques;
  const backMassageTechniques=area==='back'?normalize({
   __skipStudios:true,
   __regionalYogaLimit:4,
@@ -521,7 +589,7 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
   backSeedVersion:area==='back'?Math.max(2,backSeedVersion):backSeedVersion,
-  techniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,massageTechniques:backMassageTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
+  techniques:area==='legs'?legPhotoTechniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,massageTechniques:backMassageTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }
 function download(name,data){

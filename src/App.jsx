@@ -421,7 +421,7 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   imageUrl:'',imagePath:'',tags:[item.group==='massage'?'Massage':'Stretch'],
   references:(item.videos||[]).map((v,i)=>{
    const id=typeof v==='string'?v:v?.id;
-   return /^[\\w-]{11}$/.test(id||'')?{id:'legacy-video:'+item.id+':'+i,url:'https://www.youtube.com/watch?v='+id,title:'기존 참고 영상',start:0,end:null,memo:''}:null;
+   return /^[\w-]{11}$/.test(id||'')?{id:'legacy-video:'+item.id+':'+i,url:'https://www.youtube.com/watch?v='+id,title:'기존 참고 영상',start:0,end:null,memo:''}:null;
   }).filter(Boolean),removedReferenceIds:[]
  });
  const legStarterItems=LEG_STRETCH_SEED.filter(seed=>!originalLegItems.some(x=>String(x.id)===seed.id||String(x.en||x.title||'').trim().toLowerCase()===seed.en.toLowerCase()));

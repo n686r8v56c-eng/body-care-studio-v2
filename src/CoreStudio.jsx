@@ -5,6 +5,7 @@ import './RoutineTimer.css';
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
 const GLUTES_YOGA_CATEGORIES=Object.freeze(['의자자세 변형','피라미드 변형','전사자세 변형','한다리서기 변형','Legacy Techniques · Review']);
 const BACK_YOGA_CATEGORIES=Object.freeze(['L Sit 변형','One Leg Lotus 변형','Supine','Prone','Legacy Techniques · Review']);
+const BACK_MASSAGE_CATEGORIES=Object.freeze(['상부 승모근·목 아래','견갑골 주변','광배근·등 옆','척추기립근 주변']);
 const ARMS_YOGA_CATEGORIES=Object.freeze(['Kneeling','Prone','Legacy Techniques · Review']);
 const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',legs:'다리',back:'등',arms:'팔'};
 const LEGS_STRETCH_CATEGORIES=['종아리','발목','발바닥·발가락','정강이·앞종아리','다리 올리기·펌핑'];
@@ -127,7 +128,7 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
 
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
-function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,modeLabels=['맨몸근력','요가']}){
+function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,massageCategories=[],modeLabels=['맨몸근력','요가']}){
  const [mode,setMode]=useState('strength');
  const [addingTechnique,setAddingTechnique]=useState(false);
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
@@ -145,9 +146,10 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
- const categories=yogaMode?yogaCategories:strengthCategories;
- const thighMode=title==='허벅지'&&!yogaMode;
- const techniques=yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
+ const massageMode=mode==='massage';
+ const categories=massageMode?massageCategories:yogaMode?yogaCategories:strengthCategories;
+ const thighMode=title==='허벅지'&&!yogaMode&&!massageMode;
+ const techniques=massageMode?(data.coreMassageTechniques||[]):yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
   let alive=true;
   const missing=techniques.filter(t=>t.imagePath&&signedImages[t.imagePath]===undefined);
@@ -167,7 +169,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const switchMode=next=>{setPostureFilters({});setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
- const storageKey=yogaMode?'coreYogaTechniques':'coreTechniques';
+ const storageKey=massageMode?'coreMassageTechniques':yogaMode?'coreYogaTechniques':'coreTechniques';
  const saveTechnique=e=>{
   e.preventDefault();
   const label=techniqueDraft.name.trim(),cat=Number(techniqueDraft.category);
@@ -218,8 +220,8 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  };
  return <section style={{padding:'16px'}}>
   <h2>{title} · 기술 라이브러리</h2>
-  <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
-   {[{id:'strength',label:modeLabels[0]},{id:'yoga',label:modeLabels[1]}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
+  <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'repeat('+modeLabels.length+',minmax(0,1fr))',gap:8,marginBottom:15}}>
+   {[{id:'strength',label:modeLabels[0]},{id:'yoga',label:modeLabels[1]},...(modeLabels[2]?[{id:'massage',label:modeLabels[2]}]:[])].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
   </div>
   <div style={{marginBottom:12}}>
    <button type="button" onClick={()=>setAddingTechnique(v=>!v)} style={{...btn,width:'100%',background:addingTechnique?'#f3eafa':'#fff',borderColor:'#c5adde',fontWeight:700,fontSize:14}}>{addingTechnique?'− 기술 등록 닫기':'＋ 새 기술 등록'}</button>
@@ -556,6 +558,7 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   ...data,
   coreTechniques:data.studios?.[area]?.techniques||[],
   coreYogaTechniques:data.studios?.[area]?.yogaTechniques||[],
+  coreMassageTechniques:data.studios?.[area]?.massageTechniques||[],
   coreRoutines:data.studios?.[area]?.routines||[],
   coreLogs:data.studios?.[area]?.logs||[]
  };
@@ -564,6 +567,7 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   const virtual={
    coreTechniques:current.techniques||[],
    coreYogaTechniques:current.yogaTechniques||[],
+   coreMassageTechniques:current.massageTechniques||[],
    coreRoutines:current.routines||[],
    coreLogs:current.logs||[]
   };
@@ -572,6 +576,7 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
    ...current,
    techniques:virtual.coreTechniques,
    yogaTechniques:virtual.coreYogaTechniques,
+   massageTechniques:virtual.coreMassageTechniques,
    routines:virtual.coreRoutines,
    logs:virtual.coreLogs
   }};
@@ -581,11 +586,13 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   <CareLibrary data={data} onUpdate={onUpdate} area={area} group="massage" sync={sync} database={database} userId={userId}/>
  </section>;
  if(tab==='timer'){
-  const timerData=area==='legs'?{
+  const timerData=area==='back'?{
+   ...scoped,coreTechniques:[...(scoped.coreTechniques||[]),...(scoped.coreMassageTechniques||[]).map(t=>({...t,category:t.category+strengthCategories.length}))]
+  }:area==='legs'?{
    ...scoped,coreTechniques:[...(scoped.coreTechniques||[]),...(scoped.coreYogaTechniques||[]).map(t=>({...t,category:t.category+LEGS_STRETCH_CATEGORIES.length}))]
   }:scoped;
-  return <CoreTimer data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
+  return <CoreTimer data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='back'?[...strengthCategories,...BACK_MASSAGE_CATEGORIES]:area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
  }
  if(tab==='records')return <CoreRecords logs={scoped.coreLogs||[]} title={title}/>;
- return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} modeLabels={area==='legs'?['스트레치','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
+ return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} massageCategories={area==='back'?BACK_MASSAGE_CATEGORIES:[]} modeLabels={area==='legs'?['스트레치','마사지']:area==='back'?['맨몸근력','요가','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
 }

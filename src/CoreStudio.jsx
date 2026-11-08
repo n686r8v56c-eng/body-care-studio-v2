@@ -213,7 +213,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
     posture:techniqueDraft.posture.trim().slice(0,200),
     muscles:techniqueDraft.muscles.trim().slice(0,400),
     description:techniqueDraft.description.trim().slice(0,1500),
-    tags:[...new Set([...(thighMode&&techniqueDraft.postureTag?[techniqueDraft.postureTag]:[]),...techniqueDraft.tags.split(',').map(x=>x.trim()).filter(Boolean).filter(tag=>!thighMode||!THIGH_POSTURE_TAGS.includes(tag)||tag===techniqueDraft.postureTag)])].slice(0,12),
+    tags:[...new Set([...(thighMode&&techniqueDraft.postureTag?[techniqueDraft.postureTag]:[]),...(backStrengthMode&&techniqueDraft.movementPattern?[techniqueDraft.movementPattern]:[]),...techniqueDraft.tags.split(',').map(x=>x.trim()).filter(Boolean).filter(tag=>!thighMode||!THIGH_POSTURE_TAGS.includes(tag)||tag===techniqueDraft.postureTag)])].slice(0,12),
     imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[],notes:''
    }];
   });
@@ -260,6 +260,12 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
    {addingTechnique&&<form onSubmit={saveTechnique} style={{display:'grid',gap:9,padding:13,marginTop:8,border:'1px solid #e3d7ef',borderRadius:13,background:'#fff'}}>
     <label style={{display:'grid',gap:4,fontSize:13}}>기술명<input required maxLength={120} value={techniqueDraft.name} onChange={e=>setTechniqueDraft(v=>({...v,name:e.target.value}))} placeholder="동작 이름" style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>대분류<select value={techniqueDraft.category} onChange={e=>setTechniqueDraft(v=>({...v,category:Number(e.target.value)}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>{orderedCategoryEntries(categories).map(([name,i])=>name==='Legacy Techniques · Review'?null:<option key={name} value={i}>{name}</option>)}</select></label>
+    {backStrengthMode&&<label style={{display:'grid',gap:4,fontSize:13}}>Movement Pattern 태그
+     <select value={techniqueDraft.movementPattern||''} onChange={e=>setTechniqueDraft(v=>({...v,movementPattern:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}>
+      <option value="">선택 안 함</option>
+      {(BACK_MOVEMENT_PATTERNS[Number(techniqueDraft.category)]||[]).map(([en,ko])=><option key={en} value={en}>{en} · {ko}</option>)}
+     </select>
+    </label>}
     {thighMode&&<label style={{display:'grid',gap:4,fontSize:13}}>시작 자세 태그<select value={techniqueDraft.postureTag||''} onChange={e=>setTechniqueDraft(v=>({...v,postureTag:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}><option value="">선택 안 함</option>{THIGH_POSTURE_TAGS.map(tag=><option key={tag} value={tag}>{tag}</option>)}</select></label>}
     <label style={{display:'grid',gap:4,fontSize:13}}>영문명 (선택)<input maxLength={120} value={techniqueDraft.en} onChange={e=>setTechniqueDraft(v=>({...v,en:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
     <label style={{display:'grid',gap:4,fontSize:13}}>자세 (선택)<input maxLength={200} value={techniqueDraft.posture} onChange={e=>setTechniqueDraft(v=>({...v,posture:e.target.value}))} style={{fontSize:16,padding:10,border:'1px solid #d7c6e8',borderRadius:9}}/></label>
@@ -346,6 +352,22 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
       {!!t.tags?.length&&<p style={{opacity:.7}}>{t.tags.join(' · ')}</p>}
       {t.notes&&<p>{t.notes}</p>}
       {hasImage&&<a href={imageSrc} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>이미지 원본 열기</a>}
+      {backStrengthMode&&BACK_MOVEMENT_PATTERNS[i]?.length>0&&<div style={{margin:'10px 0',display:'grid',gap:7}}>
+       <strong style={{fontSize:13}}>Movement Pattern 태그 편집</strong>
+       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {BACK_MOVEMENT_PATTERNS[i].map(([en,ko])=>{
+         const assigned=(t.tags||[]).some(tag=>tag===en||tag.startsWith(en+' · '));
+         return <button key={en} type="button" aria-pressed={assigned} onClick={()=>onUpdate(d=>{
+          const row=(d[storageKey]||[]).find(x=>x.id===t.id);
+          if(!row)return;
+          const tags=(row.tags||[]).filter(tag=>tag!==en&&!tag.startsWith(en+' · '));
+          row.tags=assigned?tags:[...tags,en].slice(0,12);
+         })} style={{...btn,fontSize:12,borderRadius:20,padding:'6px 9px',background:assigned?'#e9ddf7':'transparent',borderColor:assigned?'#ac8fcd':'#ddd5e7',color:assigned?'#624184':'inherit'}}>
+          {assigned?'✓ ':''}{en} · {ko}
+         </button>;
+        })}
+       </div>
+      </div>}
       <TechniqueReferences technique={t} onUpdate={onUpdate} storageKey={storageKey}/>
      </div>}
     </article>;

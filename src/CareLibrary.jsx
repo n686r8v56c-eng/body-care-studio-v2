@@ -265,7 +265,7 @@ export function seedBodyCatalog(value){
  if(!levelNames['face:stretch'])levelNames['face:stretch']=VOICE_LEVEL_NAMES;
  return {...value,items,levelNames,beautyCatalogSeedVersion:1,legStretchSeedVersion:Math.max(1,Number(value?.legStretchSeedVersion)||0)};
 }
-export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false,database=null,userId=null}){
+export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false,database=null,userId=null,hideHeading=false}){
  const [level,setLevel]=useState(1);
  const [editingMode,setEditingMode]=useState(false);
  const [showDeleted,setShowDeleted]=useState(false);
@@ -449,7 +449,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const recovered=scoped.filter(x=>linksFor(x).length);
  const totalSavedVideos=recovered.reduce((sum,x)=>sum+linksFor(x).length,0);
  return <div className="stretching-page">
-  <div className="care-page-title"><h1>{data.groupNames?.[groupKey(area,group)]||({massage:'마사지',stretch:'스트레치',bodyweight:'맨몸근력',machine:'기계근력'})[group]}</h1></div>
+  {!hideHeading&&<div className="care-page-title"><h1>{data.groupNames?.[groupKey(area,group)]||({massage:'마사지',stretch:'스트레치',bodyweight:'맨몸근력',machine:'기계근력'})[group]}</h1></div>}
   <div className="stretching-levels" role="tablist" aria-label="바디케어 단계">
    {labels.map((name,i)=><button key={i} type="button" role="tab" aria-selected={level===i+1} className={level===i+1?'active':''}
      onPointerDown={()=>startPress(i+1)} onPointerUp={stopPress} onPointerCancel={stopPress} onPointerLeave={stopPress}

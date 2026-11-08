@@ -447,8 +447,8 @@ const LEG_STRETCH_PHOTO_URLS={
   "source": "https://www.opz.at/fuss/hallux-valgus"
  },
  "Tibialis Anterior Stretch": {
-  "url": "https://www.tylino.co.uk/files/Stretching%20and%20Mobility/Lower%20Leg%20Ankle%20and%20Foot/Tibialis-anterior-stretch-kneeling-2%20not%20used",
-  "source": "https://www.tylino.co.uk/lower-leg-ankle-and-foot"
+  "url": "https://cdn.shopify.com/s/files/1/0939/6823/6867/files/Tibialis-Anterior-Shin-strech.webp?v=1770731383",
+  "source": "https://therunningoutlet.co.uk/blogs/the-running-hub/stretches-for-shin-splints"
  },
  "Heel Walks": {
   "url": "https://i0.wp.com/www.kinetic-revolution.com/wp-content/uploads/2013/10/Screen-Shot-2013-10-10-at-10.53.38.png?fit=1098%2C700&ssl=1",

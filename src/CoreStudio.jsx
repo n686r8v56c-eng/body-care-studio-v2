@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import CareLibrary from './CareLibrary.jsx';
+import { unzipSync } from 'fflate';
 import './RoutineTimer.css';
 
 export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']);
@@ -156,6 +157,7 @@ const movementPatternMatches=(technique,label)=>{
  };
  return (hints[label]||[]).some(h=>text.includes(h));
 };
+const THORACIC_PHOTO_IDS=Array.from({length:11},(_,i)=>'back-thoracic-timeline-'+String(i+1).padStart(2,'0'));
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
 function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,massageCategories=[],modeLabels=['맨몸근력','요가']}){
@@ -174,6 +176,9 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [imageMethod,setImageMethod]=useState('');
  const [uploadingImage,setUploadingImage]=useState(false);
  const imageFileInput=useRef(null);
+ const thoracicZipInput=useRef(null);
+ const [thoracicZipBusy,setThoracicZipBusy]=useState(false);
+ const [thoracicZipMessage,setThoracicZipMessage]=useState('');
  const [signedImages,setSignedImages]=useState({});
  const [failedImages,setFailedImages]=useState([]);
  const yogaMode=mode==='yoga';
@@ -226,6 +231,49 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
   onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl=clean.slice(0,2000);row.imagePath='';row.imageRemoved=false}});
   setFailedImages(ids=>ids.filter(x=>x!==id));setEditingImage('');setImageDraft('');setImageError('');setImageMethod('');
  };
+ // Import the 11 selected screenshots to the signed-in user's Storage bucket.
+ // Skip any photos the user has already added or explicitly removed.
+ const importThoracicPhotos=async file=>{
+  if(!file||thoracicZipBusy)return;
+  if(!database||!userId){setThoracicZipMessage('먼저 로그인과 Supabase 연결을 확인해 줘.');return}
+  setThoracicZipBusy(true);
+  try{
+   if(file.size>40*1024*1024)throw Error('ZIP은 최대 40MB까지 가능해.');
+   const archive=unzipSync(new Uint8Array(await file.arrayBuffer()));
+   const wanted=new Map(THORACIC_PHOTO_IDS.map((id,i)=>[String(i+1).padStart(2,'0'),id]));
+   const candidates=new Map();
+   for(const [path,bytes] of Object.entries(archive)){
+    const name=path.split('/').pop()||'';
+    const match=name.match(/^(\\d{2})[_ -].*\\.(jpe?g|png|webp)$/i);
+    if(!match||!wanted.has(match[1]))continue;
+    if(candidates.has(match[1]))throw Error(match[1]+'번 사진이 중복되어 있어.');
+    if(bytes.byteLength>5*1024*1024)throw Error(match[1]+'번 사진이 5MB를 초과해.');
+    candidates.set(match[1],{bytes,ext:match[2].toLowerCase()==='jpeg'?'jpg':match[2].toLowerCase()});
+   }
+   if(candidates.size!==11)throw Error('11장 ZIP이 아니야. '+candidates.size+'장 인식됨.');
+   let completed=0,skipped=0;
+   for(const [number,id] of wanted){
+    const row=(data.coreTechniques||[]).find(t=>t.id===id);
+    if(!row){skipped++;continue}
+    if(row.imagePath||row.imageUrl||row.imageRemoved){skipped++;continue}
+    const {bytes,ext}=candidates.get(number);
+    const objectPath=userId+'/strength/'+uid()+'.'+ext;
+    const contentType=ext==='png'?'image/png':ext==='webp'?'image/webp':'image/jpeg';
+    setThoracicZipMessage(number+'번 사진 업로드 중… ('+(completed+1)+'/11)');
+    const {error}=await database.storage.from('body-care-technique-images')
+      .upload(objectPath,new Blob([bytes],{type:contentType}),{upsert:false,contentType,cacheControl:'3600'});
+    if(error)throw Error(number+'번 사진 실패: '+error.message);
+    // Save immediately so successful uploads survive a later error.
+    onUpdate(d=>{
+     const tech=(d.coreTechniques||[]).find(t=>t.id===id);
+     if(tech&&!tech.imagePath&&!tech.imageUrl&&!tech.imageRemoved)tech.imagePath=objectPath;
+    });
+    completed++;
+   }
+   setThoracicZipMessage('완료! '+completed+'장 연결 · 기존 사진/제외 항목 '+skipped+'장 보존');
+  }catch(error){setThoracicZipMessage('업로드 중단: '+(error?.message||String(error)))}
+  finally{setThoracicZipBusy(false)}
+ };
  const deleteImage=id=>{
   onUpdate(d=>{const row=(d[storageKey]||[]).find(x=>x.id===id);if(row){row.imageUrl='';row.imagePath='';row.imageRemoved=true}});
   setEditingImage('');setImageDraft('');setImageError('');setImageMethod('');
@@ -252,6 +300,11 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  };
  return <section style={{padding:'16px'}}>
   <h2>기술 라이브러리</h2>
+   {title==='등·가슴'&&!yogaMode&&!massageMode&&<div style={{display:'grid',gap:6,marginBottom:14}}>
+    <button type="button" onClick={()=>thoracicZipInput.current?.click()} disabled={thoracicZipBusy} style={{...btn,padding:'11px 12px',background:'#f1e7fa',color:'#7952a3',fontWeight:700}}>{thoracicZipBusy?'사진 업로드 중…':'📷 흉추 가동성 11장 ZIP 한 번에 업로드'}</button>
+    <input ref={thoracicZipInput} type="file" accept=".zip,application/zip" disabled={thoracicZipBusy} style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void importThoracicPhotos(file)}}/>
+    {thoracicZipMessage&&<p role="status" style={{fontSize:12,color:'#806299',margin:0}}>{thoracicZipMessage}</p>}
+   </div>
   <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'repeat('+modeLabels.length+',minmax(0,1fr))',gap:8,marginBottom:15}}>
    {[{id:'strength',label:modeLabels[0]},{id:'yoga',label:modeLabels[1]},...(modeLabels[2]?[{id:'massage',label:modeLabels[2]}]:[])].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
   </div>

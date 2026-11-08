@@ -1,5 +1,5 @@
 import React,{useState} from 'react';
-import {Clipboard,Copy,Trash2,ExternalLink} from 'lucide-react';
+import {Clipboard,Copy,Trash2} from 'lucide-react';
 import './DashboardInbox.css';
 
 export function youtubeId(raw){
@@ -15,19 +15,26 @@ export function youtubeId(raw){
 }
 const canonical=id=>'https://www.youtube.com/watch?v='+id;
 export default function DashboardInbox({videos=[],onAdd,onRemove,readOnly=false}){
- const [draft,setDraft]=useState('');
+ const [reading,setReading]=useState(false);
  const [message,setMessage]=useState('');
  const rows=Array.isArray(videos)?videos:[];
- const save=e=>{
-  e.preventDefault();
-  const candidates=draft.split(/[\s,]+/).map(youtubeId).filter(Boolean);
-  const ids=[...new Set(candidates)];
-  if(!ids.length){setMessage('유효한 유튜브 영상 링크를 붙여줘.');return}
-  const old=new Set(rows.map(x=>x.videoId));
-  const added=ids.filter(id=>!old.has(id));
-  if(!added.length){setMessage('이미 저장된 영상이야.');return}
-  onAdd(added.map(id=>({videoId:id,url:canonical(id),createdAt:new Date().toISOString()})));
-  setDraft('');setMessage(added.length+'개 영상 저장 완료');
+ const save=async()=>{
+  if(readOnly||reading)return;
+  setReading(true);setMessage('');
+  try{
+   if(!navigator.clipboard?.readText)throw new Error('unsupported');
+   // Read on the direct button gesture so iOS can request paste permission.
+   const pasted=await navigator.clipboard.readText();
+   const candidates=pasted.match(/(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)\/[^\s,]+/gi)||[pasted.trim()];
+   const ids=[...new Set(candidates.map(youtubeId).filter(Boolean))];
+   if(!ids.length){setMessage('복사한 내용에 유튜브 영상 링크가 없어.');return}
+   const old=new Set(rows.map(x=>x.videoId));
+   const added=ids.filter(id=>!old.has(id));
+   if(!added.length){setMessage('이미 저장된 영상이야.');return}
+   onAdd(added.map(id=>({videoId:id,url:canonical(id),createdAt:new Date().toISOString()})));
+   setMessage(added.length+'개 영상 저장 완료');
+  }catch{setMessage('클립보드 접근을 허용해 줘. iPhone에서는 붙여넣기 허용을 선택해야 해.')}
+  finally{setReading(false)}
  };
  const copy=async url=>{
   try{
@@ -43,13 +50,12 @@ export default function DashboardInbox({videos=[],onAdd,onRemove,readOnly=false}
  };
  return <section className="dashboard-in-page">
   <div className="dashboard-heading"><div><span className="dashboard-overline">VIDEO INBOX</span><h1>IN</h1></div><span className="dashboard-count">{rows.length}개</span></div>
-  <form className="dashboard-in-form" onSubmit={save}>
-   <input type="url" aria-label="유튜브 영상 링크" placeholder="유튜브 영상 링크 붙여넣기" value={draft} onChange={e=>{setDraft(e.target.value);setMessage('')}} disabled={readOnly}/>
-   <button type="submit" disabled={readOnly||!draft.trim()}><Clipboard size={17}/> 붙여넣기 · 저장</button>
-  </form>
+  <div className="dashboard-in-form">
+   <button type="button" onClick={save} disabled={readOnly||reading}><Clipboard size={18}/>{reading?'등록 중…':'붙여넣기'}</button>
+  </div>
   {message&&<p role="status" className="dashboard-in-status">{message}</p>}
   <div className="dashboard-in-list">
-   {rows.length===0?<p className="dashboard-in-empty">저장된 영상이 없어. 위에 유튜브 링크를 붙여넣어 줘.</p>:rows.map(row=>{
+   {rows.length===0?<p className="dashboard-in-empty">저장된 영상이 없어. 유튜브에서 링크를 복사한 뒤 붙여넣기 버튼을 눌러줘.</p>:rows.map(row=>{
     const id=row.videoId;
     const link=canonical(id);
     return <article className="dashboard-in-item" key={id}>

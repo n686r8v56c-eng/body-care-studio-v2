@@ -156,20 +156,19 @@ const THORACIC_MOBILITY_SEED=[
   imageUrl:'https://www.elitesportsandpt.com/wp-content/uploads/2025/12/T-spine-extension-on-FR-225x300.jpg',
   notes:'사진 출처: Elite Sports Performance & Physical Therapy · https://www.elitesportsandpt.com/blog/mobility-exercises-for-your-thoracic-spine/'}
 ].map(t=>({...t,imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]}));
-// Timeline movement names supplied by the user; keep all twelve in back > strength > thoracic mobility.
+// Timeline movement names supplied by the user; keep eleven in back > strength > thoracic mobility.
 const THORACIC_TIMELINE_SEED=[
- {id:'back-thoracic-timeline-01',name:"Thoracic Rotation in Quadruped",en:"Thoracic Rotation in Quadruped",category:4,notes:"타임라인 00:18 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-02',name:"Arm Circles with Hip Hinge",en:"Arm Circles with Hip Hinge",category:4,notes:"타임라인 01:08 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-03',name:"Cat-Cow Variant in Kneeling",en:"Cat-Cow Variant in Kneeling",category:4,notes:"타임라인 02:21 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-04',name:"One-Arm Heel Touch Backbend",en:"One-Arm Heel Touch Backbend",category:4,notes:"타임라인 03:35 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-05',name:"Double Arm Circles",en:"Double Arm Circles",category:4,notes:"타임라인 05:02 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-06',name:"Side Stretch",en:"Side Stretch",category:4,notes:"타임라인 05:35 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-07',name:"Thread the Needle / Diagonal Reach",en:"Thread the Needle / Diagonal Reach",category:4,notes:"타임라인 06:44 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-08',name:"Cobra to Child's Pose Flow",en:"Cobra to Child's Pose Flow",category:4,notes:"타임라인 08:27 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-09',name:"Pigeon Pose Variant to Down Dog",en:"Pigeon Pose Variant to Down Dog",category:4,notes:"타임라인 09:30 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-10',name:"Deep Squat with Reach",en:"Deep Squat with Reach",category:4,notes:"타임라인 10:51 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-11',name:"Deep Squat with Thoracic Rotation",en:"Deep Squat with Thoracic Rotation",category:4,notes:"타임라인 12:01 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
- {id:'back-thoracic-timeline-12',name:"Full Body Shakeout Cool-down",en:"Full Body Shakeout Cool-down",category:4,notes:"타임라인 13:38 · 원본 영상 URL 미등록",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-01',name:"Thoracic Rotation in Quadruped",en:"Thoracic Rotation in Quadruped",category:4,notes:"타임라인 00:18 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-01',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:18,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-02',name:"Arm Circles with Hip Hinge",en:"Arm Circles with Hip Hinge",category:4,notes:"타임라인 01:08 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-02',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:68,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-03',name:"Cat-Cow Variant in Kneeling",en:"Cat-Cow Variant in Kneeling",category:4,notes:"타임라인 02:21 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-03',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:141,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-04',name:"One-Arm Heel Touch Backbend",en:"One-Arm Heel Touch Backbend",category:4,notes:"타임라인 03:35 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-04',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:215,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-05',name:"Double Arm Circles",en:"Double Arm Circles",category:4,notes:"타임라인 05:02 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-05',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:302,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-06',name:"Side Stretch",en:"Side Stretch",category:4,notes:"타임라인 05:35 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-06',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:335,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-07',name:"Thread the Needle / Diagonal Reach",en:"Thread the Needle / Diagonal Reach",category:4,notes:"타임라인 06:44 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-07',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:404,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-08',name:"Cobra to Child's Pose Flow",en:"Cobra to Child's Pose Flow",category:4,notes:"타임라인 08:27 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-08',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:507,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-09',name:"Pigeon Pose Variant to Down Dog",en:"Pigeon Pose Variant to Down Dog",category:4,notes:"타임라인 09:30 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-09',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:570,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-10',name:"Deep Squat with Reach",en:"Deep Squat with Reach",category:4,notes:"타임라인 10:51 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-10',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:651,end:null,memo:''}],removedReferenceIds:[]},
+ {id:'back-thoracic-timeline-11',name:"Deep Squat with Thoracic Rotation",en:"Deep Squat with Thoracic Rotation",category:4,notes:"타임라인 12:01 · 영상 연결됨",tags:['Thoracic Mobility','Timeline'],imageUrl:'',imagePath:'',imageRemoved:false,references:[{id:'timeline-ref-11',url:'https://www.youtube.com/watch?v=pgxNgWMaudw',title:'원본 운동 영상',start:721,end:null,memo:''}],removedReferenceIds:[]},
 ];
 const ARM_EXERCISE_SEED=[
  {
@@ -555,11 +554,20 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   coreYogaTechniques:raw?.massageTechniques||[]
  }).coreYogaTechniques:(raw?.massageTechniques||[]);
  const backSeedVersion=Number(raw?.backSeedVersion)||0;
+ // One-time migration for already saved techniques, preserving photos and other video links.
+ const timelineLinked=area==='back'&&backSeedVersion<4?parsed.coreTechniques
+  .filter(t=>t.id!=='back-thoracic-timeline-12')
+  .map(t=>{
+   const seed=THORACIC_TIMELINE_SEED.find(x=>x.id===t.id);
+   if(!seed)return t;
+   const ref=seed.references[0],refs=Array.isArray(t.references)?t.references:[];
+   return refs.some(r=>r.url===ref.url&&Number(r.start)===ref.start)?t:{...t,references:[...refs,ref]};
+  }):parsed.coreTechniques;
  const backTechniques=area==='back'?[
-  ...parsed.coreTechniques,
+  ...timelineLinked,
   ...(backSeedVersion<1?BACK_EXERCISE_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[]),
   ...(backSeedVersion<2?THORACIC_MOBILITY_SEED.filter(seed=>!parsed.coreTechniques.some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[]),
-   ...(backSeedVersion<3?THORACIC_TIMELINE_SEED.filter(seed=>![...parsed.coreTechniques,...THORACIC_MOBILITY_SEED].some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
+   ...(backSeedVersion<4?THORACIC_TIMELINE_SEED.filter(seed=>![...timelineLinked,...THORACIC_MOBILITY_SEED].some(t=>t.id===seed.id||t.name.trim().toLowerCase()===seed.name.toLowerCase())):[])
  ]:parsed.coreTechniques;
  const armSeedVersion=Number(raw?.armSeedVersion)||0;
  const armTechniques=area==='arms'?[
@@ -604,7 +612,7 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   thighCategoryMigrated:area==='thighs'?true:!!raw?.thighCategoryMigrated,
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
-  backSeedVersion:area==='back'?Math.max(3,backSeedVersion):backSeedVersion,
+  backSeedVersion:area==='back'?Math.max(4,backSeedVersion):backSeedVersion,
   techniques:area==='legs'?legPhotoTechniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,massageTechniques:backMassageTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }

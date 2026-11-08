@@ -304,7 +304,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
     <button type="button" onClick={()=>thoracicZipInput.current?.click()} disabled={thoracicZipBusy} style={{...btn,padding:'11px 12px',background:'#f1e7fa',color:'#7952a3',fontWeight:700}}>{thoracicZipBusy?'사진 업로드 중…':'📷 흉추 가동성 11장 ZIP 한 번에 업로드'}</button>
     <input ref={thoracicZipInput} type="file" accept=".zip,application/zip" disabled={thoracicZipBusy} style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void importThoracicPhotos(file)}}/>
     {thoracicZipMessage&&<p role="status" style={{fontSize:12,color:'#806299',margin:0}}>{thoracicZipMessage}</p>}
-   </div>
+   </div>}
   <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'repeat('+modeLabels.length+',minmax(0,1fr))',gap:8,marginBottom:15}}>
    {[{id:'strength',label:modeLabels[0]},{id:'yoga',label:modeLabels[1]},...(modeLabels[2]?[{id:'massage',label:modeLabels[2]}]:[])].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
   </div>

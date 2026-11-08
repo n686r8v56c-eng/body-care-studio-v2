@@ -6,8 +6,11 @@ export const YOGA_CATEGORIES=Object.freeze(['전굴','후굴','측굴','회전']
 const GLUTES_YOGA_CATEGORIES=Object.freeze(['의자자세 변형','피라미드 변형','전사자세 변형','한다리서기 변형','Legacy Techniques · Review']);
 const BACK_YOGA_CATEGORIES=Object.freeze(['L Sit 변형','One Leg Lotus 변형','Supine','Prone','Legacy Techniques · Review']);
 const ARMS_YOGA_CATEGORIES=Object.freeze(['Kneeling','Prone','Legacy Techniques · Review']);
-const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',back:'등',arms:'팔'};
+const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',legs:'다리',back:'등',arms:'팔'};
+const LEGS_STRETCH_CATEGORIES=['종아리','발목','발바닥·발가락','정강이·앞종아리','다리 올리기·펌핑'];
+const LEGS_MASSAGE_CATEGORIES=['종아리 마사지','발목 주변','발바닥 마사지','정강이 주변','다리 전체 이완'];
 const STUDIO_STRENGTH_CATEGORIES={
+ legs:LEGS_STRETCH_CATEGORIES,
  glutes:['Quadruped','Supine','Prone','Side-Lying','Half Kneeling','Tall Kneeling','Seated','Bench-Supported','Bilateral Standing','Single-Leg Standing','Split Stance','Kickstand / B-Stance','Step up','Legacy Techniques · Review'],
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side-Kneeling','Prone','Long Sitting','Frog','Z-Shaped Legs'],
  thighs:['안벅지','뒷벅지','앞벅지','Legacy Techniques · Review'],
@@ -124,7 +127,7 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
 
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
-function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES}){
+function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,modeLabels=['맨몸근력','요가']}){
  const [mode,setMode]=useState('strength');
  const [addingTechnique,setAddingTechnique]=useState(false);
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
@@ -216,7 +219,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  return <section style={{padding:'16px'}}>
   <h2>{title} · 기술 라이브러리</h2>
   <div role="tablist" aria-label={title+" 운동 유형"} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:15}}>
-   {[{id:'strength',label:'맨몸근력'},{id:'yoga',label:'요가'}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
+   {[{id:'strength',label:modeLabels[0]},{id:'yoga',label:modeLabels[1]}].map(t=><button key={t.id} type="button" role="tab" aria-selected={mode===t.id} onClick={()=>switchMode(t.id)} style={{...btn,fontSize:15,fontWeight:700,padding:'12px 8px',background:mode===t.id?'#e9ddf7':'transparent',borderColor:mode===t.id?'#ac8fcd':'#e5ddea',color:mode===t.id?'#65458c':'inherit'}}>{t.label}</button>)}
   </div>
   <div style={{marginBottom:12}}>
    <button type="button" onClick={()=>setAddingTechnique(v=>!v)} style={{...btn,width:'100%',background:addingTechnique?'#f3eafa':'#fff',borderColor:'#c5adde',fontWeight:700,fontSize:14}}>{addingTechnique?'− 기술 등록 닫기':'＋ 새 기술 등록'}</button>
@@ -545,7 +548,7 @@ function CoreRecords({logs=[],title='코어'}){
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){
  const title=STUDIO_NAMES[area]||'코어';
  const baseCategories=STUDIO_STRENGTH_CATEGORIES[area]||CORE_CATEGORIES;
- const yogaCategories=area==='glutes'?GLUTES_YOGA_CATEGORIES:area==='back'?BACK_YOGA_CATEGORIES:area==='arms'?ARMS_YOGA_CATEGORIES:YOGA_CATEGORIES;
+ const yogaCategories=area==='legs'?LEGS_MASSAGE_CATEGORIES:area==='glutes'?GLUTES_YOGA_CATEGORIES:area==='back'?BACK_YOGA_CATEGORIES:area==='arms'?ARMS_YOGA_CATEGORIES:YOGA_CATEGORIES;
  // Step up is the 13th visible category (index 12) in the user's requested order.
  // Legacy review stays hidden unless there are saved legacy techniques (index 13).
  const strengthCategories=baseCategories;
@@ -577,7 +580,12 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   <div style={{padding:'14px 16px 4px'}}><h2 style={{margin:'0 0 4px',fontSize:20}}>{title} · 영상 인박스</h2><p style={{margin:'0 0 10px',fontSize:13,opacity:.7}}>영상 링크를 모으고 기술은 라이브러리에서 정리해.</p></div>
   <CareLibrary data={data} onUpdate={onUpdate} area={area} group="massage" sync={sync} database={database} userId={userId}/>
  </section>;
- if(tab==='timer')return <CoreTimer data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} database={database} userId={userId}/>;
+ if(tab==='timer'){
+  const timerData=area==='legs'?{
+   ...scoped,coreTechniques:[...(scoped.coreTechniques||[]),...(scoped.coreYogaTechniques||[]).map(t=>({...t,category:t.category+LEGS_STRETCH_CATEGORIES.length}))]
+  }:scoped;
+  return <CoreTimer data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
+ }
  if(tab==='records')return <CoreRecords logs={scoped.coreLogs||[]} title={title}/>;
- return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} database={database} userId={userId}/>;
+ return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} modeLabels={area==='legs'?['스트레치','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
 }

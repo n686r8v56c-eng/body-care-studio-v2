@@ -697,7 +697,82 @@ export const CORE_APPROVED_TECHNIQUES=[
     ],
     "imageUrl": "",
     "notes": "제공된 Calisthenics Core Conditioning 시퀀스 · 06:51 · 다리 하강형"
-  }
+  },
+  {
+  "id": "core-custom-side-to-side-slide",
+  "category": 8,
+  "name": "Side-to-Side Slide",
+  "en": "Side-to-Side Slide",
+  "tags": [
+    "측굴",
+    "맨몸근력"
+  ],
+  "time": "",
+  "posture": "",
+  "muscles": "",
+  "description": "",
+  "imageUrl": ""
+},
+  {
+  "id": "core-custom-side-crunch",
+  "category": 8,
+  "name": "Side Crunch",
+  "en": "Side Crunch",
+  "tags": [
+    "측굴",
+    "맨몸근력"
+  ],
+  "time": "",
+  "posture": "",
+  "muscles": "",
+  "description": "",
+  "imageUrl": ""
+},
+  {
+  "id": "core-custom-ab-twist",
+  "category": 2,
+  "name": "Ab twist",
+  "en": "Ab twist",
+  "tags": [
+    "회전",
+    "맨몸근력"
+  ],
+  "time": "",
+  "posture": "",
+  "muscles": "",
+  "description": "",
+  "imageUrl": ""
+},
+  {
+  "id": "core-custom-plank-twist",
+  "category": 8,
+  "name": "Plank Twist",
+  "en": "Plank Twist",
+  "tags": [
+    "측굴",
+    "맨몸근력"
+  ],
+  "time": "",
+  "posture": "",
+  "muscles": "",
+  "description": "",
+  "imageUrl": ""
+},
+  {
+  "id": "core-custom-plank-side-hold",
+  "category": 8,
+  "name": "Plank Side Hold",
+  "en": "Plank Side Hold",
+  "tags": [
+    "측굴",
+    "맨몸근력"
+  ],
+  "time": "",
+  "posture": "",
+  "muscles": "",
+  "description": "",
+  "imageUrl": ""
+}
 ];
 // Source video provided by the user; positions are the supplied chapter timestamps.
 const STRONG_ABS_VIDEO='https://www.youtube.com/watch?v=z6D727lTqB0';

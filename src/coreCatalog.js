@@ -707,11 +707,21 @@ export const CORE_APPROVED_TECHNIQUES=[
     "측굴",
     "맨몸근력"
   ],
-  "time": "",
+  "time": "06:35",
   "posture": "",
   "muscles": "",
   "description": "",
-  "imageUrl": ""
+  "imageUrl": "",
+  "references": [
+    {
+      "id": "source-kTTnHi8rnNA-side-to-side-slide",
+      "url": "https://www.youtube.com/watch?v=kTTnHi8rnNA",
+      "title": "코어 운동 동작별 참고 영상",
+      "start": 395,
+      "end": null,
+      "memo": "Side-to-Side Slide · 06:35 시작"
+    }
+  ]
 },
   {
   "id": "core-custom-side-crunch",
@@ -722,11 +732,21 @@ export const CORE_APPROVED_TECHNIQUES=[
     "측굴",
     "맨몸근력"
   ],
-  "time": "",
+  "time": "07:26",
   "posture": "",
   "muscles": "",
   "description": "",
-  "imageUrl": ""
+  "imageUrl": "",
+  "references": [
+    {
+      "id": "source-kTTnHi8rnNA-side-crunch",
+      "url": "https://www.youtube.com/watch?v=kTTnHi8rnNA",
+      "title": "코어 운동 동작별 참고 영상",
+      "start": 446,
+      "end": null,
+      "memo": "Side Crunch · 07:26 시작"
+    }
+  ]
 },
   {
   "id": "core-custom-ab-twist",
@@ -737,11 +757,21 @@ export const CORE_APPROVED_TECHNIQUES=[
     "회전",
     "맨몸근력"
   ],
-  "time": "",
+  "time": "09:25",
   "posture": "",
   "muscles": "",
   "description": "",
-  "imageUrl": ""
+  "imageUrl": "",
+  "references": [
+    {
+      "id": "source-kTTnHi8rnNA-ab-twist",
+      "url": "https://www.youtube.com/watch?v=kTTnHi8rnNA",
+      "title": "코어 운동 동작별 참고 영상",
+      "start": 565,
+      "end": null,
+      "memo": "Ab twist · 09:25 시작"
+    }
+  ]
 },
   {
   "id": "core-custom-plank-twist",
@@ -752,11 +782,21 @@ export const CORE_APPROVED_TECHNIQUES=[
     "측굴",
     "맨몸근력"
   ],
-  "time": "",
+  "time": "10:25",
   "posture": "",
   "muscles": "",
   "description": "",
-  "imageUrl": ""
+  "imageUrl": "",
+  "references": [
+    {
+      "id": "source-kTTnHi8rnNA-plank-twist",
+      "url": "https://www.youtube.com/watch?v=kTTnHi8rnNA",
+      "title": "코어 운동 동작별 참고 영상",
+      "start": 625,
+      "end": null,
+      "memo": "Plank Twist · 10:25 시작"
+    }
+  ]
 },
   {
   "id": "core-custom-plank-side-hold",
@@ -767,11 +807,21 @@ export const CORE_APPROVED_TECHNIQUES=[
     "측굴",
     "맨몸근력"
   ],
-  "time": "",
+  "time": "11:23",
   "posture": "",
   "muscles": "",
   "description": "",
-  "imageUrl": ""
+  "imageUrl": "",
+  "references": [
+    {
+      "id": "source-kTTnHi8rnNA-plank-side-hold",
+      "url": "https://www.youtube.com/watch?v=kTTnHi8rnNA",
+      "title": "코어 운동 동작별 참고 영상",
+      "start": 683,
+      "end": null,
+      "memo": "Plank Side Hold · 11:23 시작"
+    }
+  ]
 }
 ];
 // Source video provided by the user; positions are the supplied chapter timestamps.

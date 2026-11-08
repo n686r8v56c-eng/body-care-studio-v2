@@ -244,7 +244,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
    const candidates=new Map();
    for(const [path,bytes] of Object.entries(archive)){
     const name=path.split('/').pop()||'';
-    const match=name.match(/^(\\d{2})[_ -].*\\.(jpe?g|png|webp)$/i);
+    const match=name.match(/^(\d{2})[_ -].*\.(jpe?g|png|webp)$/i);
     if(!match||!wanted.has(match[1]))continue;
     if(candidates.has(match[1]))throw Error(match[1]+'번 사진이 중복되어 있어.');
     if(bytes.byteLength>5*1024*1024)throw Error(match[1]+'번 사진이 5MB를 초과해.');

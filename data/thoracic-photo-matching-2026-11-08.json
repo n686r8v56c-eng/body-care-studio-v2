@@ -1,0 +1,68 @@
+{
+  "description": "User-supplied exercise screenshots selected by visible movement captions; files need image upload to storage to appear in app. This manifest does not contain image bytes.",
+  "target": {
+    "area": "back",
+    "mode": "strength",
+    "category": 4,
+    "label": "흉추 가동성"
+  },
+  "selected": [
+    {
+      "techniqueId": "back-thoracic-timeline-02",
+      "sourceFile": "IMG_3103.jpeg",
+      "timestamp": "01:08"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-04",
+      "sourceFile": "IMG_3102.jpeg",
+      "timestamp": "03:35"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-06",
+      "sourceFile": "IMG_3101.jpeg",
+      "timestamp": "05:35"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-07",
+      "sourceFile": "IMG_3107.jpeg",
+      "timestamp": "06:44",
+      "decision": "Selected overhead thoracic opening instead of IMG_3100.jpeg downward reach"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-08",
+      "sourceFile": "IMG_3106.jpeg",
+      "timestamp": "08:27"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-09",
+      "sourceFile": "IMG_3099.jpeg",
+      "timestamp": "09:30"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-10",
+      "sourceFile": "IMG_3098.jpeg",
+      "timestamp": "10:51"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-11",
+      "sourceFile": "IMG_3104.jpeg",
+      "timestamp": "12:01"
+    }
+  ],
+  "excluded": [
+    {
+      "sourceFile": "IMG_3100.jpeg",
+      "reason": "Alternative to movement 7"
+    },
+    {
+      "sourceFile": "IMG_3105.jpeg",
+      "reason": "Movement 12 intentionally deleted"
+    }
+  ],
+  "pendingTechniqueIds": [
+    "back-thoracic-timeline-01",
+    "back-thoracic-timeline-03",
+    "back-thoracic-timeline-05"
+  ],
+  "imageUploadStatus": "pending"
+}

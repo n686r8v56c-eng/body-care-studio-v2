@@ -8,14 +8,29 @@
   },
   "selected": [
     {
+      "techniqueId": "back-thoracic-timeline-01",
+      "sourceFile": "IMG_3110.jpeg",
+      "timestamp": "00:18"
+    },
+    {
       "techniqueId": "back-thoracic-timeline-02",
       "sourceFile": "IMG_3103.jpeg",
       "timestamp": "01:08"
     },
     {
+      "techniqueId": "back-thoracic-timeline-03",
+      "sourceFile": "IMG_3109.jpeg",
+      "timestamp": "02:21"
+    },
+    {
       "techniqueId": "back-thoracic-timeline-04",
       "sourceFile": "IMG_3102.jpeg",
       "timestamp": "03:35"
+    },
+    {
+      "techniqueId": "back-thoracic-timeline-05",
+      "sourceFile": "IMG_3108.jpeg",
+      "timestamp": "05:02"
     },
     {
       "techniqueId": "back-thoracic-timeline-06",
@@ -57,12 +72,12 @@
     {
       "sourceFile": "IMG_3105.jpeg",
       "reason": "Movement 12 intentionally deleted"
+    },
+    {
+      "sourceFile": "IMG_3111.jpeg",
+      "reason": "Duplicate of movement 11; retained IMG_3104.jpeg because arm extension and thoracic rotation are clearer"
     }
   ],
-  "pendingTechniqueIds": [
-    "back-thoracic-timeline-01",
-    "back-thoracic-timeline-03",
-    "back-thoracic-timeline-05"
-  ],
-  "imageUploadStatus": "pending"
+  "pendingTechniqueIds": [],
+  "imageUploadStatus": "11 matched; image files not yet in app image storage"
 }

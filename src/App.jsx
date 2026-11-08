@@ -8,7 +8,7 @@ import PracticeRecords from './PracticeRecords.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
-const areas=[{id:'core',name:'코어'},{id:'glutes',name:'엉덩이'},{id:'hips',name:'고관절'},{id:'thighs',name:'허벅지'},{id:'legs',name:'다리'},{id:'face',name:'Face Care'},{id:'back',name:'등'},{id:'arms',name:'팔'}];
+const areas=[{id:'core',name:'코어'},{id:'glutes',name:'엉덩이'},{id:'hips',name:'고관절'},{id:'thighs',name:'허벅지'},{id:'legs',name:'다리'},{id:'face',name:'Face Care'},{id:'back',name:'등·가슴'},{id:'arms',name:'팔'}];
 // Previous lower/upper records remain valid in backups and the saved payload, but no longer appear as genres.
 const savedAreaIds=new Set([...areas.map(a=>a.id),'lower','upper']);
 const studioAreas=['core','glutes','hips','thighs','legs','back','arms'];
@@ -512,7 +512,7 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   :prepared;
  const parsed=normalize({
   __skipStudios:true,
-  __regionalStrengthLimit:area==='legs'?6:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?6:area==='arms'?4:8,
+  __regionalStrengthLimit:area==='legs'?6:area==='hips'?11:area==='glutes'?14:area==='thighs'?4:area==='back'?7:area==='arms'?4:8,
   coreTechniques:area==='legs'?[...(raw?.techniques||[]),...legStrengthSeed.filter(t=>!(raw?.techniques||[]).some(x=>x.id===t.id))].map(t=>!raw?.legsThighCategoryMigrated&&Number(t.category)===4?{...t,category:5}:t):backPrepared,
   __regionalYogaLimit:area==='legs'?6:(area==='glutes'||area==='back')?5:area==='arms'?3:4,
   coreYogaTechniques:area==='glutes'&&!raw?.glutesYogaCategoryMigrated?(raw?.yogaTechniques||[]).map(t=>({

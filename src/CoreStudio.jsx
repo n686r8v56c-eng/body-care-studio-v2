@@ -7,7 +7,7 @@ const GLUTES_YOGA_CATEGORIES=Object.freeze(['의자자세 변형','피라미드 
 const BACK_YOGA_CATEGORIES=Object.freeze(['L Sit 변형','One Leg Lotus 변형','Supine','Prone','Legacy Techniques · Review']);
 const BACK_MASSAGE_CATEGORIES=Object.freeze(['상부 승모근·목 아래','견갑골 주변','광배근·등 옆','척추기립근 주변']);
 const ARMS_YOGA_CATEGORIES=Object.freeze(['Kneeling','Prone','Legacy Techniques · Review']);
-const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',legs:'다리',back:'등',arms:'팔'};
+const STUDIO_NAMES={core:'코어',glutes:'엉덩이',hips:'고관절',thighs:'허벅지',legs:'다리',back:'등·가슴',arms:'팔'};
 const LEGS_STRETCH_CATEGORIES=['종아리','발목','발바닥·발가락','정강이·앞종아리','허벅지','다리 올리기·펌핑'];
 const LEGS_MASSAGE_CATEGORIES=['종아리 마사지','발목 주변','발바닥 마사지','정강이 주변','허벅지','다리 전체 이완'];
 const STUDIO_STRENGTH_CATEGORIES={
@@ -16,7 +16,7 @@ const STUDIO_STRENGTH_CATEGORIES={
  hips:['90/90 Sitting','Quadruped','Half-Kneeling Lunge','Supine','Standing','Deep Squat','Side-Kneeling','Prone','Long Sitting','Frog','Z-Shaped Legs'],
  thighs:['안벅지','뒷벅지','앞벅지','Legacy Techniques · Review'],
  // These new studios share the complete technique/routine/timer UI; taxonomy can be finalized later.
- back:['광배근','등 중앙','상부 승모근','척추기립근','흉추 가동성','Legacy Techniques · Review'],
+ back:['광배근','등 중앙','상부 승모근','척추기립근','흉추 가동성','Legacy Techniques · Review','대흉근'],
  arms:['이두근','삼두근','전완근','Legacy Techniques · Review']
 };
 export const CORE_CATEGORIES=Object.freeze([
@@ -26,6 +26,7 @@ export const CORE_CATEGORIES=Object.freeze([
 const orderedCategoryEntries=categories=>{
  const order=categories===CORE_CATEGORIES?[0,1,2,8,3,4,5,6,7]
   :categories===STUDIO_STRENGTH_CATEGORIES.hips?[1,9,6,2,0,10,5,8,3,7,4]
+  :categories===STUDIO_STRENGTH_CATEGORIES.back?[0,1,2,3,4,6,5]
   :categories.map((_,i)=>i);
  return order.map(i=>[categories[i],i]);
 };

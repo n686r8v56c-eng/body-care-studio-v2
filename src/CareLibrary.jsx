@@ -37,7 +37,7 @@ function download(name,object){
  setTimeout(()=>URL.revokeObjectURL(url),20000);
 }
 // Dedicated leg-swelling-care stretch starter set. IDs and version preserve user deletions/edits.
-const LEG_STRETCH_SEED=[
+export const LEG_STRETCH_SEED=[
  {
   "id": "legs-stretch-v1-01",
   "area": "legs",

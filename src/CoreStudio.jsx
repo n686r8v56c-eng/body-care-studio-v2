@@ -127,6 +127,35 @@ function TechniqueReferences({technique,onUpdate,storageKey='coreTechniques'}){
  </section>;
 }
 
+// Visible movement-pattern filters for the back/chest strength categories.
+// Keep saved category indices stable: category 5 is the legacy-review bucket.
+const BACK_MOVEMENT_PATTERNS=[[["Vertical Pull","위에서 아래로 당기기"],["Shoulder Extension","팔을 앞에서 뒤로 당기기"],["Shoulder Adduction","팔을 옆에서 몸통으로 모으기"]],[["Horizontal Pull","앞에서 뒤로 당기기"],["Scapular Retraction","견갑골 뒤로 모으기"],["Scapular Stabilization","견갑골 안정화"]],[["Scapular Elevation","어깨 올리기"],["Upward Rotation","견갑골 위쪽 회전"],["Elevation Hold","어깨 올린 상태 유지"]],[["Spinal Extension","척추 뒤로 펴기"],["Hip Hinge","고관절 접었다 펴기"],["Anti-Flexion","몸통 굴곡 저항하기"]],[["Thoracic Rotation","등 회전하기"],["Thoracic Extension","등 뒤로 펴기"],["Thoracic Lateral Flexion","등 옆으로 굽히기"]],[],[["Horizontal Press","앞으로 밀기"],["Horizontal Adduction","팔을 가슴 앞으로 모으기"],["Diagonal Adduction","팔을 대각선으로 모으기"]]];
+const movementPatternMatches=(technique,label)=>{
+ const tags=Array.isArray(technique.tags)?technique.tags:[];
+ const text=[technique.name,technique.en,technique.posture,technique.description,...tags].filter(Boolean).join(' ').toLowerCase();
+ if(tags.some(t=>t.toLowerCase()===label.toLowerCase()||t.toLowerCase().startsWith(label.toLowerCase()+' · ')))return true;
+ const hints={
+  'Vertical Pull':['lat pulldown','pull-up','pull up','chin-up','chin up','vertical pull'],
+  'Shoulder Extension':['straight arm pulldown','straight-arm pulldown','pullover','shoulder extension'],
+  'Shoulder Adduction':['shoulder adduction'],
+  'Horizontal Pull':['seated row','barbell row','dumbbell row','cable row','horizontal pull','inverted row','bent over row'],
+  'Scapular Retraction':['scapular retraction','y-t-w raise','face pull','reverse fly'],
+  'Scapular Stabilization':['scapular stabilization','y-t-w raise','bird dog'],
+  'Scapular Elevation':['shrug','scapular elevation'],
+  'Upward Rotation':['upward rotation','overhead shrug'],
+  'Elevation Hold':['elevation hold','shrug hold','farmer carry'],
+  'Spinal Extension':['back extension','superman','spinal extension'],
+  'Hip Hinge':['hip hinge','good morning','romanian deadlift','deadlift'],
+  'Anti-Flexion':['bird dog hold','anti-flexion','isometric back'],
+  'Thoracic Rotation':['open book','thread the needle','thoracic rotation'],
+  'Thoracic Extension':['foam roller thoracic extension','thoracic extension'],
+  'Thoracic Lateral Flexion':['thoracic lateral flexion','thoracic side bend'],
+  'Horizontal Press':['push-up','push up','bench press','chest press','horizontal press'],
+  'Horizontal Adduction':['chest fly','cable crossover','pec fly','horizontal adduction'],
+  'Diagonal Adduction':['low to high fly','high to low fly','diagonal adduction']
+ };
+ return (hints[label]||[]).some(h=>text.includes(h));
+};
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
 function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,massageCategories=[],modeLabels=['맨몸근력','요가']}){
@@ -135,6 +164,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
  const [openCategories,setOpenCategories]=useState([]);
  const [postureFilters,setPostureFilters]=useState({});
+ const [movementFilters,setMovementFilters]=useState({});
  const [search,setSearch]=useState('');
  const [searchClosed,setSearchClosed]=useState([]);
  const [expanded,setExpanded]=useState([]);
@@ -150,6 +180,7 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const massageMode=mode==='massage';
  const categories=massageMode?massageCategories:yogaMode?yogaCategories:strengthCategories;
  const thighMode=title==='허벅지'&&!yogaMode&&!massageMode;
+ const backStrengthMode=title==='등·가슴'&&!yogaMode&&!massageMode;
  const techniques=massageMode?(data.coreMassageTechniques||[]):yogaMode?(data.coreYogaTechniques||[]):(data.coreTechniques||[]);
  useEffect(()=>{
   let alive=true;
@@ -164,10 +195,10 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
  const term=search.trim().toLocaleLowerCase();
  const searchable=t=>[t.name,t.en,t.posture,t.muscles,t.description,t.notes,...(t.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(term);
  const categoryMatches=i=>categories[i].toLocaleLowerCase().includes(term);
- const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t))&&(!thighMode||!postureFilters[i]||thighPostureOf(t)===postureFilters[i]));
+ const matchingEntries=i=>techniques.filter(t=>t.category===i&&(!term||categoryMatches(i)||searchable(t))&&(!thighMode||!postureFilters[i]||thighPostureOf(t)===postureFilters[i])&&(!backStrengthMode||!movementFilters[i]||movementPatternMatches(t,movementFilters[i])));
  const clearSearch=()=>{setSearch('');setSearchClosed([]);setOpenCategories([])};
  const totalMatches=term?categories.reduce((sum,_,i)=>sum+matchingEntries(i).length,0):techniques.length;
- const switchMode=next=>{setPostureFilters({});setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
+ const switchMode=next=>{setPostureFilters({});setMovementFilters({});setAddingTechnique(false);setTechniqueDraft({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});setMode(next);setSearch('');setSearchClosed([]);setOpenCategories([]);setExpanded([]);setEditingImage('');setImageDraft('');setImageError('');setImageMethod('')};
  const toggle=id=>setExpanded(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const isValidUrl=value=>{try{const u=new URL(String(value).trim());return ['https:','http:'].includes(u.protocol)&&!!u.hostname}catch{return false}};
  const storageKey=massageMode?'coreMassageTechniques':yogaMode?'coreYogaTechniques':'coreTechniques';
@@ -261,6 +292,18 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
      {openCategory&&<div style={{borderTop:'1px solid #e9e1ef',padding:'10px',display:'grid',gridTemplateColumns:'minmax(0,1fr)',gap:12}}>
       {thighMode&&i<3&&<div role="group" aria-label={name+' 시작 자세 필터'} style={{display:'flex',gap:6,flexWrap:'wrap'}}>
        {['전체',...THIGH_POSTURE_TAGS].map(tag=>{const value=tag==='전체'?'':tag;const selected=(postureFilters[i]||'')===value;const count=techniques.filter(t=>t.category===i&&(!value||thighPostureOf(t)===value)).length;return <button key={tag} type="button" aria-pressed={selected} onClick={()=>setPostureFilters(prev=>({...prev,[i]:value}))} style={{...btn,fontSize:12,padding:'7px 10px',borderRadius:20,background:selected?'#e9ddf7':'#fff',color:selected?'#624184':'inherit',borderColor:selected?'#b79bd5':'#e1d5e9'}}>{tag} {count}</button>})}
+      </div>}
+      {backStrengthMode&&BACK_MOVEMENT_PATTERNS[i]?.length>0&&<div role="group" aria-label={name+' Movement Pattern 필터'} style={{display:'flex',gap:7,flexWrap:'wrap',marginBottom:4}}>
+       {[null,...BACK_MOVEMENT_PATTERNS[i]].map((pair,j)=>{
+        const value=pair?pair[0]:'';
+        const selected=(movementFilters[i]||'')===value;
+        const count=techniques.filter(t=>t.category===i&&(!value||movementPatternMatches(t,value))).length;
+        return <button type="button" key={value||'all'} aria-pressed={selected} onClick={()=>setMovementFilters(prev=>({...prev,[i]:value}))} title={pair?pair[1]:'모든 주요 동작'} style={{...btn,fontSize:12,lineHeight:1.45,padding:'7px 10px',borderRadius:20,background:selected?'#e9ddf7':'#fff',borderColor:selected?'#ac8fcd':'#e1d5e9',color:selected?'#624184':'inherit',textAlign:'left',display:'inline-flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
+         <span style={{fontWeight:selected?700:500}}>{pair?pair[0]:'전체'}</span>
+         {pair&&<span style={{fontSize:11,opacity:.72}}>{pair[1]}</span>}
+         <span style={{opacity:.65}}>{count}</span>
+        </button>;
+       })}
       </div>}
       {!entries.length&&<p style={{fontSize:13,opacity:.65,margin:'8px 4px'}}>등록된 동작이 없어.</p>}
       {entries.map(t=>{

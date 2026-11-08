@@ -466,6 +466,11 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   coreRoutines:raw?.routines||[],
   coreLogs:raw?.logs||[]
  });
+ const backMassageTechniques=area==='back'?normalize({
+  __skipStudios:true,
+  __regionalYogaLimit:4,
+  coreYogaTechniques:raw?.massageTechniques||[]
+ }).coreYogaTechniques:(raw?.massageTechniques||[]);
  const backSeedVersion=Number(raw?.backSeedVersion)||0;
  const backTechniques=area==='back'?[
   ...parsed.coreTechniques,
@@ -515,7 +520,7 @@ function normalizeRegionalStudio(raw,area,legacyItems=[]){
   thighSeedVersion:area==='thighs'?Math.max(2,thighSeedVersion):thighSeedVersion,
   hipSeedVersion:area==='hips'?Math.max(1,hipSeedVersion):hipSeedVersion,
   backSeedVersion:area==='back'?Math.max(2,backSeedVersion):backSeedVersion,
-  techniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
+  techniques:area==='back'?backTechniques:area==='arms'?armTechniques:thighTechniques,yogaTechniques:parsed.coreYogaTechniques,massageTechniques:backMassageTechniques,routines:parsed.coreRoutines,logs:parsed.coreLogs
  };
 }
 function download(name,data){

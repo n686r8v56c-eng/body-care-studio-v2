@@ -4,7 +4,7 @@ import './Dashboard.css';
 const A=['core','glutes','thighs','hips'];
 const B=['legs','face','back','arms'];
 const LABELS={core:'코어',glutes:'엉덩이',thighs:'허벅지',hips:'고관절',legs:'다리',face:'Face Care',back:'등·가슴',arms:'팔'};
-const ANCHOR=Date.UTC(2026,10,8);
+const ANCHOR=Date.UTC(2026,10,7);
 const pad=n=>String(n).padStart(2,'0');
 const dateKey=d=>[d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-');
 const parseDate=key=>{const [y,m,d]=key.split('-').map(Number);return new Date(y,m-1,d)};

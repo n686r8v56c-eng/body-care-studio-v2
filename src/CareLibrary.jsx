@@ -36,6 +36,204 @@ function download(name,object){
  link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),20000);
 }
+// Dedicated leg-swelling-care stretch starter set. IDs and version preserve user deletions/edits.
+const LEG_STRETCH_SEED=[
+ {
+  "id": "legs-stretch-v1-01",
+  "area": "legs",
+  "group": "stretch",
+  "level": 1,
+  "sort": 100,
+  "title": "Wall Calf Stretch",
+  "en": "Wall Calf Stretch",
+  "ko": "벽 짚고 종아리 늘리기",
+  "note": "벽에 손을 대고 한 다리를 뒤로 보내 뒤꿈치를 바닥에 둔다. 무릎을 편 채 20~30초 유지한 뒤 반대쪽도 반복한다. 통증 없이 부드럽게.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-02",
+  "area": "legs",
+  "group": "stretch",
+  "level": 1,
+  "sort": 101,
+  "title": "Bent-Knee Soleus Stretch",
+  "en": "Bent-Knee Soleus Stretch",
+  "ko": "무릎 굽혀 가자미근 늘리기",
+  "note": "벽을 짚고 뒤쪽 무릎을 살짝 굽힌 상태에서 뒤꿈치를 바닥에 붙인다. 종아리 아래쪽을 20~30초 부드럽게 늘린다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-03",
+  "area": "legs",
+  "group": "stretch",
+  "level": 1,
+  "sort": 102,
+  "title": "Towel Calf Stretch",
+  "en": "Towel Calf Stretch",
+  "ko": "수건 이용 종아리 스트레치",
+  "note": "앉아 다리를 뻗고 발바닥 앞쪽에 수건을 걸어 몸쪽으로 가볍게 당긴다. 20초 유지하고 반대쪽도 반복한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-04",
+  "area": "legs",
+  "group": "stretch",
+  "level": 2,
+  "sort": 103,
+  "title": "Ankle Pumps",
+  "en": "Ankle Pumps",
+  "ko": "발목 펌핑",
+  "note": "앉거나 누워 발끝을 몸쪽으로 당겼다가 멀리 뻗는다. 편안한 범위에서 15~20회 리듬감 있게 반복한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-05",
+  "area": "legs",
+  "group": "stretch",
+  "level": 2,
+  "sort": 104,
+  "title": "Ankle Circles",
+  "en": "Ankle Circles",
+  "ko": "발목 원 그리기",
+  "note": "발을 바닥에서 살짝 들고 발목으로 작은 원을 천천히 그린다. 시계·반시계 방향 각각 10회, 통증 없는 범위에서 한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-06",
+  "area": "legs",
+  "group": "stretch",
+  "level": 2,
+  "sort": 105,
+  "title": "Ankle Alphabet",
+  "en": "Ankle Alphabet",
+  "ko": "발목 알파벳 그리기",
+  "note": "앉아 발을 든 뒤 발끝으로 공중에 알파벳을 그리듯 천천히 움직인다. 다리 전체보다 발목 움직임에 집중한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-07",
+  "area": "legs",
+  "group": "stretch",
+  "level": 3,
+  "sort": 106,
+  "title": "Toe Spreads",
+  "en": "Toe Spreads",
+  "ko": "발가락 벌리기",
+  "note": "발뒤꿈치를 바닥에 둔 채 발가락을 넓게 벌렸다가 편안히 모은다. 10~15회 반복한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-08",
+  "area": "legs",
+  "group": "stretch",
+  "level": 3,
+  "sort": 107,
+  "title": "Plantar Fascia Stretch",
+  "en": "Plantar Fascia Stretch",
+  "ko": "발바닥 근막 스트레치",
+  "note": "앉아서 한 발을 다른 허벅지 위에 올리고 발가락을 몸쪽으로 부드럽게 당긴다. 발바닥이 늘어나는 느낌으로 15~20초 유지한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-09",
+  "area": "legs",
+  "group": "stretch",
+  "level": 3,
+  "sort": 108,
+  "title": "Toe Flexion and Extension",
+  "en": "Toe Flexion and Extension",
+  "ko": "발가락 굽힘·폄",
+  "note": "앉은 자세에서 발가락을 가볍게 움켜쥐었다가 길게 펴준다. 10~15회 천천히 반복한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-10",
+  "area": "legs",
+  "group": "stretch",
+  "level": 4,
+  "sort": 109,
+  "title": "Tibialis Anterior Stretch",
+  "en": "Tibialis Anterior Stretch",
+  "ko": "앞정강근 스트레치",
+  "note": "의자에 앉아 발등이 부드럽게 펴지는 방향으로 발목을 움직인다. 발목 앞쪽에 통증이 없도록 무리하지 않는다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-11",
+  "area": "legs",
+  "group": "stretch",
+  "level": 4,
+  "sort": 110,
+  "title": "Heel Walks",
+  "en": "Heel Walks",
+  "ko": "뒤꿈치 걷기",
+  "note": "안전한 평지에서 발끝을 살짝 들어 뒤꿈치로 10~20걸음 천천히 걷는다. 균형이 불안하면 벽을 짚는다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-12",
+  "area": "legs",
+  "group": "stretch",
+  "level": 4,
+  "sort": 111,
+  "title": "Seated Toe Raises",
+  "en": "Seated Toe Raises",
+  "ko": "앉아서 발끝 들기",
+  "note": "의자에 앉아 뒤꿈치는 바닥에 두고 양쪽 발끝을 들어 올렸다 내린다. 15~20회 반복하며 앞정강근을 가볍게 움직인다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-13",
+  "area": "legs",
+  "group": "stretch",
+  "level": 5,
+  "sort": 112,
+  "title": "Legs Up the Wall",
+  "en": "Legs Up the Wall",
+  "ko": "벽에 다리 올리기",
+  "note": "누워서 종아리와 발을 벽에 편안히 기대고 3~5분 쉰다. 불편하거나 저림이 생기면 즉시 자세를 풀고, 허리와 목을 편하게 둔다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-14",
+  "area": "legs",
+  "group": "stretch",
+  "level": 5,
+  "sort": 113,
+  "title": "Elevated Ankle Pumps",
+  "en": "Elevated Ankle Pumps",
+  "ko": "다리 올리고 발목 펌핑",
+  "note": "누워 종아리를 쿠션에 올린 채 발끝을 몸쪽으로 당겼다 뻗기를 15~20회 반복한다.",
+  "archived": false,
+  "videos": []
+ },
+ {
+  "id": "legs-stretch-v1-15",
+  "area": "legs",
+  "group": "stretch",
+  "level": 5,
+  "sort": 114,
+  "title": "Supine Heel Slides",
+  "en": "Supine Heel Slides",
+  "ko": "누워서 뒤꿈치 미끄러뜨리기",
+  "note": "바로 누운 자세에서 한쪽 뒤꿈치를 바닥에 붙인 채 엉덩이 쪽으로 끌어당겼다가 다시 다리를 편다. 좌우 각각 10회 부드럽게 움직인다.",
+  "archived": false,
+  "videos": []
+ }
+];
 export function seedBodyCatalog(value){
  const items=[...(value?.items||[])],keys=new Set(items.map(x=>x.id));
  if(Number(value?.beautyCatalogSeedVersion)<1){
@@ -50,6 +248,12 @@ export function seedBodyCatalog(value){
   }
  }
  }
+ if((Number(value?.legStretchSeedVersion)||0)<1){
+  for(const drill of LEG_STRETCH_SEED){
+   if(keys.has(drill.id)||items.some(x=>x.area==='legs'&&x.group==='stretch'&&String(x.en||x.title||'').trim().toLowerCase()===drill.en.toLowerCase()))continue;
+   items.push({...drill});
+  }
+ }
  // Insert Voice Flow's 45 drills only into Face > Voice (internal group: stretch).
  // Keep pre-existing custom drills, video links, notes and archived state unchanged.
  for(const drill of VOICE_SEED_DRILLS){
@@ -59,7 +263,7 @@ export function seedBodyCatalog(value){
  }
  const levelNames={...(value?.levelNames||{})};
  if(!levelNames['face:stretch'])levelNames['face:stretch']=VOICE_LEVEL_NAMES;
- return {...value,items,levelNames,beautyCatalogSeedVersion:1};
+ return {...value,items,levelNames,beautyCatalogSeedVersion:1,legStretchSeedVersion:Math.max(1,Number(value?.legStretchSeedVersion)||0)};
 }
 export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=false,database=null,userId=null}){
  const [level,setLevel]=useState(1);

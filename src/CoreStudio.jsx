@@ -160,7 +160,7 @@ const movementPatternMatches=(technique,label)=>{
 const THORACIC_PHOTO_IDS=Array.from({length:11},(_,i)=>'back-thoracic-timeline-'+String(i+1).padStart(2,'0'));
 const THIGH_POSTURE_TAGS=['Supine','Side-Lying','Standing','Machine'];
 const thighPostureOf=t=>THIGH_POSTURE_TAGS.find(tag=>(t.tags||[]).includes(tag))||'';
-function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,massageCategories=[],modeLabels=['맨몸근력','요가']}){
+function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,yogaCategories=YOGA_CATEGORIES,massageCategories=[],modeLabels=['맨몸근력','요가'],compact=false}){
  const [mode,setMode]=useState('strength');
  const [addingTechnique,setAddingTechnique]=useState(false);
  const [techniqueDraft,setTechniqueDraft]=useState({name:'',en:'',category:0,posture:'',muscles:'',description:'',tags:''});
@@ -298,8 +298,8 @@ function CoreTechniques({data,onUpdate,database,userId,title='코어',strengthCa
   }catch(error){setImageError('업로드 실패: '+(error?.message||'Storage 설정을 확인해 줘.'))}
   finally{setUploadingImage(false)}
  };
- return <section style={{padding:'16px'}}>
-  <h2>기술 라이브러리</h2>
+ return <section style={{padding:compact?'0 16px 16px':'16px'}}>
+  {!compact&&<h2>기술 라이브러리</h2>}
    {title==='등·가슴'&&!yogaMode&&!massageMode&&<div style={{display:'grid',gap:6,marginBottom:14}}>
     <button type="button" onClick={()=>thoracicZipInput.current?.click()} disabled={thoracicZipBusy} style={{...btn,padding:'11px 12px',background:'#f1e7fa',color:'#7952a3',fontWeight:700}}>{thoracicZipBusy?'사진 업로드 중…':'📷 흉추 가동성 11장 ZIP 한 번에 업로드'}</button>
     <input ref={thoracicZipInput} type="file" accept=".zip,application/zip" disabled={thoracicZipBusy} style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void importThoracicPhotos(file)}}/>
@@ -452,7 +452,7 @@ function CoreSequenceThumbnail({technique,database,userId}){
   {src&&!broken?<img src={src} alt="" loading="lazy" onError={()=>setBroken(true)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:22,color:'#ae94c7'}}>▧</span>}
  </span>;
 }
-function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES}){
+function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategories=CORE_CATEGORIES,compact=false}){
  const techniques=data.coreTechniques||[];
  const routines=data.coreRoutines||[];
  const [routineId,setRoutineId]=useState('');
@@ -544,11 +544,12 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
   lastTick.current=Date.now();endAt.current=lastTick.current+(done?steps[0].seconds:remaining)*1000;setPlaying(true);playingRef.current=true};
  const skip=()=>{pause();const n=index+1;if(n<steps.length){setIndex(n);setRemaining(steps[n].seconds)}else{setDone(true);setRemaining(0)}};
  const save=()=>{if(!steps.length||!name.trim())return;const id=routineId||uid();onUpdate(d=>{d.coreRoutines=d.coreRoutines||[];const value={id,name:name.trim(),steps:steps.map(x=>({...x}))};const at=d.coreRoutines.findIndex(x=>x.id===id);if(at<0)d.coreRoutines.push(value);else d.coreRoutines[at]=value});setRoutineId(id)};
- return <section style={{padding:'16px'}}>
-  <h2>타이머</h2>
-  <p style={{fontSize:13,opacity:.7}}>기술 라이브러리에서 동작을 선택하고 나만의 시퀀스를 만들어.</p>
+ return <section style={{padding:compact?'0 16px 16px':'16px'}}>
+  {!compact&&<h2>타이머</h2>}
+  {!compact&&<p style={{fontSize:13,opacity:.7}}>기술 라이브러리에서 동작을 선택하고 나만의 시퀀스를 만들어.</p>}
   <select aria-label="저장된 시퀀스" value={routineId} onChange={e=>selectRoutine(e.target.value)} style={{width:'100%',padding:12,borderRadius:10,marginBottom:12}}><option value="">저장된 시퀀스 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
   <div className="routine-root routine-face" style={{padding:'22px 10px 20px',borderRadius:18,marginBottom:12,background:'#fff'}}>
+   {!compact&&<>
    <div style={{width:'min(100%,320px)',aspectRatio:'1',position:'relative',margin:'2px auto 10px'}}>
     <svg viewBox="0 0 260 260" width="100%" height="100%" role="img" aria-label={'남은 시간 '+fmt(remaining)+' · 진행률 '+Math.round(progress*100)+'퍼센트'}>
      <circle cx="130" cy="130" r={ringRadius} fill="none" stroke="#eee6f5" strokeWidth="21"/>
@@ -560,6 +561,7 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
      <strong style={{fontSize:'clamp(34px,10vw,51px)',color:'#7751a1',fontVariantNumeric:'tabular-nums',lineHeight:1.12}}>{fmt(remaining)}</strong>
     </div>
    </div>
+   </>}
    <div style={{textAlign:'center',fontSize:13,margin:'0 0 14px',color:'#776483'}}>
     <div>다음 · {nextName}</div>
     <div style={{fontSize:12,marginTop:4}}>총 {steps.length}개 동작 · {fmt(total)} {steps.length?'· '+Math.min(index+1,steps.length)+'/'+steps.length:''}</div>
@@ -655,11 +657,11 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
   </div>
  </section>;
 }
-function CoreRecords({logs=[],title='코어'}){
+function CoreRecords({logs=[],title='코어',compact=false}){
  const today=day(),current=logs.filter(x=>x.date===today).reduce((n,x)=>n+x.seconds,0);
  const dates=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')});
- return <section style={{padding:16}}>
-  <h2>기록</h2>
+ return <section style={{padding:compact?'0 16px 16px':16}}>
+  {!compact&&<h2>기록</h2>}
   <div style={panel}><span>오늘의 운동</span><h2 style={{margin:'8px 0'}}>{fmt(current)}</h2></div>
   <h3>최근 7일</h3>
   {dates.map(date=><div key={date} style={{...panel,display:'flex',justifyContent:'space-between'}}><span>{date}</span><strong>{fmt(logs.filter(x=>x.date===date).reduce((n,x)=>n+x.seconds,0))}</strong></div>)}
@@ -709,8 +711,8 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   }:area==='legs'?{
    ...scoped,coreTechniques:[...(scoped.coreTechniques||[]),...(scoped.coreYogaTechniques||[]).map(t=>({...t,category:t.category+LEGS_STRETCH_CATEGORIES.length}))]
   }:scoped;
-  return <CoreTimer data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='back'?[...strengthCategories,...BACK_MASSAGE_CATEGORIES]:area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
+  return <CoreTimer compact={area==='hip'} data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='back'?[...strengthCategories,...BACK_MASSAGE_CATEGORIES]:area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
  }
- if(tab==='records')return <CoreRecords logs={scoped.coreLogs||[]} title={title}/>;
- return <CoreTechniques data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} massageCategories={area==='back'?BACK_MASSAGE_CATEGORIES:[]} modeLabels={area==='legs'?['스트레치','마사지']:area==='back'?['맨몸근력','요가','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
+ if(tab==='records')return <CoreRecords compact={area==='hip'} logs={scoped.coreLogs||[]} title={title}/>;
+ return <CoreTechniques compact={area==='hip'} data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} massageCategories={area==='back'?BACK_MASSAGE_CATEGORIES:[]} modeLabels={area==='legs'?['스트레치','마사지']:area==='back'?['맨몸근력','요가','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
 }

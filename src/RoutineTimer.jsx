@@ -262,7 +262,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
  useEffect(()=>{if(!playing)return;deadline.current=performance.now()+remaining*1000;timer.current=setInterval(()=>{const left=Math.max(0,(deadline.current-performance.now())/1000);if(left<=0)advanceRef.current();else{setRemaining(left);if(tracking.current&&Date.now()-tracking.current.last>=10000)flushTracking()}},100);return()=>{clearInterval(timer.current);timer.current=null}},[playing,index]);
  const togglePlay=()=>{if(complete){setIndex(0);setRemaining(steps[0]?.seconds||60);setComplete(false);beginTracking(steps[0]?.seconds||60);setPlaying(true)}else if(playing){setRemaining(Math.max(0,(deadline.current-performance.now())/1000));stop()}else if(steps.length){beginTracking(remaining);setPlaying(true)}};
  const jump=n=>{stop();const at=Math.max(0,Math.min(steps.length-1,n));setIndex(at);setRemaining(steps[at]?.seconds||60);setComplete(false)};
- const updateDuration=(n,raw)=>{const value=Math.min(3600,Math.max(5,Number(raw)||60));setSteps(old=>old.map((s,i)=>i===n?{...s,seconds:value}:s));if(n===index){stop();setRemaining(value);setComplete(false)}};
+ const updateDuration=(n,raw)=>{const minutes=Number(raw);if(!Number.isFinite(minutes)||minutes<=0)return;const value=Math.min(3600,Math.max(5,Math.round(minutes*60)));setSteps(old=>old.map((s,i)=>i===n?{...s,seconds:value}:s));if(n===index){stop();setRemaining(value);setComplete(false)}};
  const total=steps.reduce((n,x)=>n+x.seconds,0);
  const elapsed=complete?total:steps.slice(0,index).reduce((n,x)=>n+x.seconds,0)+(chosen?chosen.seconds-remaining:0);
  const radius=96,circ=2*Math.PI*radius,part=chosen?Math.max(0,Math.min(1,remaining/chosen.seconds)):0;
@@ -293,7 +293,7 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      <div className={'routine-step '+(i===index&&!complete?'active':'')} onClick={()=>isOwner&&jump(i)}>
       <i style={{background:colors[i%colors.length]}}/>
       <span>{i<index||complete?'✓ ':''}{step.title}</span>
-      <input aria-label={step.title+' 시간(초)'} type="number" disabled={!isOwner} min="5" max="3600" value={step.seconds} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>초</small>
+      <input aria-label={step.title+' 시간(분)'} type="number" disabled={!isOwner} min="0.1" max="60" step="0.1" value={Number((step.seconds/60).toFixed(2))} onClick={e=>e.stopPropagation()} onChange={e=>updateDuration(i,e.target.value)}/><small>분</small>
      </div>
      {i===index&&step.videoId&&<div className="routine-video-accordion">
       <button type="button" className="routine-video-toggle" aria-expanded={videoExpanded} onClick={()=>setVideoExpanded(v=>!v)}>

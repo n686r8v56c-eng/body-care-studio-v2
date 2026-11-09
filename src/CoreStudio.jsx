@@ -546,7 +546,6 @@ function CoreTimer({data,onUpdate,database,userId,title='코어',strengthCategor
  const save=()=>{if(!steps.length||!name.trim())return;const id=routineId||uid();onUpdate(d=>{d.coreRoutines=d.coreRoutines||[];const value={id,name:name.trim(),steps:steps.map(x=>({...x}))};const at=d.coreRoutines.findIndex(x=>x.id===id);if(at<0)d.coreRoutines.push(value);else d.coreRoutines[at]=value});setRoutineId(id)};
  return <section style={{padding:compact?'0 16px 16px':'16px'}}>
   {!compact&&<h2>타이머</h2>}
-  {!compact&&<p style={{fontSize:13,opacity:.7}}>기술 라이브러리에서 동작을 선택하고 나만의 시퀀스를 만들어.</p>}
   <select aria-label="저장된 시퀀스" value={routineId} onChange={e=>selectRoutine(e.target.value)} style={{width:'100%',padding:12,borderRadius:10,marginBottom:12}}><option value="">저장된 시퀀스 선택</option>{routines.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
   <div className="routine-root routine-face" style={{padding:'22px 10px 20px',borderRadius:18,marginBottom:12,background:'#fff'}}>
    {!compact&&<>

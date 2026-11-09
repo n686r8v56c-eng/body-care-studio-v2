@@ -282,10 +282,6 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
        {normalizeVideoIds(row.videos).map((videoId,i)=>{const key=row.id+":"+videoId;return <label key={key}><input type="checkbox" checked={checked.includes(key)} onChange={e=>setChecked(v=>e.target.checked?[...v,key]:v.filter(x=>x!==key))}/> 영상 {i+1}<a href={"https://www.youtube.com/watch?v="+videoId} target="_blank" rel="noopener noreferrer" aria-label="영상 열기" onClick={e=>e.stopPropagation()}><ExternalLink size={14}/></a></label>})}</div>):<p>등록된 영상이 없어.</p>}</div>}
      </div>})}
    </div>}
-   {database&&userId&&<div className="routine-sync-status">
-     <span>{syncState}{!isOwner&&' · 읽기 전용'}</span>
-     {!isOwner&&<button type="button" onClick={takeOver}>이 기기에서 이어받기</button>}
-   </div>}
    {!!steps.length&&<div className="routine-player">
     <div className="routine-list-accordion">
      <button type="button" className="routine-list-toggle" aria-expanded={stepsExpanded} onClick={()=>{setStepsExpanded(v=>!v);if(stepsExpanded)setVideoExpanded(false)}}>
@@ -309,6 +305,10 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      </div>}
     </div>)}</div>}
     </div>
+   {database&&userId&&<div className="routine-sync-status">
+     <span>{syncState}{!isOwner&&' · 읽기 전용'}</span>
+     {!isOwner&&<button type="button" onClick={takeOver}>이 기기에서 이어받기</button>}
+   </div>}
     {!readOnly&&<div className="routine-save"><input aria-label="루틴 이름" disabled={!isOwner} placeholder="루틴 이름 (예: 아침 발성 6분)" value={draftName} onChange={e=>setDraftName(e.target.value)}/><button className="routine-purple" type="button" onClick={save} disabled={!isOwner||!draftName.trim()}><Save size={16}/> 저장</button>{selectedId&&<button type="button" onClick={remove} disabled={!isOwner} aria-label="루틴 삭제"><Trash2 size={17}/></button>}</div>}
    </div>}
   </>}

@@ -287,19 +287,6 @@ export default function RoutineTimer({data,onUpdate,area,group,readOnly=false,th
      {!isOwner&&<button type="button" onClick={takeOver}>이 기기에서 이어받기</button>}
    </div>}
    {!!steps.length&&<div className="routine-player">
-    <div className="routine-pie"><svg viewBox="0 0 240 240" role="img" aria-label="단계별 색상 파이 타이머">
-     {steps.map((s,i)=>{const before=steps.slice(0,i).reduce((n,x)=>n+x.seconds,0)/total;const length=s.seconds/total;return <circle key={i} cx="120" cy="120" r={radius} fill="none" stroke={colors[i%colors.length]} strokeWidth="32" strokeDasharray={Math.max(0,circ*length-3)+' '+circ} strokeDashoffset={-circ*before} transform="rotate(-90 120 120)" opacity={(i<index||complete)?0.18:0.9}/>})}
-     <circle cx="120" cy="120" r="67" fill="none" stroke={colors[index%colors.length]} strokeWidth="8" strokeDasharray={circ*part*67/96+' 421'} transform="rotate(-90 120 120)" opacity=".9"/>
-    </svg>
-     <div className="routine-pie-center" aria-live="off">
-      <strong className="routine-pie-title" title={chosen?.title||''}>{complete?'루틴 완료!':chosen?.title}</strong>
-      <strong className="routine-pie-time">{fmt(remaining)}</strong>
-      
-     </div>
-    </div>
-    <div className="routine-current"><strong>{complete?'모든 연습 완료':index+1<steps.length?'다음 · '+steps[index+1].title:'마지막 연습'}</strong></div>
-    <div className="routine-controls"><button type="button" disabled={!isOwner} onClick={()=>jump(index-1)} aria-label="이전"><SkipBack size={20}/></button><button type="button" disabled={!isOwner} className="routine-purple" onClick={togglePlay}>{playing?<Pause size={18}/>:<Play size={18}/>} {playing?'일시정지':complete?'다시 시작':'시작'}</button><button type="button" disabled={!isOwner} onClick={()=>jump(index+1)} aria-label="다음"><SkipForward size={20}/></button><button type="button" disabled={!isOwner} onClick={()=>jump(0)} aria-label="초기화"><RotateCcw size={18}/></button></div>
-    <div className="routine-options"><label><input type="checkbox" disabled={!isOwner} checked={autoNext} onChange={e=>setAutoNext(e.target.checked)}/> 자동 다음</label><label><input type="checkbox" disabled={!isOwner} checked={tone} onChange={e=>setTone(e.target.checked)}/> 알림음</label><span>총 {fmt(total)} · 진행 {fmt(elapsed)}</span></div>
     <div className="routine-list-accordion">
      <button type="button" className="routine-list-toggle" aria-expanded={stepsExpanded} onClick={()=>{setStepsExpanded(v=>!v);if(stepsExpanded)setVideoExpanded(false)}}>
       <span className="routine-list-icon"><ChevronDown size={18} className={stepsExpanded?'routine-chevron-open':''}/></span>

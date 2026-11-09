@@ -710,8 +710,8 @@ export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,
   }:area==='legs'?{
    ...scoped,coreTechniques:[...(scoped.coreTechniques||[]),...(scoped.coreYogaTechniques||[]).map(t=>({...t,category:t.category+LEGS_STRETCH_CATEGORIES.length}))]
   }:scoped;
-  return <CoreTimer compact={area==='hip'} data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='back'?[...strengthCategories,...BACK_MASSAGE_CATEGORIES]:area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
+  return <CoreTimer compact={area==='hips'} data={timerData} onUpdate={scopedUpdate} title={title} strengthCategories={area==='back'?[...strengthCategories,...BACK_MASSAGE_CATEGORIES]:area==='legs'?[...LEGS_STRETCH_CATEGORIES,...LEGS_MASSAGE_CATEGORIES]:strengthCategories} database={database} userId={userId}/>;
  }
- if(tab==='records')return <CoreRecords compact={area==='hip'} logs={scoped.coreLogs||[]} title={title}/>;
- return <CoreTechniques compact={area==='hip'} data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} massageCategories={area==='back'?BACK_MASSAGE_CATEGORIES:[]} modeLabels={area==='legs'?['스트레치','마사지']:area==='back'?['맨몸근력','요가','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
+ if(tab==='records')return <CoreRecords compact={area==='hips'} logs={scoped.coreLogs||[]} title={title}/>;
+ return <CoreTechniques compact={area==='hips'} data={scoped} onUpdate={scopedUpdate} title={title} strengthCategories={strengthCategories} yogaCategories={yogaCategories} massageCategories={area==='back'?BACK_MASSAGE_CATEGORIES:[]} modeLabels={area==='legs'?['스트레치','마사지']:area==='back'?['맨몸근력','요가','마사지']:['맨몸근력','요가']} database={database} userId={userId}/>;
 }

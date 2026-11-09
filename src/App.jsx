@@ -660,18 +660,28 @@ export default function App(){
  const [stopwatchRunning,setStopwatchRunning]=useState(false);
  const stopwatchStarted=useRef(0);
  const stopwatchBase=useRef(0);
+ const stopwatchAccounted=useRef(0);
+ const stopwatchCategory=useRef('face');
+ const stopwatchRecorder=useRef(()=>{});
+ const stopwatchElapsed=()=>stopwatchBase.current+(stopwatchRunning?(Date.now()-stopwatchStarted.current)/1000:0);
+ const flushStopwatch=()=>{
+  const elapsed=stopwatchElapsed();
+  const delta=Math.max(0,elapsed-stopwatchAccounted.current);
+  if(delta>=0.01){stopwatchAccounted.current=elapsed;stopwatchRecorder.current(stopwatchCategory.current,delta)}
+ };
  useEffect(()=>{
   if(!stopwatchRunning)return;
   const updateClock=()=>setStopwatchSeconds(Math.floor(stopwatchBase.current+(Date.now()-stopwatchStarted.current)/1000));
   updateClock();
   const tick=setInterval(updateClock,250);
-  return()=>clearInterval(tick);
+  const accounting=setInterval(flushStopwatch,5000);
+  return()=>{clearInterval(tick);clearInterval(accounting);};
  },[stopwatchRunning]);
  const toggleStopwatch=()=>{
-  if(stopwatchRunning){stopwatchBase.current+=(Date.now()-stopwatchStarted.current)/1000;setStopwatchSeconds(Math.floor(stopwatchBase.current));setStopwatchRunning(false)}
-  else{stopwatchStarted.current=Date.now();setStopwatchRunning(true)}
+  if(stopwatchRunning){flushStopwatch();stopwatchBase.current=stopwatchElapsed();setStopwatchSeconds(Math.floor(stopwatchBase.current));setStopwatchRunning(false)}
+  else{stopwatchCategory.current=activeTimerKind;stopwatchStarted.current=Date.now();setStopwatchRunning(true)}
  };
- const resetStopwatch=()=>{stopwatchBase.current=0;stopwatchStarted.current=Date.now();setStopwatchSeconds(0)};
+ const resetStopwatch=()=>{flushStopwatch();stopwatchBase.current=0;stopwatchAccounted.current=0;stopwatchStarted.current=Date.now();setStopwatchSeconds(0)};
  const stopwatchLabel=[Math.floor(stopwatchSeconds/3600),Math.floor(stopwatchSeconds%3600/60),stopwatchSeconds%60].map(n=>String(n).padStart(2,'0')).join(':');
 
  const [coreTab,setCoreTab]=useState('inbox');
@@ -692,6 +702,7 @@ export default function App(){
  const timerKinds=area==='face'?[{id:'face',name:'Face'},{id:'voice',name:'Voice'}]:[{id:'circulation',name:'순환'},{id:'strength',name:'근력'},{id:'gym',name:'헬스'}];
  const activeTimerKind=timerKinds.some(t=>t.id===timerKind)?timerKind:timerKinds[0].id;
  const selectTimerKind=kind=>{
+  if(stopwatchRunning){flushStopwatch();stopwatchCategory.current=kind}
   setTimerKind(kind);
   try{localStorage.setItem(timerPreferenceKey,kind)}catch{}
  };
@@ -857,7 +868,8 @@ export default function App(){
   setPracticeLogs(previous=>addPractice(previous,kind,event.duration_seconds,day));
   if(practiceStorage==='sql')drainPracticeQueue();
  };
- const sourceGroup=(kind)=>{
+ stopwatchRecorder.current=area==='face'?recordPractice:(kind,seconds)=>recordBodyPractice(kind,seconds);
+  const sourceGroup=(kind)=>{
   // Users may rename bottom tabs: resolve their saved label first, then
   // fall back to stable internal IDs without changing stored video data.
   const labels={

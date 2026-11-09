@@ -664,7 +664,6 @@ function CoreRecords({logs=[],title='코어',compact=false,hideHeading=false}){
   <div style={panel}><span>오늘의 운동</span><h2 style={{margin:'8px 0'}}>{fmt(current)}</h2></div>
   <h3>최근 7일</h3>
   {dates.map(date=><div key={date} style={{...panel,display:'flex',justifyContent:'space-between'}}><span>{date}</span><strong>{fmt(logs.filter(x=>x.date===date).reduce((n,x)=>n+x.seconds,0))}</strong></div>)}
-  <p style={{fontSize:12,opacity:.7}}>타이머에서 실제 진행한 시간만 기록해.</p>
  </section>;
 }
 export default function CoreStudio({area='core',tab,data,onUpdate,sync,database,userId}){

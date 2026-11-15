@@ -7,7 +7,7 @@ import RoutineTimer from './RoutineTimer.jsx';
 import PracticeRecords from './PracticeRecords.jsx';
 import Dashboard from './Dashboard.jsx';
 import DashboardInbox from './DashboardInbox.jsx';
-import './GenreBook.css';
+import GenreBook from './GenreBook.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2,Play,Pause} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
@@ -652,22 +652,6 @@ export function BodyCarePreview(){
  </div>;
 }
 
-
-function GenreBook({area,userId}){
- const key='body-care-v2-book:'+String(userId||'guest')+':'+area;
- const [state,setState]=useState(()=>read(key,null)||{folders:['Korea','China'],folder:'Korea',boards:{}});
- useEffect(()=>{setState(read(key,null)||{folders:['Korea','China'],folder:'Korea',boards:{}})},[key]);
- const save=fn=>setState(prev=>{const next=fn(prev);persist(key,next);return next});
- const folders=state.folders||['Korea','China'],folder=folders.includes(state.folder)?state.folder:folders[0];
- const boards=state.boards?.[folder]||[{id:'default',name:'보드1',cards:[]}];
- const addFolder=()=>{const name=prompt('상위함 이름');if(name?.trim()&&!folders.includes(name.trim()))save(p=>({...p,folders:[...p.folders,name.trim()],folder:name.trim()}))};
- const updateBoards=fn=>save(p=>({...p,boards:{...p.boards,[folder]:fn(p.boards?.[folder]||[{id:'default',name:'보드1',cards:[]}])}}));
- const addBoard=()=>updateBoards(b=>[...b,{id:uid(),name:'보드'+(b.length+1),cards:[]}]);
- const renameBoard=id=>{const current=boards.find(b=>b.id===id);const name=prompt('보드 이름',current?.name||'');if(name?.trim())updateBoards(b=>b.map(x=>x.id===id?{...x,name:name.trim()}:x))};
- const archiveBoard=id=>{if(!confirm('이 보드를 보관함으로 이동할까?'))return;save(p=>({...p,boards:{...p.boards,[folder]:boards.filter(b=>b.id!==id)},archive:[...(p.archive||[]),{...boards.find(b=>b.id===id),folder}]}))};
- const editCard=(bid,index)=>{const board=boards.find(b=>b.id===bid),card=board?.cards?.[index]||{};const title=prompt('카드 제목',card.title||'');if(title===null)return;const link=prompt('링크 URL (선택)',card.link||'');if(link===null)return;const memo=prompt('메모 (선택)',card.memo||'');if(memo===null)return;updateBoards(b=>b.map(x=>x.id!==bid?x:{...x,cards:Array.from({length:Math.max((x.cards||[]).length,index+1)},(_,i)=>i===index?{title,link,memo}:x.cards?.[i]||{})}))};
- return <div className="genre-book"><div className="genre-book-heading"><h2>Book</h2><button type="button" onClick={()=>{const archived=state.archive||[];if(!archived.length)return alert('보관된 보드가 없어.');const names=archived.map((b,i)=>i+1+'. '+b.name+' ('+b.folder+')').join('\\n');const pick=Number(prompt('복원할 보드 번호\\n'+names));if(pick>0&&pick<=archived.length){const item=archived[pick-1];save(p=>({...p,archive:p.archive.filter((_,i)=>i!==pick-1),boards:{...p.boards,[item.folder]:[...(p.boards?.[item.folder]||[]),{id:item.id,name:item.name,cards:item.cards}]}}))}}}>보관함 ({(state.archive||[]).length})</button></div><div className="genre-book-folders">{folders.map(f=><button type="button" key={f} className={f===folder?'active':''} onClick={()=>save(p=>({...p,folder:f}))}>{f}</button>)}<button type="button" aria-label="상위함 추가" onClick={addFolder}>＋</button></div><div className="genre-book-board-scroll">{boards.map(b=><section className="genre-book-board" key={b.id}><div className="genre-book-board-title"><button type="button" onClick={()=>renameBoard(b.id)}>{b.name} ✎</button><button type="button" onClick={()=>archiveBoard(b.id)}>▣</button></div><div className="genre-book-cards">{Array.from({length:Math.max(8,(b.cards||[]).length+1)},(_,i)=>{const card=b.cards?.[i];return <button type="button" className="genre-book-card" key={i} onClick={()=>editCard(b.id,i)}>{card?.title?<><strong>{card.title}</strong><small>{card.memo}</small>{card.link&&<span onClick={e=>{e.stopPropagation();window.open(card.link,'_blank','noopener,noreferrer')}}>링크 열기 ↗</span>}</>:<span>＋</span>}</button>})}</div></section>)}<button type="button" className="genre-book-add-board" onClick={addBoard}>＋ 보드 추가</button></div></div>;
-}
 
 // Leg swelling-care library uses separate stretch and massage collections; no gym/strength tabs.
 export default function App(){

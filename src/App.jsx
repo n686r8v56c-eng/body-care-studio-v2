@@ -8,7 +8,7 @@ import PracticeRecords from './PracticeRecords.jsx';
 import Dashboard from './Dashboard.jsx';
 import DashboardInbox from './DashboardInbox.jsx';
 import GenreBook from './GenreBook.jsx';
-import MovementFlow from './MovementFlow.jsx';
+import MovementFlow from './ForceMapEditor.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2,Play,Pause} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};

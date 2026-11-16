@@ -8,7 +8,7 @@ const VOICE_LEVEL_NAMES=['기초','음정','음색','기교','표현'];
 // Source: Voice Flow drill catalog, exported 2026-11-06. Stable IDs prevent duplicate seeding.
 const VOICE_SEED_DRILLS=[{"level":1,"sort":0,"en":"Appoggio","ko":"아포지오 · 호흡 지지"},{"level":1,"sort":1,"en":"Breath–Voice Coordination","ko":"호흡·성대 협응"},{"level":1,"sort":2,"en":"F–V Transition","ko":"F→V 전환"},{"level":1,"sort":3,"en":"S–Z Transition","ko":"S→Z 전환"},{"level":1,"sort":4,"en":"Lip Trill","ko":"립트릴"},{"level":1,"sort":5,"en":"Tongue Trill","ko":"텅트릴"},{"level":1,"sort":6,"en":"Straw Phonation","ko":"빨대 발성"},{"level":1,"sort":7,"en":"Water Resistance Phonation","ko":"물저항 발성"},{"level":1,"sort":8,"en":"Gentle Humming","ko":"허밍"},{"level":1,"sort":9,"en":"Easy Onset","ko":"부드러운 발성 시작"},{"level":1,"sort":10,"en":"Gentle Offset","ko":"부드러운 발성 종료"},{"level":1,"sort":11,"en":"Humming to Vowel","ko":"음→아 연결"},{"level":2,"sort":0,"en":"Single Note Matching","ko":"피아노 단음 따라 하기"},{"level":2,"sort":1,"en":"Pitch Accuracy","ko":"음정 정확도"},{"level":2,"sort":2,"en":"Semitone Steps","ko":"반음씩 상행·하행"},{"level":2,"sort":3,"en":"Interval Jumps","ko":"3도·5도·옥타브 도약"},{"level":2,"sort":4,"en":"Pitch Glide","ko":"피치 글라이드"},{"level":2,"sort":5,"en":"Siren","ko":"사이렌"},{"level":2,"sort":6,"en":"Range Expansion","ko":"음역 확장"},{"level":3,"sort":0,"en":"Chest Register","ko":"흉성"},{"level":3,"sort":1,"en":"Head Register","ko":"두성"},{"level":3,"sort":2,"en":"Mix Coordination","ko":"믹스 보이스"},{"level":3,"sort":3,"en":"Register Transition","ko":"성구 전환"},{"level":3,"sort":4,"en":"Vowel Resonance","ko":"모음·공명 조절"},{"level":3,"sort":5,"en":"Bright–Dark Tone","ko":"밝고 어두운 음색"},{"level":3,"sort":6,"en":"Light–Full Tone","ko":"가볍고 묵직한 음색"},{"level":3,"sort":7,"en":"M–N–NG Resonance","ko":"비음·공명 탐색"},{"level":4,"sort":0,"en":"Crescendo–Decrescendo","ko":"크레셴도·디크레셴도"},{"level":4,"sort":1,"en":"Messa di Voce","ko":"메사 디 보체"},{"level":4,"sort":2,"en":"Scale Agility","ko":"스케일 민첩성"},{"level":4,"sort":3,"en":"Arpeggio","ko":"아르페지오"},{"level":4,"sort":4,"en":"Melisma","ko":"멜리스마"},{"level":4,"sort":5,"en":"Legato","ko":"레가토"},{"level":4,"sort":6,"en":"Staccato","ko":"스타카토"},{"level":4,"sort":7,"en":"Vibrato","ko":"비브라토 조절"},{"level":4,"sort":8,"en":"Dynamic Control","ko":"음량 조절"},{"level":5,"sort":0,"en":"Sustained Tone","ko":"지속음·발성 안정성"},{"level":5,"sort":1,"en":"Long Phrase","ko":"긴 프레이즈·호흡 배분"},{"level":5,"sort":2,"en":"Clear Diction","ko":"자음·모음 딕션"},{"level":5,"sort":3,"en":"Semantic Pausing","ko":"의미 단위 쉼"},{"level":5,"sort":4,"en":"Musical Phrasing","ko":"프레이징"},{"level":5,"sort":5,"en":"Stress & Intonation","ko":"강세·억양"},{"level":5,"sort":6,"en":"Emotional Delivery","ko":"감정 표현"},{"level":5,"sort":7,"en":"Expressive Reading","ko":"표현 낭독"},{"level":5,"sort":8,"en":"Voice to Speech","ko":"발성에서 말하기 연결"}];
 
-import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
+import {normalizeVideoIds} from './videoLimits.js';
 const groupKey=(area,group)=>area+':'+group;
 const instagramUrl=raw=>{
  try{
@@ -19,7 +19,7 @@ const instagramUrl=raw=>{
   return 'https://www.instagram.com/'+(p[0]==='reels'?'reel':p[0])+'/'+p[1]+'/';
  }catch{return null}
 };
-const instagramLinks=value=>[...new Set((Array.isArray(value)?value:[]).map(instagramUrl).filter(Boolean))].slice(0,5);
+const instagramLinks=value=>[...new Set((Array.isArray(value)?value:[]).map(instagramUrl).filter(Boolean))];
 const nextId=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
 const displayName=row=>row.en||row.title||row.ko||'이름 없음';
 const videoId=raw=>{
@@ -370,7 +370,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   const existing=linksFor(row);
   const limit=Math.max(0,MAX-existing.length);
   if(!limit){alertUser('영상 링크는 한 동작에 최대 5개까지 등록 가능해.');return}
-  const fresh=[...youTubeIds.filter(id=>!videosFor(row).includes(id)).map(id=>({type:'youtube',id})),...instagramUrls.filter(url=>!instagramsFor(row).includes(url)).map(url=>({type:'instagram',url}))].slice(0,limit);
+  const fresh=[...youTubeIds.filter(id=>!videosFor(row).includes(id)).map(id=>({type:'youtube',id})),...instagramUrls.filter(url=>!instagramsFor(row).includes(url)).map(url=>({type:'instagram',url}))];
   if(!fresh.length){alertUser('이미 등록된 영상이야.');return}
   update(d=>{
    const found=d.items.find(x=>x.id===row.id);
@@ -493,7 +493,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
        <button type="button" onClick={()=>arr[index].type==='youtube'?copyLink(arr[index].id):navigator.clipboard.writeText(arr[index].url).then(()=>alertUser('링크 복사 완료')).catch(()=>alertUser('영상 열기를 이용해 줘.'))}><Link2 size={15}/> 링크 복사</button>
        <a href={arr[index].url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> {arr[index].type==='instagram'?'Instagram에서 열기':'영상 열기'}</a>
        {!readOnly&&<button type="button" onClick={()=>removeVideo(row,index)}><Trash2 size={15}/> 링크 삭제</button>}
-       {!readOnly&&arr.length<MAX&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
+       {!readOnly&&<button type="button" onClick={()=>addFromClipboard(row)}><Plus size={15}/> 영상 추가</button>}
       </div>
      </>:<div className="stretching-no-video"><strong>영상 링크 등록 대기</strong><span>오른쪽 링크 아이콘을 눌러 YouTube 또는 Instagram 주소를 등록해 줘.</span></div>}
     </div>}

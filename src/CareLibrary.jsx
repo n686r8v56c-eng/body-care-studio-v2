@@ -368,8 +368,6 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   const instagramUrls=[...new Set(rawLinks.map(instagramUrl).filter(Boolean))];
   if(!youTubeIds.length&&!instagramUrls.length){alertUser('YouTube 또는 Instagram 릴스·게시물 주소를 입력해 줘.');return}
   const existing=linksFor(row);
-  const limit=Math.max(0,MAX-existing.length);
-  if(!limit){alertUser('영상 링크는 한 동작에 최대 5개까지 등록 가능해.');return}
   const fresh=[...youTubeIds.filter(id=>!videosFor(row).includes(id)).map(id=>({type:'youtube',id})),...instagramUrls.filter(url=>!instagramsFor(row).includes(url)).map(url=>({type:'instagram',url}))];
   if(!fresh.length){alertUser('이미 등록된 영상이야.');return}
   update(d=>{
@@ -382,7 +380,6 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   alertUser('영상 링크 '+fresh.length+'개 등록 완료');
  };
  const addFromClipboard=async row=>{
-  if(linksFor(row).length>=MAX){setOpened(row.id);alertUser('영상은 최대 5개까지 등록 가능해.');return}
   let pasted='';
   try{
    if(!navigator.clipboard?.readText)throw new Error('clipboard unavailable');

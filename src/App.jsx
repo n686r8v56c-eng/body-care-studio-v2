@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {MAX_VIDEOS_PER_ITEM as MAX,normalizeVideoIds} from './videoLimits.js';
+import {normalizeVideoIds} from './videoLimits.js';
 import CareLibrary,{seedBodyCatalog,LEG_STRETCH_SEED} from './CareLibrary.jsx';
 import CoreStudio from './CoreStudio.jsx';
 import {seedCoreCatalog} from './coreCatalog.js';
@@ -45,7 +45,7 @@ const normalize=obj=>({version:1,dashboardVideos:Array.isArray(obj?.dashboardVid
  id:String(x.id),area:savedAreaIds.has(x.area)?x.area:'upper',
  group:groups.some(g=>g.id===x.group)?x.group:'massage',level:Number.isInteger(Number(x.level))&&Number(x.level)>=1&&Number(x.level)<=5?Number(x.level):1,
  title:String(x.title||x.en||x.ko||'').slice(0,120),en:String(x.en||x.title||'').slice(0,120),ko:String(x.ko||'').slice(0,120),note:String(x.note||'').slice(0,2000),
- videos:videoList(x.videos),instagramLinks:[...new Set((Array.isArray(x.instagramLinks)?x.instagramLinks:[]).filter(v=>typeof v==='string').map(v=>{try{const u=new URL(v);const parts=u.pathname.split('/').filter(Boolean);if(!['instagram.com','www.instagram.com','m.instagram.com'].includes(u.hostname.toLowerCase())||!['p','reel','reels','tv'].includes(parts[0])||!/^[-\w]+$/.test(parts[1]||''))return '';return 'https://www.instagram.com/'+(parts[0]==='reels'?'reel':parts[0])+'/'+parts[1]+'/'}catch{return ''}}).filter(Boolean))].slice(0,5),instagramThumbnails:x.instagramThumbnails&&typeof x.instagramThumbnails==='object'&&!Array.isArray(x.instagramThumbnails)?Object.fromEntries(Object.entries(x.instagramThumbnails).filter(([url,path])=>typeof url==='string'&&/^https:\/\/www\.instagram\.com\/(?:reel|p|tv)\/[-\w]+\/$/.test(url)&&typeof path==='string'&&/^[0-9a-f-]{36}\/instagram\/[0-9a-z.-]+\.(?:jpg|png|webp)$/i.test(path))):{},sort:Number.isFinite(Number(x.sort))?Number(x.sort):i,archived:!!x.archived
+ videos:videoList(x.videos),instagramLinks:[...new Set((Array.isArray(x.instagramLinks)?x.instagramLinks:[]).filter(v=>typeof v==='string').map(v=>{try{const u=new URL(v);const parts=u.pathname.split('/').filter(Boolean);if(!['instagram.com','www.instagram.com','m.instagram.com'].includes(u.hostname.toLowerCase())||!['p','reel','reels','tv'].includes(parts[0])||!/^[-\w]+$/.test(parts[1]||''))return '';return 'https://www.instagram.com/'+(parts[0]==='reels'?'reel':parts[0])+'/'+parts[1]+'/'}catch{return ''}}).filter(Boolean))],instagramThumbnails:x.instagramThumbnails&&typeof x.instagramThumbnails==='object'&&!Array.isArray(x.instagramThumbnails)?Object.fromEntries(Object.entries(x.instagramThumbnails).filter(([url,path])=>typeof url==='string'&&/^https:\/\/www\.instagram\.com\/(?:reel|p|tv)\/[-\w]+\/$/.test(url)&&typeof path==='string'&&/^[0-9a-f-]{36}\/instagram\/[0-9a-z.-]+\.(?:jpg|png|webp)$/i.test(path))):{},sort:Number.isFinite(Number(x.sort))?Number(x.sort):i,archived:!!x.archived
 })):[]});
 // New independent studios reuse the Core catalog/routine schema without touching Core's saved data.
 const HIP_MOBILITY_SEED=[
@@ -926,8 +926,8 @@ export default function App(){
   const matches=String(raw).match(/(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)\/[^\s,，]+/gi)||[String(raw)];
   const found=matches.map(idFromUrl).filter(Boolean);
   if(!found.length)return show('유효한 유튜브 링크를 입력해 줘.');
-  const combined=[...new Set([...item.videos,...found])].slice(0,MAX);
-  if(combined.length===item.videos.length)return show(item.videos.length===MAX?'영상은 5개까지 등록 가능해.':'이미 등록된 영상이야.');
+  const combined=[...new Set([...item.videos,...found])];
+  if(combined.length===item.videos.length)return show('이미 등록된 영상이야.');
   update(d=>{d.items.find(x=>x.id===item.id).videos=combined});
   setVideoDraft('');setActiveVideo(v=>({...v,[item.id]:item.videos.length}));show('영상 등록 완료');
  };

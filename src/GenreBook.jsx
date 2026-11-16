@@ -2,8 +2,14 @@ import React,{useEffect,useRef,useState} from 'react';
 import {Search,Archive,Plus,Pin,Copy,Link2,X,ImagePlus,Type,Trash2} from 'lucide-react';
 import './GenreBook.css';
 const keyFor=(user,area)=>'body-care-v2-book:'+String(user||'guest')+':'+area;
-const fresh=()=>({folders:['Korea','China'],folder:'Korea',boards:{}});
-const read=(key)=>{try{return JSON.parse(localStorage.getItem(key)||'null')||fresh()}catch{return fresh()}};
+const fresh=()=>({folders:['Korea','China'],folder:'Korea',boards:{},subfolders:{},selectedSubfolders:{}});
+const defaultSub='하위함1';
+const subsFor=(p,f)=>p.subfolders?.[f]?.length?p.subfolders[f]:[defaultSub];
+const selectedSub=(p,f)=>subsFor(p,f).includes(p.selectedSubfolders?.[f])?p.selectedSubfolders[f]:subsFor(p,f)[0];
+const boardKey=(f,sub)=>JSON.stringify([f,sub]);
+// Legacy boards were stored directly under each top-level folder. Keep them in its first subfolder.
+const migrate=p=>{if(!p||p.bookStructureVersion===2)return p;const boards={...(p.boards||{})};for(const f of p.folders||['Korea','China']){if(Array.isArray(boards[f])){boards[boardKey(f,defaultSub)]=boards[f];delete boards[f]}}return {...p,boards,subfolders:p.subfolders||{},selectedSubfolders:p.selectedSubfolders||{},bookStructureVersion:2}};
+const read=(key)=>{try{return migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh())}catch{return fresh()}};
 const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});
 async function putImage(id,blob){const db=await openImages();return new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').put(blob,id);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
@@ -16,19 +22,25 @@ export default function GenreBook({area,userId}){
  useEffect(()=>{setState(read(storageKey));setModal(null)},[storageKey]);
  const save=fn=>setState(prev=>{const next=fn(prev);try{localStorage.setItem(storageKey,JSON.stringify(next))}catch{alert('저장 공간이 부족해.')}return next});
  const folders=state.folders?.length?state.folders:['Korea','China'],folder=folders.includes(state.folder)?state.folder:folders[0];
- const boards=state.boards?.[folder]||[{id:'default',name:'보드1',cards:[]}];
- const updateBoards=fn=>save(p=>({...p,boards:{...p.boards,[folder]:fn(p.boards?.[folder]||[{id:'default',name:'보드1',cards:[]}])}}));
+ const subfolders=subsFor(state,folder),subfolder=selectedSub(state,folder),currentKey=boardKey(folder,subfolder);
+ const boards=state.boards?.[currentKey]||[{id:'default',name:'보드1',cards:[]}];
+ const updateBoards=fn=>save(p=>({...p,boards:{...p.boards,[currentKey]:fn(p.boards?.[currentKey]||[{id:'default',name:'보드1',cards:[]}])}}));
+ const renameFolder=()=>{const name=prompt('상위함 이름 변경',folder)?.trim();if(!name||name===folder)return;if(folders.includes(name))return alert('이미 있는 상위함이야.');save(p=>{const boards={...p.boards};for(const sub of subsFor(p,folder)){const old=boardKey(folder,sub),next=boardKey(name,sub);if(boards[old]){boards[next]=boards[old];delete boards[old]}}return {...p,folders:p.folders.map(f=>f===folder?name:f),folder:name,boards,subfolders:{...p.subfolders,[name]:subsFor(p,folder)},selectedSubfolders:{...p.selectedSubfolders,[name]:subfolder},archive:(p.archive||[]).map(b=>b.folder===folder?{...b,folder:name}:b)}})};
+ const deleteFolder=()=>{if(!confirm('상위함을 삭제할까? 내부 하위함과 보드도 함께 삭제돼.'))return;save(p=>{const boards={...p.boards};for(const sub of subsFor(p,folder))delete boards[boardKey(folder,sub)];const remaining=folders.filter(f=>f!==folder);return {...p,folders:remaining,folder:remaining[0]||'',boards}})};
+ const addSubfolder=()=>{const name=prompt('하위함 이름')?.trim();if(!name)return;if(subfolders.includes(name))return alert('이미 있는 하위함이야.');save(p=>({...p,subfolders:{...p.subfolders,[folder]:[...subfolders,name]},selectedSubfolders:{...p.selectedSubfolders,[folder]:name}}))};
+ const renameSubfolder=()=>{const name=prompt('하위함 이름 변경',subfolder)?.trim();if(!name||name===subfolder)return;if(subfolders.includes(name))return alert('이미 있는 하위함이야.');save(p=>{const boards={...p.boards};const nextKey=boardKey(folder,name);if(boards[currentKey]){boards[nextKey]=boards[currentKey];delete boards[currentKey]}return {...p,boards,subfolders:{...p.subfolders,[folder]:subfolders.map(x=>x===subfolder?name:x)},selectedSubfolders:{...p.selectedSubfolders,[folder]:name},archive:(p.archive||[]).map(b=>b.folder===folder&&b.subfolder===subfolder?{...b,subfolder:name}:b)}})};
+ const deleteSubfolder=()=>{if(!confirm('하위함과 내부 보드를 삭제할까?'))return;save(p=>{const boards={...p.boards};delete boards[currentKey];const remaining=subfolders.filter(x=>x!==subfolder);return {...p,boards,subfolders:{...p.subfolders,[folder]:remaining.length?remaining:[defaultSub]},selectedSubfolders:{...p.selectedSubfolders,[folder]:remaining[0]||defaultSub}}})};
  const changeCard=(bid,index,fn)=>updateBoards(bs=>bs.map(b=>b.id===bid?{...b,cards:Array.from({length:Math.max(index+1,b.cards?.length||0)},(_,i)=>i===index?fn(b.cards?.[i]||{}):b.cards?.[i]||{})}:b));
  const addFolder=()=>{const name=prompt('상위함 이름');if(name?.trim()&&!folders.includes(name.trim()))save(p=>({...p,folders:[...folders,name.trim()],folder:name.trim()}))};
  const renameBoard=id=>{const old=boards.find(b=>b.id===id);const name=prompt('보드 이름',old?.name||'');if(name?.trim())updateBoards(bs=>bs.map(b=>b.id===id?{...b,name:name.trim()}:b))};
- const archiveBoard=id=>{if(!confirm('보드를 보관함으로 이동할까?'))return;save(p=>({...p,boards:{...p.boards,[folder]:boards.filter(b=>b.id!==id)},archive:[...(p.archive||[]),{...boards.find(b=>b.id===id),folder}]}))};
- const restoreBoard=()=>{const arr=state.archive||[];if(!arr.length)return alert('보관된 보드가 없어.');const n=Number(prompt('복원할 보드 번호\n'+arr.map((b,i)=>(i+1)+'. '+b.name+' ('+b.folder+')').join('\n')));if(n>0&&n<=arr.length){const b=arr[n-1];save(p=>({...p,archive:p.archive.filter((_,i)=>i!==n-1),boards:{...p.boards,[b.folder]:[...(p.boards?.[b.folder]||[]),b]}}))}};
+ const archiveBoard=id=>{if(!confirm('보드를 보관함으로 이동할까?'))return;save(p=>({...p,boards:{...p.boards,[currentKey]:boards.filter(b=>b.id!==id)},archive:[...(p.archive||[]),{...boards.find(b=>b.id===id),folder,subfolder}]}))};
+ const restoreBoard=()=>{const arr=state.archive||[];if(!arr.length)return alert('보관된 보드가 없어.');const n=Number(prompt('복원할 보드 번호\n'+arr.map((b,i)=>(i+1)+'. '+b.name+' ('+b.folder+' / '+(b.subfolder||defaultSub)+')').join('\n')));if(n>0&&n<=arr.length){const b=arr[n-1];save(p=>({...p,archive:p.archive.filter((_,i)=>i!==n-1),boards:{...p.boards,[boardKey(b.folder,b.subfolder||defaultSub)]:[...(p.boards?.[boardKey(b.folder,b.subfolder||defaultSub)]||[]),b]}}))}};
  const chooseText=()=>{setDraft(modal?.card?.text||modal?.card?.title||modal?.card?.memo||'');setModal(m=>({...m,mode:'text'}))};
  const saveText=()=>{changeCard(modal.bid,modal.index,c=>({...c,type:'text',text:draft,title:'',memo:''}));setModal(null)};
  const chooseImage=()=>inputRef.current?.click();
  const uploadImage=async file=>{if(!file||!modal)return;try{const img=await createImageBitmap(file);const scale=Math.min(1,1200/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);img.close();const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.82));if(!blob)throw Error('이미지 변환 실패');const id=uid();await putImage(id,blob);changeCard(modal.bid,modal.index,c=>({...c,type:'image',imageId:id}));setModal(null)}catch(e){alert('이미지 저장 실패: '+e.message)}};
  const setLink=(bid,index)=>{const card=boards.find(b=>b.id===bid)?.cards?.[index]||{};const url=prompt('연결할 링크',card.link||'');if(url===null)return;if(url.trim()&&!/^https?:\/\//i.test(url.trim()))return alert('https:// 또는 http:// 링크를 입력해 줘.');changeCard(bid,index,c=>({...c,link:url.trim()}))};
- const deleteCard=(bid,index)=>{if(confirm('카드를 삭제할까?'))changeCard(bid,index,()=>({}))};
+ const deleteCard=(bid,index)=>{if(confirm('카드를 삭제할까?'))updateBoards(bs=>bs.map(b=>b.id===bid?{...b,cards:(b.cards||[]).filter((_,i)=>i!==index)}:b))};
  const copyCard=(bid,index)=>{pasteRef.current=boards.find(b=>b.id===bid)?.cards?.[index]||null;};
  const pasteCard=(bid,index)=>{if(pasteRef.current)changeCard(bid,index,()=>({...pasteRef.current}))};
  const matching=card=>!term.trim()||[card?.text,card?.title,card?.memo].some(t=>String(t||'').toLowerCase().includes(term.toLowerCase()));
@@ -36,6 +48,9 @@ export default function GenreBook({area,userId}){
   <div className="genre-book-heading"><h2>Book</h2><div className="genre-book-tools"><button aria-label="검색" onClick={()=>setSearch(!search)}><Search/></button><button onClick={restoreBoard} aria-label="보관함"><Archive/> <span>({(state.archive||[]).length})</span></button></div></div>
   {search&&<input className="genre-book-search" value={term} onChange={e=>setTerm(e.target.value)} placeholder="카드 텍스트 검색"/>}
   <div className="genre-book-folders">{folders.map(f=><button key={f} className={f===folder?'active':''} onClick={()=>save(p=>({...p,folder:f}))}>{f}</button>)}<button onClick={addFolder} aria-label="상위함 추가"><Plus/></button></div>
+  <div className="genre-book-manage"><button onClick={renameFolder}>상위함 이름 변경</button><button onClick={deleteFolder}>상위함 삭제</button></div>
+  <div className="genre-book-subfolders">{subfolders.map(f=><button key={f} className={f===subfolder?'active':''} onClick={()=>save(p=>({...p,selectedSubfolders:{...p.selectedSubfolders,[folder]:f}}))}>{f}</button>)}<button onClick={addSubfolder} aria-label="하위함 추가"><Plus size={20}/></button></div>
+  <div className="genre-book-manage"><button onClick={renameSubfolder}>하위함 이름 변경</button><button onClick={deleteSubfolder}>하위함 삭제</button></div>
   <div className="genre-book-board-scroll">{boards.map(b=><section className="genre-book-board" key={b.id}><div className="genre-book-board-title"><button onClick={()=>renameBoard(b.id)}>{b.name}</button><button onClick={()=>archiveBoard(b.id)} aria-label="보드 보관"><Archive size={18}/></button></div>
    <div className="genre-book-cards">{Array.from({length:Math.max(8,(b.cards||[]).length+1)},(_,i)=>{const card=b.cards?.[i]||{},filled=!!(card.text||card.title||card.imageId);return <div key={i} className={'genre-book-card '+(filled?'filled':'')+(card.pinned?' pinned':'')} style={term&&!matching(card)?{opacity:.2}:{}}>
     {filled&&<div className="genre-book-card-actions"><button aria-label="핀 고정" onClick={()=>changeCard(b.id,i,c=>({...c,pinned:!c.pinned}))}><Pin size={15} fill={card.pinned?'currentColor':'none'}/></button><button aria-label="카드 복사" onClick={()=>copyCard(b.id,i)}><Copy size={15}/></button><button aria-label="링크 설정" onClick={()=>setLink(b.id,i)}><Link2 size={15}/></button><button aria-label="카드 삭제" onClick={()=>deleteCard(b.id,i)}><X size={15}/></button></div>}

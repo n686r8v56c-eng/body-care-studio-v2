@@ -12,9 +12,10 @@ import MovementFlow from './ForceMapEditor.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2,Play,Pause} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
-const areas=[{id:'glutes',name:'엉덩이'},{id:'dashboard',name:'Dashboard'},{id:'core',name:'코어'},{id:'hips',name:'고관절'},{id:'thighs',name:'허벅지'},{id:'legs',name:'다리'},{id:'movement',name:'Movement Flow'},{id:'face',name:'Face Care'},{id:'back',name:'등·가슴'},{id:'arms',name:'팔'}];
+const areas=[{id:'glutes',name:'엉덩이'},{id:'dashboard',name:'Dashboard'},{id:'core',name:'코어'},{id:'movement',name:'Movement Flow'},{id:'back',name:'등·가슴'},{id:'arms',name:'팔'}];
 // Previous lower/upper records remain valid in backups and the saved payload, but no longer appear as genres.
-const savedAreaIds=new Set([...areas.map(a=>a.id),'lower','upper','glutes-video2']);
+// Hidden genres remain valid storage IDs so existing records survive normalization and backups.
+const savedAreaIds=new Set([...areas.map(a=>a.id),'hips','thighs','face','legs','lower','upper','glutes-video2']);
 const studioAreas=['core','glutes','hips','thighs','legs','back','arms'];
 const regionalStudioAreas=['glutes','hips','thighs','legs','back','arms'];
 const groups=[{id:'massage',name:'마사지'},{id:'stretch',name:'스트레치'},{id:'bodyweight',name:'맨몸근력'},{id:'machine',name:'기계근력'}];

@@ -282,7 +282,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
  const [levelRename,setLevelRename]=useState(null);
  const [renameText,setRenameText]=useState('');
  const timer=useRef(null),wasLongPress=useRef(false);
- const labels=Array.from({length:5},(_,i)=>data.levelNames?.[groupKey(area,group)]?.[i]||(area==='face'&&group==='stretch'?VOICE_LEVEL_NAMES[i]:DEFAULT_LABELS[i]));
+ const labels=Array.from({length:10},(_,i)=>data.levelNames?.[groupKey(area,group)]?.[i]||(i<5?(area==='face'&&group==='stretch'?VOICE_LEVEL_NAMES[i]:DEFAULT_LABELS[i]):`Lv.${i+1}`));
  useEffect(()=>{setLevel(1);setOpened(null);setEditingMode(false);setEditor(null);setShowDeleted(false);setShowRecovery(false)},[area,group]);
  const alertUser=text=>{setMessage(text)};
  const update=fn=>{if(readOnly)return;onUpdate(d=>{fn(d)})};
@@ -438,7 +438,7 @@ export default function CareLibrary({data,onUpdate,area,group,sync,readOnly=fals
   const name=renameText.trim().slice(0,20);
   if(!name)return;
   update(d=>{
-   const key=groupKey(area,group),current=Array.from({length:5},(_,i)=>d.levelNames?.[key]?.[i]||DEFAULT_LABELS[i]);
+   const key=groupKey(area,group),current=Array.from({length:10},(_,i)=>d.levelNames?.[key]?.[i]||(DEFAULT_LABELS[i]||`Lv.${i+1}`));
    d.levelNames={...(d.levelNames||{}),[key]:current.map((x,i)=>i===levelRename-1?name:x)};
   });
   setLevelRename(null);alertUser('단계 이름 저장 완료');

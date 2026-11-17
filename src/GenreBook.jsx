@@ -45,7 +45,40 @@ export default function GenreBook({area,userId}){
  const chooseText=()=>{setDraft(modal?.card?.text||modal?.card?.title||modal?.card?.memo||'');setModal(m=>({...m,mode:'text'}))};
  const saveText=()=>{changeCard(modal.bid,modal.index,c=>({...c,type:'text',text:draft,title:'',memo:''}));setModal(null)};
  const chooseImage=()=>inputRef.current?.click();
- const uploadImage=async file=>{if(!file||!modal)return;try{const img=await createImageBitmap(file);const scale=Math.min(1,1200/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);img.close();const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.82));if(!blob)throw Error('이미지 변환 실패');const id=uid();await putImage(id,blob);changeCard(modal.bid,modal.index,c=>({...c,type:'image',imageId:id}));setModal(null)}catch(e){alert('이미지 저장 실패: '+e.message)}};
+ const [uploading,setUploading]=useState(false);
+ const uploadImages=async files=>{
+  if(!files?.length||!modal||uploading)return;
+  const {bid,index}=modal;
+  setUploading(true);
+  const saved=[];let failed=0;
+  for(const file of files){
+   try{
+    const img=await createImageBitmap(file);
+    const scale=Math.min(1,1200/Math.max(img.width,img.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.width*scale));
+    canvas.height=Math.max(1,Math.round(img.height*scale));
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    img.close();
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.82));
+    if(!blob)throw Error('이미지 변환 실패');
+    const id=uid();await putImage(id,blob);saved.push(id);
+   }catch(e){failed++;console.error('Book image upload failed',e)}
+  }
+  if(saved.length)updateBoards(bs=>bs.map(b=>{
+   if(b.id!==bid)return b;
+   const cards=[...(b.cards||[])];
+   let cursor=index;
+   for(const imageId of saved){
+    while(cursor<cards.length&&(cards[cursor]?.text||cards[cursor]?.title||cards[cursor]?.imageId))cursor++;
+    cards[cursor]={...(cards[cursor]||{}),type:'image',imageId};
+    cursor++;
+   }
+   return {...b,cards};
+  }));
+  setModal(null);setUploading(false);
+  if(failed)alert(saved.length+'장 저장 완료, '+failed+'장 실패했어. 실패한 사진만 다시 선택해 줘.');
+ };
  const setLink=(bid,index)=>{const card=boards.find(b=>b.id===bid)?.cards?.[index]||{};const url=prompt('연결할 링크',card.link||'');if(url===null)return;if(url.trim()&&!/^https?:\/\//i.test(url.trim()))return alert('https:// 또는 http:// 링크를 입력해 줘.');changeCard(bid,index,c=>({...c,link:url.trim()}))};
  const pasteLink=async(bid,index)=>{let value='';try{value=await navigator.clipboard.readText()}catch{value=prompt('붙여넣을 링크를 입력해 줘')||''}const url=value.trim();if(!url)return;if(!/^https?:\/\//i.test(url)){alert('http:// 또는 https:// 링크를 복사해 줘.');return}changeCard(bid,index,c=>({...c,link:url}));};
  const openCardLink=(bid,index)=>{const url=boards.find(b=>b.id===bid)?.cards?.[index]?.link;if(!url){alert('저장된 링크가 없어. 네모 두 개 버튼으로 먼저 링크를 붙여넣어 줘.');return}if(!/^https?:\/\//i.test(url)){alert('유효한 링크가 아니야.');return}window.open(url,'_blank','noopener,noreferrer')};
@@ -65,9 +98,9 @@ export default function GenreBook({area,userId}){
     {!filled&&pasteRef.current&&<button className="genre-book-paste" onClick={()=>pasteCard(b.id,i)}>붙여넣기</button>}
    </div>})}</div></section>)}<button className="genre-book-add-board" onClick={()=>updateBoards(bs=>[...bs,{id:uid(),name:'보드'+(bs.length+1),cards:[]}])}>＋ 보드 추가</button></div>
   {manage&&<div className="genre-book-modal-backdrop" onClick={()=>setManage(null)}><div className="genre-book-modal genre-book-action-sheet" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><h3>{manage.kind==='folder'?manage.name:manage.kind==='subfolder'?manage.name:boards.find(b=>b.id===manage.name)?.name||'보드'}</h3><button onClick={()=>{const m=manage;setManage(null);if(m.kind==='folder')renameFolder(m.name);else if(m.kind==='subfolder')renameSubfolder(m.name);else renameBoard(m.name)}}>✎　이름 편집</button><button onClick={()=>{const m=manage;setManage(null);if(m.kind==='folder')deleteFolder(m.name);else if(m.kind==='subfolder')deleteSubfolder(m.name);else archiveBoard(m.name)}}>♜　{manage.kind==='board'?'보드 보관':'분류 삭제'}</button><button onClick={()=>setManage(null)}>×　취소</button></div></div>}
-  <input ref={inputRef} type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';uploadImage(f)}}/>
+  <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';uploadImages(files)}}/>
   {modal&&<div className="genre-book-modal-backdrop" onClick={()=>setModal(null)}><div className="genre-book-modal" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}>
-   {modal.mode==='text'?<><h3>텍스트 입력</h3><textarea autoFocus value={draft} onChange={e=>setDraft(e.target.value)} rows={7} placeholder="내용을 입력해 줘"/><div className="genre-book-modal-footer"><button onClick={()=>setModal(null)}>취소</button><button onClick={saveText}>저장</button></div></>:<><h3>이 칸에 무엇을 넣을까?</h3><div className="genre-book-modal-choices"><button onClick={chooseText}><Type size={32}/>텍스트</button><button onClick={chooseImage}><ImagePlus size={32}/>이미지</button></div><button className="genre-book-cancel" onClick={()=>setModal(null)}>취소</button></>}
+   {modal.mode==='text'?<><h3>텍스트 입력</h3><textarea autoFocus value={draft} onChange={e=>setDraft(e.target.value)} rows={7} placeholder="내용을 입력해 줘"/><div className="genre-book-modal-footer"><button onClick={()=>setModal(null)}>취소</button><button onClick={saveText}>저장</button></div></>:<><h3>{uploading?'사진 저장 중…':'이 칸에 무엇을 넣을까?'}</h3><div className="genre-book-modal-choices"><button onClick={chooseText}><Type size={32}/>텍스트</button><button onClick={chooseImage} disabled={uploading}><ImagePlus size={32}/>이미지 여러 장</button></div><button className="genre-book-cancel" onClick={()=>setModal(null)}>취소</button></>}
   </div></div>}
  </div>
 }

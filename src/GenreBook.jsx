@@ -28,7 +28,7 @@ const migrateCore=p=>{
  return {...p,boards,subfolders,selectedSubfolders,middleFolders:Object.fromEntries(folders.map(f=>[f,[defaultMiddle]])),selectedMiddleFolders:Object.fromEntries(folders.map(f=>[f,defaultMiddle])),archive:(p.archive||[]).map(b=>({...b,middle:b.middle||defaultMiddle})),bookStructureVersion:3};
 };
 // Legacy boards were stored directly under each top-level folder. Keep them in its first subfolder.
-const migrate=p=>{if(!p||p.bookStructureVersion===2)return p;const boards={...(p.boards||{})};for(const f of p.folders||['Korea','China']){if(Array.isArray(boards[f])){boards[boardKey(f,defaultSub)]=boards[f];delete boards[f]}}return {...p,boards,subfolders:p.subfolders||{},selectedSubfolders:p.selectedSubfolders||{},bookStructureVersion:2}};
+const migrate=p=>{if(!p||Number(p.bookStructureVersion)>=2)return p;const boards={...(p.boards||{})};for(const f of p.folders||['Korea','China']){if(Array.isArray(boards[f])){boards[boardKey(f,defaultSub)]=boards[f];delete boards[f]}}return {...p,boards,subfolders:p.subfolders||{},selectedSubfolders:p.selectedSubfolders||{},bookStructureVersion:2}};
 const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return core?migrateCore(p):p}catch{return core?migrateCore(migrate(fresh())):fresh()}};
 const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});

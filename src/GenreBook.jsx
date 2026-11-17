@@ -40,6 +40,33 @@ export default function GenreBook({area,userId}){
  const [state,setState]=useState(()=>read(storageKey,isCoreBook(area))),[modal,setModal]=useState(null),[draft,setDraft]=useState(''),[search,setSearch]=useState(false),[term,setTerm]=useState('');
  const inputRef=useRef(null),pasteRef=useRef(null),holdTimer=useRef(null),holdTriggered=useRef(false);
  const [manage,setManage]=useState(null);
+ const exportRecovery=async()=>{
+  try{
+   const records={};
+   for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k?.startsWith('body-care-v2-book:'))records[k]=localStorage.getItem(k);
+   }
+   const imageIds=[];
+   try{
+    const db=await openImages();
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('images','readonly');
+     const req=tx.objectStore('images').getAllKeys();
+     req.onsuccess=()=>{imageIds.push(...req.result.map(String));resolve()};
+     req.onerror=()=>reject(req.error);
+    });
+    db.close();
+   }catch(e){console.warn('Book image index unavailable',e)}
+   const payload={format:'body-care-book-recovery-v1',exportedAt:new Date().toISOString(),activeKey:storageKey,records,imageIds};
+   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download='body-care-book-recovery-'+new Date().toISOString().slice(0,10)+'.json';
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   alert('북 복구 진단 파일을 내보냈어. 이 파일을 채팅에 첨부해 줘. 기존 저장 데이터는 변경하지 않았어.');
+  }catch(e){alert('복구 진단 파일 생성 실패: '+String(e?.message||e))}
+ };
+
  const boardScrollRef=useRef(null),swipeStartRef=useRef(null),pendingBoardRef=useRef(false);
  const appendBoard=()=>{if(pendingBoardRef.current)return;pendingBoardRef.current=true;updateBoards(bs=>[...bs,{id:uid(),name:'보드'+(bs.length+1),cards:[]}]);requestAnimationFrame(()=>requestAnimationFrame(()=>{const el=boardScrollRef.current;if(el)el.scrollTo({left:el.scrollWidth-el.clientWidth,behavior:'smooth'});pendingBoardRef.current=false}))};
  const onBoardTouchStart=e=>{const el=boardScrollRef.current;const last=el?.querySelector('.genre-book-board:last-of-type');const boardEnd=last?last.offsetLeft+last.offsetWidth:0;swipeStartRef.current=el?{x:e.touches[0]?.clientX,atEnd:boardEnd-el.scrollLeft-el.clientWidth<70}:null};
@@ -120,7 +147,7 @@ export default function GenreBook({area,userId}){
  const pasteCard=(bid,index)=>{if(pasteRef.current)changeCard(bid,index,()=>({...pasteRef.current}))};
  const matching=card=>!term.trim()||[card?.text,card?.title,card?.memo].some(t=>String(t||'').toLowerCase().includes(term.toLowerCase()));
  return <div className="genre-book">
-  <div className="genre-book-heading"><h2>Book</h2><div className="genre-book-tools"><button aria-label="검색" onClick={()=>setSearch(!search)}><Search/></button><button onClick={restoreBoard} aria-label="보관함"><Archive/> <span>({(state.archive||[]).length})</span></button></div></div>
+  <div className="genre-book-heading"><h2>Book</h2><div className="genre-book-tools"><button aria-label="검색" onClick={()=>setSearch(!search)}><Search/></button><button type="button" onClick={exportRecovery} aria-label="북 복구 진단 파일 내보내기" title="북 복구 진단 파일 내보내기" style={{fontSize:12,fontWeight:700}}>복구</button><button onClick={restoreBoard} aria-label="보관함"><Archive/> <span>({(state.archive||[]).length})</span></button></div></div>
   {search&&<input className="genre-book-search" value={term} onChange={e=>setTerm(e.target.value)} placeholder="카드 텍스트 검색"/>}
   <div className="genre-book-folders">{folders.map(f=><button key={f} className={f===folder?'active':''} {...longPress('folder',f)} onClick={()=>save(p=>({...p,folder:f}))}>{f}</button>)}<button onClick={addFolder} aria-label="상위함 추가"><Plus/></button></div>
   {coreBook&&<div className="genre-book-subfolders">{middleFolders.map(m=><button key={m} className={m===middle?'active':''} {...longPress('middle',m)} onClick={()=>save(p=>({...p,selectedMiddleFolders:{...p.selectedMiddleFolders,[folder]:m}}))}>{m}</button>)}<button onClick={addMiddle} aria-label="중간함 추가"><Plus size={20}/></button></div>}

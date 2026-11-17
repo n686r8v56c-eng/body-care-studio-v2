@@ -12,7 +12,7 @@ import MovementFlow from './ForceMapEditor.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2,Play,Pause} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
-const areas=[{id:'glutes',name:'상하체'},{id:'core',name:'코어'},{id:'movement',name:'Movement Flow'}];
+const areas=[{id:'glutes',name:'상하체'},{id:'core',name:'코어와 근막'},{id:'movement',name:'Movement Flow'}];
 // Previous lower/upper records remain valid in backups and the saved payload, but no longer appear as genres.
 // Hidden genres remain valid storage IDs so existing records survive normalization and backups.
 const savedAreaIds=new Set([...areas.map(a=>a.id),'dashboard','hips','thighs','face','legs','back','arms','lower','upper','glutes-video2']);

@@ -29,7 +29,17 @@ const migrateCore=p=>{
 };
 // Legacy boards were stored directly under each top-level folder. Keep them in its first subfolder.
 const migrate=p=>{if(!p||Number(p.bookStructureVersion)>=2)return p;const boards={...(p.boards||{})};for(const f of p.folders||['Korea','China']){if(Array.isArray(boards[f])){boards[boardKey(f,defaultSub)]=boards[f];delete boards[f]}}return {...p,boards,subfolders:p.subfolders||{},selectedSubfolders:p.selectedSubfolders||{},bookStructureVersion:2}};
-const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return core?migrateCore(p):p}catch{return core?migrateCore(migrate(fresh())):fresh()}};
+// Add the requested mobility tab in the existing thigh folder without touching any boards or image data.
+const ensureThighMobility=(p,key)=>{
+ if(!key.endsWith(':glutes'))return p;
+ const names=p.subfolders?.['허벅지'];
+ if(!Array.isArray(names)||names.includes('가동성'))return p;
+ const before=names.indexOf('안벅지'),after=names.indexOf('속강화');
+ if(before<0||after<=before)return p;
+ const next=[...names];next.splice(after,0,'가동성');
+ return {...p,subfolders:{...p.subfolders,['허벅지']:next}};
+};
+const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureThighMobility(core?migrateCore(p):p,key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};
 const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});

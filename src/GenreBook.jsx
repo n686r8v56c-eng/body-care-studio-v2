@@ -31,7 +31,7 @@ const migrateCore=p=>{
 const migrate=p=>{if(!p||Number(p.bookStructureVersion)>=2)return p;const boards={...(p.boards||{})};for(const f of p.folders||['Korea','China']){if(Array.isArray(boards[f])){boards[boardKey(f,defaultSub)]=boards[f];delete boards[f]}}return {...p,boards,subfolders:p.subfolders||{},selectedSubfolders:p.selectedSubfolders||{},bookStructureVersion:2}};
 // Add the requested mobility tab in the existing thigh folder without touching any boards or image data.
 const ensureThighMobility=(p,key)=>{
- if(!key.endsWith(':glutes'))return p;
+ if(!key.endsWith(':my-sequence-lower'))return p;
  const names=p.subfolders?.['허벅지'];
  if(!Array.isArray(names)||names.includes('가동성'))return p;
  const before=names.indexOf('안벅지'),after=names.indexOf('속강화');

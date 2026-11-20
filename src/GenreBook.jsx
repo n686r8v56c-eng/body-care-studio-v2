@@ -39,15 +39,16 @@ const ensureThighMobility=(p,key)=>{
  const next=[...names];next.splice(after,0,'가동성');
  return {...p,subfolders:{...p.subfolders,['허벅지']:next}};
 };
-// Keep existing custom folders and boards untouched; insert the second supine folder only in My Sequence Core Book.
+// Insert the requested posture folders without altering existing boards or image data.
 const ensureSecondSupine=(p,key)=>{
  if(!key.endsWith(':my-sequence-core'))return p;
  const folders=p.folders||[];
  const first=folders.indexOf('누워서1');
- if(first<0||folders.includes('누워서2'))return p;
+ if(first<0)return p;
  const next=[...folders];
- next.splice(first+1,0,'누워서2');
- return {...p,folders:next};
+ if(!next.includes('누워서2'))next.splice(first+1,0,'누워서2');
+ if(!next.includes('프론'))next.splice(next.indexOf('누워서2')+1,0,'프론');
+ return next.length===folders.length?p:{...p,folders:next};
 };
 const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureSecondSupine(ensureThighMobility(core?migrateCore(p):p,key),key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};

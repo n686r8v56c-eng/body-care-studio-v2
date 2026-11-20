@@ -78,7 +78,17 @@ const ensureUpperBasics=(p,key)=>{
  }
  return changed?{...p,subfolders}:p;
 };
-const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureUpperBasics(ensureBasicPosture(ensureSecondSupine(ensureThighMobility(core?migrateCore(p):p,key),key),key),key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
+// Add Side-Lying immediately after Side Plank in the saved Core Sequence folders.
+// Only append folder metadata; preserve all existing boards, subfolders, and images.
+const ensureSideLying=(p,key)=>{
+ if(!key.endsWith(':my-sequence-core'))return p;
+ const folders=p.folders||[];
+ const sidePlank=folders.indexOf('사이드플랭');
+ if(sidePlank<0||folders.includes('사이드라잉'))return p;
+ const next=[...folders];next.splice(sidePlank+1,0,'사이드라잉');
+ return {...p,folders:next};
+};
+const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureSideLying(ensureUpperBasics(ensureBasicPosture(ensureSecondSupine(ensureThighMobility(core?migrateCore(p):p,key),key),key),key),key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};
 const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});

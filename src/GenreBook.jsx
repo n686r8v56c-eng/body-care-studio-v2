@@ -93,6 +93,20 @@ const ensureBridge=(p,key)=>{
  }
  return changed?{...p,subfolders}:p;
 };
+// Add Dead Bug immediately after Bridge in Core Book, preserving existing board data.
+const ensureDeadBug=(p,key)=>{
+ if(!key.endsWith(':my-sequence-core'))return p;
+ let changed=false;
+ const subfolders={...(p.subfolders||{})};
+ for(const [scope,names] of Object.entries(subfolders)){
+  if(!Array.isArray(names)||names.includes('데드버그'))continue;
+  const index=names.indexOf('브릿지');
+  if(index<0)continue;
+  const next=[...names];next.splice(index+1,0,'데드버그');
+  subfolders[scope]=next;changed=true;
+ }
+ return changed?{...p,subfolders}:p;
+};
 // Add Side-Lying immediately after Side Plank in the saved Core Sequence folders.
 // Only append folder metadata; preserve all existing boards, subfolders, and images.
 const ensureSideLying=(p,key)=>{
@@ -103,7 +117,7 @@ const ensureSideLying=(p,key)=>{
  const next=[...folders];next.splice(sidePlank+1,0,'사이드라잉');
  return {...p,folders:next};
 };
-const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureBridge(ensureSideLying(ensureUpperBasics(ensureBasicPosture(ensureSecondSupine(ensureThighMobility(core?migrateCore(p):p,key),key),key),key),key),key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
+const read=(key,core=false)=>{try{const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());return ensureDeadBug(ensureBridge(ensureSideLying(ensureUpperBasics(ensureBasicPosture(ensureSecondSupine(ensureThighMobility(core?migrateCore(p):p,key),key),key),key),key),key),key),key)}catch{return core?migrateCore(migrate(fresh())):fresh()}};
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};
 const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});

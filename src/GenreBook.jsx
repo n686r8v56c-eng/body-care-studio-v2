@@ -50,19 +50,22 @@ const ensureSecondSupine=(p,key)=>{
  if(!next.includes('프론'))next.splice(next.indexOf('누워서2')+1,0,'프론');
  return next.length===folders.length?p:{...p,folders:next};
 };
-// Add Basic Postures beside the existing Lower/Upper Body subfolder in Core Book.
-const ensureBasicPosture=(p,key)=>{
+// Remove the obsolete auto-created Basic Postures tab from the Core Sequence.
+// Preserve its board data and image blobs for recovery; only remove folder metadata.
+const removeObsoleteBasicPosture=(p,key)=>{
  if(!key.endsWith(':my-sequence-core'))return p;
  let changed=false;
  const subfolders={...(p.subfolders||{})};
+ const selectedSubfolders={...(p.selectedSubfolders||{})};
  for(const [scope,names] of Object.entries(subfolders)){
-  if(!Array.isArray(names))continue;
-  const index=names.indexOf('하체상체');
-  if(index<0||names.includes('기본자세'))continue;
-  const next=[...names];next.splice(index+1,0,'기본자세');
-  subfolders[scope]=next;changed=true;
+  if(!Array.isArray(names)||!names.includes('기본자세'))continue;
+  const next=names.filter(name=>name!=='기본자세');
+  // Keep an active folder so the UI never falls back to a deleted selection.
+  subfolders[scope]=next.length?next:[defaultSub];
+  if(selectedSubfolders[scope]==='기본자세')selectedSubfolders[scope]=subfolders[scope][0];
+  changed=true;
  }
- return changed?{...p,subfolders}:p;
+ return changed?{...p,subfolders,selectedSubfolders}:p;
 };
 // Place Upper Body Basics between Upper Body and Arm Basics without changing board IDs.
 const ensureUpperBasics=(p,key)=>{
@@ -123,8 +126,8 @@ const read=(key,core=false)=>{
   const base=core?migrateCore(p):p;
   const mobility=ensureThighMobility(base,key);
   const supine=ensureSecondSupine(mobility,key);
-  const basic=ensureBasicPosture(supine,key);
-  const upper=ensureUpperBasics(basic,key);
+  const withoutBasic=removeObsoleteBasicPosture(supine,key);
+  const upper=ensureUpperBasics(withoutBasic,key);
   const sideLying=ensureSideLying(upper,key);
   const bridge=ensureBridge(sideLying,key);
   return ensureDeadBug(bridge,key);

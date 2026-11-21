@@ -7,7 +7,7 @@ const defaultSub='하위함1';
 const subsFor=(p,f)=>p.subfolders?.[f]?.length?p.subfolders[f]:[defaultSub];
 const selectedSub=(p,f)=>subsFor(p,f).includes(p.selectedSubfolders?.[f])?p.selectedSubfolders[f]:subsFor(p,f)[0];
 const defaultMiddle='중간함1';
-const isCoreBook=area=>area==='core'||area==='core-fascia-book';
+const isCoreBook=area=>area==='core'||area==='core-fascia-book'||area==='practice-book';
 const middlesFor=(p,f)=>p.middleFolders?.[f]?.length?p.middleFolders[f]:[defaultMiddle];
 const selectedMiddle=(p,f)=>middlesFor(p,f).includes(p.selectedMiddleFolders?.[f])?p.selectedMiddleFolders[f]:middlesFor(p,f)[0];
 const subScope=(f,m)=>JSON.stringify([f,m]);

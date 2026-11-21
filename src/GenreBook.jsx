@@ -139,11 +139,17 @@ const uid=()=>crypto.randomUUID?.()||String(Date.now()+Math.random());
 const openImages=()=>new Promise((resolve,reject)=>{const req=indexedDB.open('body-care-v2-book-images',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result)});
 async function putImage(id,blob){const db=await openImages();return new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').put(blob,id);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
 async function getImage(id){const db=await openImages();return new Promise((resolve,reject)=>{const tx=db.transaction('images');const req=tx.objectStore('images').get(id);req.onsuccess=()=>{db.close();resolve(req.result)};req.onerror=()=>{db.close();reject(req.error)}})}
+function InstagramPreview({url,coverId}){
+ if(coverId)return <div className="genre-instagram-preview"><CardImage id={coverId}/><span className="genre-instagram-mark">Instagram</span></div>;
+ const parts=new URL(url).pathname.split('/').filter(Boolean);
+ const embedded='https://www.instagram.com/'+parts.join('/')+'/embed/';
+ return <div className="genre-instagram-preview"><div className="genre-instagram-fallback"><span>◎</span><strong>Instagram</strong><small>게시물 · 릴스</small></div><iframe title="인스타그램 게시물 미리보기" src={embedded} loading="lazy" scrolling="no" tabIndex={-1}/></div>;
+}
 function CardImage({id}){const [src,setSrc]=useState('');useEffect(()=>{let live=true,url='';if(id)getImage(id).then(blob=>{if(live&&blob){url=URL.createObjectURL(blob);setSrc(url)}}).catch(()=>{});return()=>{live=false;if(url)URL.revokeObjectURL(url)}},[id]);return src?<img src={src} alt="카드 이미지"/>:<span>이미지를 불러올 수 없어</span>}
 export default function GenreBook({area,userId}){
  const storageKey=keyFor(userId,area);
  const [state,setState]=useState(()=>read(storageKey,isCoreBook(area))),[modal,setModal]=useState(null),[draft,setDraft]=useState(''),[search,setSearch]=useState(false),[term,setTerm]=useState('');
- const inputRef=useRef(null),pasteRef=useRef(null),holdTimer=useRef(null),holdTriggered=useRef(false);
+ const inputRef=useRef(null),instagramCoverInputRef=useRef(null),pasteRef=useRef(null),holdTimer=useRef(null),holdTriggered=useRef(false);
  const [manage,setManage]=useState(null),[playing,setPlaying]=useState('');
  const exportRecovery=async()=>{
   try{
@@ -213,6 +219,30 @@ export default function GenreBook({area,userId}){
  const chooseYoutube=()=>{const url=prompt('유튜브 링크를 붙여넣어 줘 (영상 · 쇼츠)',modal?.card?.youtubeUrl||'');if(url===null)return;const id=youtubeId(url);if(!id)return alert('유효한 유튜브 영상 링크를 입력해 줘.');changeCard(modal.bid,modal.index,c=>({...c,type:'youtube',youtubeUrl:url.trim(),youtubeId:id}));setModal(null)};
  const chooseInstagram=()=>{const url=prompt('인스타그램 게시물 · 릴스 링크를 붙여넣어 줘',modal?.card?.instagramUrl||'');if(url===null)return;const normalized=instagramUrl(url);if(!normalized)return alert('유효한 Instagram 게시물 또는 릴스 링크를 입력해 줘.');changeCard(modal.bid,modal.index,c=>({...c,type:'instagram',instagramUrl:normalized,youtubeId:'',youtubeUrl:''}));setModal(null)};
  const [uploading,setUploading]=useState(false);
+ const uploadInstagramCover=async e=>{
+  const file=e.target.files?.[0];e.target.value='';
+  if(!file||!modal||uploading)return;
+  const {bid,index}=modal;
+  setUploading(true);
+  try{
+   if(!file.type.startsWith('image/'))throw Error('이미지 파일을 선택해 줘.');
+   const bitmap=await createImageBitmap(file);
+   const scale=Math.min(1,1200/Math.max(bitmap.width,bitmap.height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+   canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+   bitmap.close();
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.82));
+   if(!blob)throw Error('이미지 변환에 실패했어.');
+   const coverId=uid();
+   await putImage(coverId,blob);
+   changeCard(bid,index,c=>({...c,instagramCoverId:coverId}));
+   setModal(null);
+  }catch(error){alert('표지 사진을 저장하지 못했어. '+String(error?.message||error))}
+  finally{setUploading(false)}
+ };
+
  const uploadImages=async files=>{
   if(!files?.length||!modal||uploading)return;
   const {bid,index}=modal;
@@ -262,14 +292,14 @@ export default function GenreBook({area,userId}){
   <div className="genre-book-board-scroll" ref={boardScrollRef} onTouchStart={onBoardTouchStart} onTouchEnd={onBoardTouchEnd}>{boards.map(b=><section className="genre-book-board" key={b.id}><div className="genre-book-board-title"><button {...longPress("board",b.id)} onClick={()=>{}}>{b.name}</button></div>
    <div className="genre-book-cards">{Array.from({length:Math.max(8,(b.cards||[]).length+1)},(_,i)=>{const card=b.cards?.[i]||{},filled=!!(card.text||card.title||card.imageId||card.youtubeId||card.instagramUrl);return <div key={i} className={'genre-book-card '+(filled?'filled':'')+(card.pinned?' pinned':'')} style={term&&!matching(card)?{opacity:.2}:{}}>
     {filled&&<div className="genre-book-card-actions"><button aria-label="핀 고정" onClick={()=>changeCard(b.id,i,c=>({...c,pinned:!c.pinned}))}><Pin size={15} fill={card.pinned?'currentColor':'none'}/></button><button aria-label="클립보드 링크 붙여넣기" onClick={()=>pasteLink(b.id,i)}><Copy size={15}/></button><button aria-label={card.instagramUrl?"인스타그램 열기":card.link?"연결된 링크 열기":"링크 없음"} title={card.instagramUrl?"Instagram에서 열기":card.link?"링크 연결됨":"링크 없음"} onClick={()=>card.instagramUrl?window.open(card.instagramUrl,"_blank","noopener,noreferrer"):openCardLink(b.id,i)} style={card.instagramUrl||card.link?{background:"#8053b5",color:"#fff"}:{}}><Link2 size={15}/></button><button aria-label="카드 삭제" onClick={()=>deleteCard(b.id,i)}><X size={15}/></button></div>}
-    <button className="genre-book-card-main" onClick={()=>setModal({bid:b.id,index:i,card,mode:filled?'edit':'choose'})}>{card.instagramUrl?<span className="genre-book-card-text" style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}><span style={{fontSize:28}}>◎</span><strong>Instagram</strong><span style={{fontSize:12}}>게시물 · 릴스</span></span>:card.youtubeId?<img src={'https://i.ytimg.com/vi/'+card.youtubeId+'/hqdefault.jpg'} alt="유튜브 영상 썸네일" onClick={e=>{e.stopPropagation();setPlaying(card.youtubeId)}}/>:card.imageId?<CardImage id={card.imageId}/>:filled?<span className="genre-book-card-text">{card.text||card.title}</span>:<Plus size={30}/>}</button>
+    <button className="genre-book-card-main" onClick={()=>setModal({bid:b.id,index:i,card,mode:filled?'edit':'choose'})}>{card.instagramUrl?<InstagramPreview url={card.instagramUrl} coverId={card.instagramCoverId}/>:card.youtubeId?<img src={'https://i.ytimg.com/vi/'+card.youtubeId+'/hqdefault.jpg'} alt="유튜브 영상 썸네일" onClick={e=>{e.stopPropagation();setPlaying(card.youtubeId)}}/>:card.imageId?<CardImage id={card.imageId}/>:filled?<span className="genre-book-card-text">{card.text||card.title}</span>:<Plus size={30}/>}</button>
     {!filled&&pasteRef.current&&<button className="genre-book-paste" onClick={()=>pasteCard(b.id,i)}>붙여넣기</button>}
    </div>})}</div></section>)}<button className="genre-book-add-board" onClick={()=>updateBoards(bs=>[...bs,{id:uid(),name:'보드'+(bs.length+1),cards:[]}])}>＋ 보드 추가</button></div>
   {manage&&<div className="genre-book-modal-backdrop" onClick={()=>setManage(null)}><div className="genre-book-modal genre-book-action-sheet" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><h3>{manage.kind==='folder'?manage.name:manage.kind==='subfolder'||manage.kind==='middle'?manage.name:boards.find(b=>b.id===manage.name)?.name||'보드'}</h3><button onClick={()=>{const m=manage;setManage(null);if(m.kind==='folder')renameFolder(m.name);else if(m.kind==='subfolder')renameSubfolder(m.name);else if(m.kind==='middle')renameMiddle(m.name);else renameBoard(m.name)}}>✎　이름 편집</button><button onClick={()=>{const m=manage;setManage(null);if(m.kind==='folder')deleteFolder(m.name);else if(m.kind==='subfolder')deleteSubfolder(m.name);else if(m.kind==='middle')deleteMiddle(m.name);else archiveBoard(m.name)}}>♜　{manage.kind==='board'?'보드 보관':'분류 삭제'}</button><button onClick={()=>setManage(null)}>×　취소</button></div></div>}
   {playing&&<div className="genre-book-modal-backdrop" onClick={()=>setPlaying('')}><div role="dialog" aria-modal="true" aria-label="유튜브 영상 재생" onClick={e=>e.stopPropagation()} style={{width:'min(95vw,600px)',background:'#fff',borderRadius:16,padding:12}}><button onClick={()=>setPlaying('')} style={{float:'right'}}>닫기 ×</button><iframe title="유튜브 영상" src={'https://www.youtube-nocookie.com/embed/'+playing+'?autoplay=1'} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{width:'100%',aspectRatio:'9 / 16',maxHeight:'75vh',border:0,borderRadius:12}}/></div></div>}
-  <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';uploadImages(files)}}/>
+  <input ref={instagramCoverInputRef} type="file" accept="image/*" hidden onChange={uploadInstagramCover}/><input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';uploadImages(files)}}/>
   {modal&&<div className="genre-book-modal-backdrop" onClick={()=>setModal(null)}><div className="genre-book-modal" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}>
-   {modal.mode==='text'?<><h3>텍스트 입력</h3><textarea autoFocus value={draft} onChange={e=>setDraft(e.target.value)} rows={7} placeholder="내용을 입력해 줘"/><div className="genre-book-modal-footer"><button onClick={()=>setModal(null)}>취소</button><button onClick={saveText}>저장</button></div></>:<><h3>{uploading?'사진 저장 중…':'이 칸에 무엇을 넣을까?'}</h3><div className="genre-book-modal-choices"><button onClick={chooseText}><Type size={32}/>텍스트</button><button onClick={chooseImage} disabled={uploading}><ImagePlus size={32}/>이미지 여러 장</button><button onClick={chooseYoutube} disabled={uploading}><Link2 size={32}/>유튜브 링크</button><button onClick={chooseInstagram} disabled={uploading}><Link2 size={32}/>인스타 링크</button>{modal.card?.instagramUrl&&<a href={modal.card.instagramUrl} target="_blank" rel="noopener noreferrer" style={{padding:12,textAlign:'center'}}>Instagram에서 열기 ↗</a>}</div><button className="genre-book-cancel" onClick={()=>setModal(null)}>취소</button></>}
+   {modal.mode==='text'?<><h3>텍스트 입력</h3><textarea autoFocus value={draft} onChange={e=>setDraft(e.target.value)} rows={7} placeholder="내용을 입력해 줘"/><div className="genre-book-modal-footer"><button onClick={()=>setModal(null)}>취소</button><button onClick={saveText}>저장</button></div></>:<><h3>{uploading?'사진 저장 중…':'이 칸에 무엇을 넣을까?'}</h3><div className="genre-book-modal-choices"><button onClick={chooseText}><Type size={32}/>텍스트</button><button onClick={chooseImage} disabled={uploading}><ImagePlus size={32}/>이미지 여러 장</button><button onClick={chooseYoutube} disabled={uploading}><Link2 size={32}/>유튜브 링크</button><button onClick={chooseInstagram} disabled={uploading}><Link2 size={32}/>인스타 링크</button>{modal.card?.instagramUrl&&<><button onClick={()=>instagramCoverInputRef.current?.click()} disabled={uploading}><ImagePlus size={32}/>{modal.card.instagramCoverId?'표지 사진 변경':'표지 사진 등록'}</button>{modal.card.instagramCoverId&&<button onClick={()=>{changeCard(modal.bid,modal.index,c=>({...c,instagramCoverId:''}));setModal(null)}} disabled={uploading}>자동 미리보기 사용</button>}<a href={modal.card.instagramUrl} target="_blank" rel="noopener noreferrer" style={{padding:12,textAlign:'center'}}>Instagram에서 열기 ↗</a></>}</div><button className="genre-book-cancel" onClick={()=>setModal(null)}>취소</button></>}
   </div></div>}
  </div>
 }

@@ -34,3 +34,19 @@
 .body-stopwatch-play{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#8865b9;color:white}
 .body-stopwatch-reset{display:grid;place-items:center;width:32px;height:38px;border-radius:9px;background:#f0e7f8;color:#7855a8}
 @media(max-width:380px){.body-stopwatch-time{font-size:15px}.body-timer-sticky{gap:6px}}
+
+/* My Sequence has eight independent books. Keep existing 4-tab layouts elsewhere. */
+.bottom-nav.sequence-bottom-nav{
+  display:flex;
+  grid-template-columns:none;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.bottom-nav.sequence-bottom-nav::-webkit-scrollbar{display:none}
+.bottom-nav.sequence-bottom-nav button{
+  flex:0 0 auto;
+  min-width:clamp(67px,18vw,105px);
+  padding:5px 12px;
+}

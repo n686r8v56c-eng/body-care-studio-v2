@@ -13,8 +13,8 @@ import MovementFlow from './ForceMapEditor.jsx';
 import {createClient} from '@supabase/supabase-js';
 import {ChevronDown,Plus,Pencil,Trash2,ArrowUp,ArrowDown,Link2,Copy,ExternalLink,Download,Upload,RotateCcw,LogOut,Check,X,Settings2,Play,Pause} from 'lucide-react';
 const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
-// Display order is intentional: Core/Fascia first in the genre selector and on first launch.
-const areas=[{id:'core',name:'코어와 근막'},{id:'glutes',name:'하체 상체'},{id:'movement',name:'Movement Flow'},{id:'my-sequence',name:'내 시퀀스'},{id:'practice-diary',name:'연습일기'}];
+// My Sequence is first in the genre selector and on first launch.
+const areas=[{id:'my-sequence',name:'내 시퀀스'},{id:'core',name:'코어와 근막'},{id:'glutes',name:'하체 상체'},{id:'movement',name:'Movement Flow'},{id:'practice-diary',name:'연습일기'}];
 // Previous lower/upper records remain valid in backups and the saved payload, but no longer appear as genres.
 // Hidden genres remain valid storage IDs so existing records survive normalization and backups.
 const normalizeArchivedGenres=value=>{const ids=areas.filter(a=>Array.isArray(value)&&value.includes(a.id)).map(a=>a.id);return ids.length===areas.length?ids.slice(1):ids};

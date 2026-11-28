@@ -120,6 +120,17 @@ const ensureSideLying=(p,key)=>{
  const next=[...folders];next.splice(sidePlank+1,0,'사이드라잉');
  return {...p,folders:next};
 };
+// Add Big Toe Lift immediately after Big Toe Strength in the Star Book foot category.
+const ensureBigToeLift=(p,key)=>{
+ if(!key.endsWith(':my-sequence-star'))return p;
+ const names=p.subfolders?.[subScope('발',selectedMiddle(p,'발'))];
+ const scope=subScope('발',selectedMiddle(p,'발'));
+ if(!Array.isArray(names)||names.includes('엄지들기'))return p;
+ const index=names.indexOf('엄지강화');
+ if(index<0)return p;
+ const next=[...names];next.splice(index+1,0,'엄지들기');
+ return {...p,subfolders:{...p.subfolders,[scope]:next}};
+};
 const read=(key,core=false)=>{
  try{
   const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());
@@ -130,7 +141,7 @@ const read=(key,core=false)=>{
   const upper=ensureUpperBasics(withoutBasic,key);
   const sideLying=ensureSideLying(upper,key);
   const bridge=ensureBridge(sideLying,key);
-  return ensureDeadBug(bridge,key);
+  return ensureBigToeLift(ensureDeadBug(bridge,key),key);
  }catch{return core?migrateCore(migrate(fresh())):fresh()}
 };
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};

@@ -131,6 +131,17 @@ const ensureBigToeLift=(p,key)=>{
  const next=[...names];next.splice(index+1,0,'엄지들기');
  return {...p,subfolders:{...p.subfolders,[scope]:next}};
 };
+// Insert Yoga Block before Dorsi Plantar only in Star Book > Foot > Ankle.
+const ensureAnkleYogaBlock=(p,key)=>{
+ if(!key.endsWith(':my-sequence-star'))return p;
+ const scope=subScope('발','발목');
+ const names=p.subfolders?.[scope];
+ if(!Array.isArray(names))return p;
+ const index=names.indexOf('Dorsi Plantar');
+ if(index<0||names.includes('요가블럭'))return p;
+ const next=[...names];next.splice(index,0,'요가블럭');
+ return {...p,subfolders:{...p.subfolders,[scope]:next}};
+};
 const read=(key,core=false)=>{
  try{
   const p=migrate(JSON.parse(localStorage.getItem(key)||'null')||fresh());
@@ -141,7 +152,7 @@ const read=(key,core=false)=>{
   const upper=ensureUpperBasics(withoutBasic,key);
   const sideLying=ensureSideLying(upper,key);
   const bridge=ensureBridge(sideLying,key);
-  return ensureBigToeLift(ensureDeadBug(bridge,key),key);
+  return ensureAnkleYogaBlock(ensureBigToeLift(ensureDeadBug(bridge,key),key),key);
  }catch{return core?migrateCore(migrate(fresh())):fresh()}
 };
 const youtubeId=raw=>{try{const u=new URL(String(raw||'').trim());const host=u.hostname.toLowerCase();const parts=u.pathname.split('/').filter(Boolean);const id=host==='youtu.be'?parts[0]:['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com'].includes(host)?(u.searchParams.get('v')||(['shorts','embed','live'].includes(parts[0])?parts[1]:'')):'';return id&&id.length===11&&Array.from(id).every(ch=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.includes(ch))?id:''}catch{return ''}};

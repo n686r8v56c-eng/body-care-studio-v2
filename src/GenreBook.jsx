@@ -7,7 +7,7 @@ const defaultSub='하위함1';
 const subsFor=(p,f)=>p.subfolders?.[f]?.length?p.subfolders[f]:[defaultSub];
 const selectedSub=(p,f)=>subsFor(p,f).includes(p.selectedSubfolders?.[f])?p.selectedSubfolders[f]:subsFor(p,f)[0];
 const defaultMiddle='중간함1';
-const isCoreBook=area=>area==='core'||area==='core-fascia-book'||area==='practice-book';
+const isCoreBook=area=>area==='core'||area==='core-fascia-book'||area==='practice-book'||area==='my-sequence-star';
 const middlesFor=(p,f)=>p.middleFolders?.[f]?.length?p.middleFolders[f]:[defaultMiddle];
 const selectedMiddle=(p,f)=>middlesFor(p,f).includes(p.selectedMiddleFolders?.[f])?p.selectedMiddleFolders[f]:middlesFor(p,f)[0];
 const subScope=(f,m)=>JSON.stringify([f,m]);
@@ -212,7 +212,7 @@ export default function GenreBook({area,userId}){
  const addFolder=()=>{const name=prompt('상위함 이름');if(name?.trim()&&!folders.includes(name.trim()))save(p=>({...p,folders:[...folders,name.trim()],folder:name.trim()}))};
  const renameBoard=id=>{const old=boards.find(b=>b.id===id);const name=prompt('보드 이름',old?.name||'');if(name?.trim())updateBoards(bs=>bs.map(b=>b.id===id?{...b,name:name.trim()}:b))};
  const archiveBoard=id=>{if(!confirm('보드를 보관함으로 이동할까?'))return;save(p=>({...p,boards:{...p.boards,[currentKey]:boards.filter(b=>b.id!==id)},archive:[...(p.archive||[]),{...boards.find(b=>b.id===id),folder,subfolder,middle}]}))};
- const restoreBoard=()=>{const arr=state.archive||[];if(!arr.length)return alert('보관된 보드가 없어.');const n=Number(prompt('복원할 보드 번호\n'+arr.map((b,i)=>(i+1)+'. '+b.name+' ('+b.folder+' / '+(b.subfolder||defaultSub)+')').join('\n')));if(n>0&&n<=arr.length){const b=arr[n-1];save(p=>({...p,archive:p.archive.filter((_,i)=>i!==n-1),boards:{...p.boards,[boardKey(b.folder,b.subfolder||defaultSub,coreBook?(b.middle||defaultMiddle):undefined)]:[...(p.boards?.[boardKey(b.folder,b.subfolder||defaultSub)]||[]),b]}}))}};
+ const restoreBoard=()=>{const arr=state.archive||[];if(!arr.length)return alert('보관된 보드가 없어.');const n=Number(prompt('복원할 보드 번호\n'+arr.map((b,i)=>(i+1)+'. '+b.name+' ('+b.folder+' / '+(b.subfolder||defaultSub)+')').join('\n')));if(n>0&&n<=arr.length){const b=arr[n-1];save(p=>({...p,archive:p.archive.filter((_,i)=>i!==n-1),boards:{...p.boards,[boardKey(b.folder,b.subfolder||defaultSub,coreBook?(b.middle||defaultMiddle):undefined)]:[...(p.boards?.[boardKey(b.folder,b.subfolder||defaultSub,coreBook?(b.middle||defaultMiddle):undefined)]||[]),b]}}))}};
  const chooseText=()=>{setDraft(modal?.card?.text||modal?.card?.title||modal?.card?.memo||'');setModal(m=>({...m,mode:'text'}))};
  const saveText=()=>{changeCard(modal.bid,modal.index,c=>({...c,type:'text',text:draft,title:'',memo:''}));setModal(null)};
  const chooseImage=()=>inputRef.current?.click();
